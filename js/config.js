@@ -10,6 +10,8 @@ const CONFIG = {
   // 1. Google Sheets 기본 정보
   // ============================================================
 
+  VERSION: '20241125-01',
+
   /**
    * Google Spreadsheet ID
    * 스프레드시트 URL에서 추출: https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit

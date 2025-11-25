@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="강동어울림복지관 직원 평가 시스템">
   <title>강동어울림복지관 평가 시스템 - 로그인</title>
-  
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/main.css">
-  
+
   <style>
     .login-container {
       min-height: 100vh;
@@ -23,7 +24,7 @@
       padding: var(--spacing-lg);
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    
+
     .login-card {
       width: 100%;
       max-width: 450px;
@@ -32,47 +33,47 @@
       box-shadow: var(--shadow-xl);
       overflow: hidden;
     }
-    
+
     .login-header {
       padding: var(--spacing-2xl) var(--spacing-xl);
       background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
       color: white;
       text-align: center;
     }
-    
+
     .login-header h1 {
       font-size: var(--font-2xl);
       font-weight: 700;
       margin-bottom: var(--spacing-sm);
       color: white;
     }
-    
+
     .login-header p {
       font-size: var(--font-sm);
       opacity: 0.9;
       margin: 0;
     }
-    
+
     .login-body {
       padding: var(--spacing-2xl) var(--spacing-xl);
     }
-    
+
     .login-form .form-group {
       margin-bottom: var(--spacing-lg);
     }
-    
+
     .login-input {
       padding: var(--spacing-md);
       font-size: var(--font-md);
     }
-    
+
     .login-button {
       width: 100%;
       padding: var(--spacing-md);
       font-size: var(--font-lg);
       margin-top: var(--spacing-md);
     }
-    
+
     .login-footer {
       padding: var(--spacing-lg) var(--spacing-xl);
       background: var(--gray-50);
@@ -80,7 +81,7 @@
       font-size: var(--font-sm);
       color: var(--text-secondary);
     }
-    
+
     .demo-accounts {
       margin-top: var(--spacing-lg);
       padding: var(--spacing-md);
@@ -88,24 +89,24 @@
       border-radius: var(--radius-md);
       font-size: var(--font-sm);
     }
-    
+
     .demo-accounts h4 {
       color: var(--primary-color);
       margin-bottom: var(--spacing-sm);
       font-size: var(--font-md);
     }
-    
+
     .demo-accounts ul {
       list-style: none;
       margin: 0;
       padding: 0;
     }
-    
+
     .demo-accounts li {
       padding: var(--spacing-xs) 0;
       color: var(--text-secondary);
     }
-    
+
     .demo-accounts code {
       background: white;
       padding: 2px 6px;
@@ -115,6 +116,7 @@
     }
   </style>
 </head>
+
 <body>
   <!-- 로딩 스피너 -->
   <div id="global-loader" class="loader">
@@ -123,10 +125,10 @@
       <p class="loader-message">처리 중...</p>
     </div>
   </div>
-  
+
   <!-- 알림 컨테이너 -->
   <div id="alert-container"></div>
-  
+
   <!-- 로그인 컨테이너 -->
   <div class="login-container">
     <div class="login-card">
@@ -135,70 +137,51 @@
         <h1>강동어울림복지관</h1>
         <p>통합 근무평정 체계</p>
       </div>
-      
+
       <!-- 로그인 폼 -->
       <div class="login-body">
         <form id="loginForm" class="login-form">
           <div class="form-group">
             <label for="employeeId" class="form-label required">직원 ID</label>
-            <input 
-              type="text" 
-              id="employeeId" 
-              name="employeeId"
-              class="form-input login-input" 
-              placeholder="직원 ID를 입력하세요"
-              required
-              autocomplete="username"
-            >
+            <input type="text" id="employeeId" name="employeeId" class="form-input login-input"
+              placeholder="직원 ID를 입력하세요" required autocomplete="username">
           </div>
-          
+
           <div class="form-group">
             <label for="password" class="form-label required">비밀번호</label>
-            <input 
-              type="password" 
-              id="password" 
-              name="password"
-              class="form-input login-input" 
-              placeholder="비밀번호를 입력하세요"
-              required
-              autocomplete="current-password"
-            >
+            <input type="password" id="password" name="password" class="form-input login-input"
+              placeholder="비밀번호를 입력하세요" required autocomplete="current-password">
           </div>
-          
+
           <div class="form-check">
-            <input 
-              type="checkbox" 
-              id="rememberMe" 
-              name="rememberMe"
-              class="form-check-input"
-            >
+            <input type="checkbox" id="rememberMe" name="rememberMe" class="form-check-input">
             <label for="rememberMe" class="form-check-label">
               로그인 상태 유지
             </label>
           </div>
-          
+
           <button type="submit" class="btn btn-primary login-button">
             로그인
           </button>
         </form>
-        
+
         <!-- 데모 계정 안내 (테스트용) -->
         <div class="demo-accounts" id="demoAccounts">
           <h4>🔐 테스트 계정</h4>
           <ul>
             <li>
-              <strong>관리자:</strong> 
-              ID: <code>ADMIN</code> / 
+              <strong>관리자:</strong>
+              ID: <code>ADMIN</code> /
               PW: <code>admin1234</code>
             </li>
             <li>
-              <strong>팀장:</strong> 
-              ID: <code>EMP002</code> / 
+              <strong>팀장:</strong>
+              ID: <code>EMP002</code> /
               PW: <code>kim1234</code>
             </li>
             <li>
-              <strong>일반 직원:</strong> 
-              ID: <code>EMP001</code> / 
+              <strong>일반 직원:</strong>
+              ID: <code>EMP001</code> /
               PW: <code>hong1234</code>
             </li>
           </ul>
@@ -207,7 +190,7 @@
           </p>
         </div>
       </div>
-      
+
       <!-- 푸터 -->
       <div class="login-footer">
         <p>© 2024 강동어울림복지관. All rights reserved.</p>
@@ -217,13 +200,13 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Scripts -->
-  <script src="js/config.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
-  
+  <script src="js/config.js?v=20241125-01"></script>
+  <script src="js/utils.js?v=20241125-01"></script>
+  <script src="js/api.js?v=20241125-01"></script>
+  <script src="js/auth.js?v=20241125-01"></script>
+
   <script>
     // 페이지 로드 시
     document.addEventListener('DOMContentLoaded', async () => {
@@ -233,11 +216,11 @@
         window.location.href = 'dashboard.html';
         return;
       }
-      
+
       // Google Sheets API 초기화
       try {
         await api.initialize();
-        console.log('✅ API 초기화 완료');
+        console.log('✅ API 초기화 완료 (v' + (CONFIG.VERSION || 'unknown') + ')');
       } catch (error) {
         console.error('❌ API 초기화 실패:', error);
         utils.showAlert(
@@ -245,7 +228,7 @@
           'error'
         );
       }
-      
+
       // 디버그 모드가 아니면 데모 계정 안내 숨기기
       if (!CONFIG.DEBUG) {
         const demoAccounts = document.getElementById('demoAccounts');
@@ -254,41 +237,41 @@
         }
       }
     });
-    
+
     // 로그인 폼 제출
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const employeeId = document.getElementById('employeeId').value.trim();
       const password = document.getElementById('password').value;
-      
+
       // 유효성 검사
       if (!employeeId || !password) {
         utils.showAlert('직원 ID와 비밀번호를 입력해주세요.', 'warning');
         return;
       }
-      
+
       try {
         utils.showLoading('로그인 중...');
-        
+
         // 로그인 시도
         await auth.login(employeeId, password);
-        
+
         utils.hideLoading();
         utils.showAlert(`환영합니다, ${auth.getCurrentUser().name}님!`, 'success');
-        
+
         // 대시보드로 이동
         setTimeout(() => {
           window.location.href = 'dashboard.html';
         }, 500);
-        
+
       } catch (error) {
         utils.hideLoading();
         utils.showAlert(error.message || '로그인에 실패했습니다.', 'error');
         console.error('로그인 에러:', error);
       }
     });
-    
+
     // Enter 키로 로그인
     document.getElementById('password').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
@@ -298,4 +281,5 @@
     });
   </script>
 </body>
+
 </html>
