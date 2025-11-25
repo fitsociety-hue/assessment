@@ -38,7 +38,7 @@ class SheetsAPI {
         }
 
         // 연결 테스트
-        const response = await this._callAppsScript('ping');
+        const response = await this._callAppsScript('ping', {}, 'GET');
         if (response.status === 'ok') {
             if (CONFIG.DEBUG) console.log('✅ Apps Script 연결 성공');
             return true;
@@ -93,15 +93,31 @@ class SheetsAPI {
     /**
      * Apps Script 호출 헬퍼
      */
-    async _callAppsScript(action, data = {}) {
-        const url = `${CONFIG.APPS_SCRIPT_URL}?action=${action}`;
+    /**
+     * Apps Script 호출 헬퍼
+     */
+    async _callAppsScript(action, data = {}, method = 'POST') {
+        let url = `${CONFIG.APPS_SCRIPT_URL}`;
+
+        // 기본 데이터에 action 추가
+        const payload = { ...data, action };
+
         const options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8'
-            },
-            body: JSON.stringify(data)
+            method: method,
+            headers: {}
         };
+
+        if (method === 'GET') {
+            // GET 요청: 쿼리 스트링으로 변환
+            const queryString = Object.keys(payload)
+                .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(payload[key])}`)
+                .join('&');
+            url += `?${queryString}`;
+        } else {
+            // POST 요청: text/plain으로 전송 (CORS Preflight 방지)
+            options.headers['Content-Type'] = 'text/plain;charset=utf-8';
+            options.body = JSON.stringify(payload);
+        }
 
         return await this._retryFetch(url, options);
     }
@@ -162,7 +178,7 @@ class SheetsAPI {
             let data;
 
             if (CONFIG.USE_APPS_SCRIPT) {
-                const response = await this._callAppsScript('read', { sheetName });
+                const response = await this._callAppsScript('read', { sheetName }, 'GET');
                 data = response.data;
             } else {
                 data = await this._readSheetDirectAPI(sheetName);

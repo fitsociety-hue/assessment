@@ -24,18 +24,25 @@ const SHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEE
 /**
  * GET 요청 핸들러
  */
+/**
+ * GET 요청 핸들러
+ */
 function doGet(e) {
-    const result = handleRequest(e);
-    return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+    return createResponse(handleRequest(e));
 }
 
 /**
  * POST 요청 핸들러
  */
 function doPost(e) {
-    const result = handleRequest(e);
-    return ContentService.createTextOutput(JSON.stringify(result))
+    return createResponse(handleRequest(e));
+}
+
+/**
+ * 응답 생성 헬퍼 (CORS 헤더 처리)
+ */
+function createResponse(data) {
+    return ContentService.createTextOutput(JSON.stringify(data))
         .setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -49,18 +56,28 @@ function handleRequest(e) {
             e = { parameter: { action: 'ping' }, postData: null };
         }
 
-        // 액션 파라미터 가져오기
-        const action = (e.parameter && e.parameter.action) || 'ping';
-
-        // 요청 본문 파싱
+        // 1. 파라미터 우선순위 설정
+        // GET 파라미터(e.parameter)와 POST 데이터(e.postData)를 모두 확인
         let requestData = {};
+
+        // (1) GET 파라미터 병합
+        if (e.parameter) {
+            Object.assign(requestData, e.parameter);
+        }
+
+        // (2) POST 데이터 병합 (JSON 파싱)
         if (e.postData && e.postData.contents) {
             try {
-                requestData = JSON.parse(e.postData.contents);
+                const postJson = JSON.parse(e.postData.contents);
+                Object.assign(requestData, postJson);
             } catch (error) {
-                Logger.log('JSON 파싱 오류: ' + error);
+                Logger.log('JSON 파싱 오류 (무시됨): ' + error);
+                // POST 데이터가 JSON이 아니더라도(text/plain 등) GET 파라미터가 있으면 진행
             }
         }
+
+        // 액션 확인
+        const action = requestData.action || 'ping';
 
         Logger.log('Action: ' + action);
         Logger.log('Request Data: ' + JSON.stringify(requestData));
