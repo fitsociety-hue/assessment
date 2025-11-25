@@ -9,19 +9,19 @@ const CONFIG = {
   // ============================================================
   // 1. Google Sheets 기본 정보
   // ============================================================
-  
+
   /**
    * Google Spreadsheet ID
    * 스프레드시트 URL에서 추출: https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit
    * 예: '1abc123xyz456' 형식
    */
-  SPREADSHEET_ID: 'YOUR_SPREADSHEET_ID_HERE',
-  
-  
+  SPREADSHEET_ID: '1I8_Ny4L49lI6E0o-n5QZzNKksvoUM0fJuBX-IzO2NJA',
+
+
   // ============================================================
   // 2. 연동 방식 선택 (둘 중 하나만 사용)
   // ============================================================
-  
+
   /**
    * 방식 1: Google Apps Script 웹앱 사용 (권장)
    * - 장점: API 키 노출 없음, 서버 로직 처리 가능, 보안 우수
@@ -29,8 +29,8 @@ const CONFIG = {
    * - 설정 방법: docs/SETUP_GUIDE.md 참조
    */
   USE_APPS_SCRIPT: true,
-  APPS_SCRIPT_URL: 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE',
-  
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxX6r-S_Mj1AHf6p6EXZrFME4ahHu5WRUnJp4rCUDNwki9v-s4uZThbMGJZ11kNCV4J/exec',
+
   /**
    * 방식 2: 클라이언트에서 직접 Google Sheets API 호출
    * - 장점: 설정 간단
@@ -38,8 +38,8 @@ const CONFIG = {
    * - 설정 방법: docs/SETUP_GUIDE.md 참조
    */
   GOOGLE_API_KEY: 'YOUR_API_KEY_HERE',
-  
-  
+
+
   // ============================================================
   // 3. Google Sheets 시트 이름 (스프레드시트 내 탭 이름)
   // ============================================================
@@ -52,12 +52,12 @@ const CONFIG = {
     COMPREHENSIVE: '종합평가',
     SETTINGS: '설정'
   },
-  
-  
+
+
   // ============================================================
   // 4. 앱 설정
   // ============================================================
-  
+
   /**
    * 평가 기간 설정
    */
@@ -67,7 +67,7 @@ const CONFIG = {
     '2025-상반기',
     '2025-하반기'
   ],
-  
+
   /**
    * 평가 등급 기준
    */
@@ -78,7 +78,7 @@ const CONFIG = {
     C: { min: 60, max: 69, label: '보통', coefficient: 0.85 },
     D: { min: 0, max: 59, label: '미흡', coefficient: 0.7 }
   },
-  
+
   /**
    * 점수 배점 (일반 직원)
    */
@@ -102,7 +102,7 @@ const CONFIG = {
     },
     TOTAL: 100
   },
-  
+
   /**
    * 관리자 점수 배점
    */
@@ -127,23 +127,23 @@ const CONFIG = {
     },
     TOTAL: 100
   },
-  
-  
+
+
   // ============================================================
   // 5. 앱 동작 설정
   // ============================================================
-  
+
   /**
    * 캐시 사용 여부 (성능 향상)
    */
   USE_CACHE: true,
   CACHE_DURATION: 5 * 60 * 1000, // 5분 (밀리초)
-  
+
   /**
    * 자동 저장 간격 (밀리초)
    */
   AUTO_SAVE_INTERVAL: 30 * 1000, // 30초
-  
+
   /**
    * API 호출 재시도 설정
    */
@@ -152,17 +152,17 @@ const CONFIG = {
     RETRY_DELAY: 1000, // 1초
     BACKOFF_MULTIPLIER: 2
   },
-  
+
   /**
    * 디버그 모드 (개발 시에만 true로 설정)
    */
   DEBUG: true,
-  
-  
+
+
   // ============================================================
   // 6. 조직 정보
   // ============================================================
-  
+
   ORGANIZATION: {
     NAME: '강동어울림복지관',
     DEPARTMENTS: [
