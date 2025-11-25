@@ -13,7 +13,7 @@
 ✓ git add .
 ✓ git commit -m "Initial commit: 강동어울림복지관 직원 평가 앱"
 ✓ git branch -M main
-✓ git remote add origin https://github.com/fitsociety-hue/assessment.git
+✓ git remote add origin https://github.com/fitsociety-hue/assessment
 ```
 
 ## 🚀 GitHub에 Push하는 방법
