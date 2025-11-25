@@ -13,10 +13,10 @@
  * GET 요청 처리
  */
 function doGet(e) {
-    return ContentService.createTextOutput(JSON.stringify({
+    return createResponse({
         status: 'ok',
         message: '강동어울림복지관 평가 시스템 API'
-    })).setMimeType(ContentService.MimeType.JSON);
+    });
 }
 
 /**
@@ -24,6 +24,11 @@ function doGet(e) {
  */
 function doPost(e) {
     try {
+        // CORS Preflight 처리 (옵션)
+        if (!e.postData || !e.postData.contents) {
+            return createResponse({ status: 'ok', message: 'Preflight check passed' });
+        }
+
         const params = JSON.parse(e.postData.contents);
         const action = e.parameter.action || params.action;
 
@@ -54,15 +59,22 @@ function doPost(e) {
                 result = { status: 'error', message: '알 수 없는 액션: ' + action };
         }
 
-        return ContentService.createTextOutput(JSON.stringify(result))
-            .setMimeType(ContentService.MimeType.JSON);
+        return createResponse(result);
 
     } catch (error) {
-        return ContentService.createTextOutput(JSON.stringify({
+        return createResponse({
             status: 'error',
             message: error.toString()
-        })).setMimeType(ContentService.MimeType.JSON);
+        });
     }
+}
+
+/**
+ * 응답 생성 헬퍼 (CORS 헤더 추가)
+ */
+function createResponse(data) {
+    return ContentService.createTextOutput(JSON.stringify(data))
+        .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ============================================================
