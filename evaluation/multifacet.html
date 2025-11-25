@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>다면평가 - 강동어울림복지관</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body>
+    <div id="global-loader" class="loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p class="loader-message">처리 중...</p>
+        </div>
+    </div>
+    <div id="alert-container"></div>
+
+    <div class="container" style="padding: var(--spacing-xl) var(--spacing-lg); max-width: 900px;">
+        <div style="margin-bottom: var(--spacing-xl);">
+            <a href="../dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">다면평가</h1>
+                <p class="card-subtitle">상사, 동료, 부하, 자기평가를 진행합니다.</p>
+            </div>
+
+            <form id="multifacetForm" class="card-body">
+                <input type="hidden" name="evaluation_id">
+                <input type="hidden" name="employee_id">
+                <input type="hidden" name="evaluator_id">
+
+                <div class="form-group">
+                    <label for="period" class="form-label required">평가 기간</label>
+                    <select id="period" name="period" class="form-select" required></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="evaluator_type" class="form-label required">평가자 유형</label>
+                    <select id="evaluator_type" name="evaluator_type" class="form-select" required>
+                        <option value="self">자기평가</option>
+                        <option value="supervisor">상사평가</option>
+                        <option value="peer">동료평가</option>
+                        <option value="subordinate">부하평가</option>
+                    </select>
+                </div>
+
+                <!-- 상사 평가 항목 -->
+                <div class="card evaluation-section" id="supervisorSection"
+                    style="margin-bottom: var(--spacing-lg); display:none;">
+                    <div class="card-header">
+                        <h3 class="card-title">상사 평가 (10점)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">업무 수행 태도 (0-2.5점)</label>
+                            <input type="number" name="supervisor_attitude" class="form-input" min="0" max="2.5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">지시사항 이해 및 실행 (0-2.5점)</label>
+                            <input type="number" name="supervisor_execution" class="form-input" min="0" max="2.5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">업무 보고 및 의사소통 (0-2.5점)</label>
+                            <input type="number" name="supervisor_communication" class="form-input" min="0" max="2.5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">자기개발 노력 (0-2.5점)</label>
+                            <input type="number" name="supervisor_development" class="form-input" min="0" max="2.5"
+                                step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 동료 평가 항목 -->
+                <div class="card evaluation-section" id="peerSection"
+                    style="margin-bottom: var(--spacing-lg); display:none;">
+                    <div class="card-header">
+                        <h3 class="card-title">동료 평가 (5점)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">협업 및 팀워크 (0-1.25점)</label>
+                            <input type="number" name="peer_collaboration" class="form-input" min="0" max="1.25"
+                                step="0.25">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">정보 공유 및 지원 (0-1.25점)</label>
+                            <input type="number" name="peer_support" class="form-input" min="0" max="1.25" step="0.25">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">친절성 및 배려 (0-1.25점)</label>
+                            <input type="number" name="peer_kindness" class="form-input" min="0" max="1.25" step="0.25">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">갈등 조정 능력 (0-1.25점)</label>
+                            <input type="number" name="peer_conflict" class="form-input" min="0" max="1.25" step="0.25">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 부하 평가 항목 -->
+                <div class="card evaluation-section" id="subordinateSection"
+                    style="margin-bottom: var(--spacing-lg); display:none;">
+                    <div class="card-header">
+                        <h3 class="card-title">부하 평가 (6점)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">리더십 및 방향 제시 (0-1.5점)</label>
+                            <input type="number" name="subordinate_leadership" class="form-input" min="0" max="1.5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">공정성 및 투명성 (0-1.5점)</label>
+                            <input type="number" name="subordinate_fairness" class="form-input" min="0" max="1.5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">지원 및 육성 (0-1.5점)</label>
+                            <input type="number" name="subordinate_support" class="form-input" min="0" max="1.5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">의사소통 (0-1.5점)</label>
+                            <input type="number" name="subordinate_communication" class="form-input" min="0" max="1.5"
+                                step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 자기 평가 항목 -->
+                <div class="card evaluation-section" id="selfSection"
+                    style="margin-bottom: var(--spacing-lg); display:none;">
+                    <div class="card-header">
+                        <h3 class="card-title">자기 평가 (5점)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">목표 달성도 자기 평가 (0-2.5점)</label>
+                            <input type="number" name="self_goal_achievement" class="form-input" min="0" max="2.5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">강점</label>
+                            <textarea name="self_strengths" class="form-textarea" rows="2"
+                                placeholder="본인의 강점을 작성하세요"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">개선점</label>
+                            <textarea name="self_improvements" class="form-textarea" rows="2"
+                                placeholder="개선이 필요한 부분을 작성하세요"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>총점: <span id="totalScore">0</span> / 20점</strong>
+                </div>
+
+                <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
+                    <button type="submit" class="btn btn-primary">💾 저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage();
+            loadPeriods();
+            setupEvaluatorTypeChange();
+            setupAutoCalculation();
+        });
+
+        function loadPeriods() {
+            const select = document.getElementById('period');
+            CONFIG.EVALUATION_PERIODS.forEach(period => {
+                select.add(new Option(period, period));
+            });
+            select.value = CONFIG.EVALUATION_PERIODS[CONFIG.EVALUATION_PERIODS.length - 1];
+        }
+
+        function setupEvaluatorTypeChange() {
+            document.getElementById('evaluator_type').addEventListener('change', (e) => {
+                document.querySelectorAll('.evaluation-section').forEach(el => el.style.display = 'none');
+
+                const type = e.target.value;
+                if (type === 'supervisor') document.getElementById('supervisorSection').style.display = '';
+                else if (type === 'peer') document.getElementById('peerSection').style.display = '';
+                else if (type === 'subordinate') document.getElementById('subordinateSection').style.display = '';
+                else if (type === 'self') document.getElementById('selfSection').style.display = '';
+
+                calculateTotal();
+            });
+
+            document.getElementById('evaluator_type').dispatchEvent(new Event('change'));
+        }
+
+        function setupAutoCalculation() {
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('input', calculateTotal);
+            });
+        }
+
+        function calculateTotal() {
+            const form = document.getElementById('multifacetForm');
+            const data = utils.formToObject(form);
+            const type = data.evaluator_type;
+
+            let total = 0;
+
+            if (type === 'supervisor') {
+                total += parseFloat(data.supervisor_attitude || 0);
+                total += parseFloat(data.supervisor_execution || 0);
+                total += parseFloat(data.supervisor_communication || 0);
+                total += parseFloat(data.supervisor_development || 0);
+            } else if (type === 'peer') {
+                total += parseFloat(data.peer_collaboration || 0);
+                total += parseFloat(data.peer_support || 0);
+                total += parseFloat(data.peer_kindness || 0);
+                total += parseFloat(data.peer_conflict || 0);
+            } else if (type === 'subordinate') {
+                total += parseFloat(data.subordinate_leadership || 0);
+                total += parseFloat(data.subordinate_fairness || 0);
+                total += parseFloat(data.subordinate_support || 0);
+                total += parseFloat(data.subordinate_communication || 0);
+            } else if (type === 'self') {
+                total += parseFloat(data.self_goal_achievement || 0);
+            }
+
+            document.getElementById('totalScore').textContent = total.toFixed(2);
+            return total;
+        }
+
+        document.getElementById('multifacetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            try {
+                utils.showLoading('저장 중...');
+
+                const formData = utils.formToObject(e.target);
+                const user = auth.getCurrentUser();
+
+                formData.evaluator_id = user.employeeId;
+                formData.total_score = calculateTotal();
+                formData.updated_at = new Date().toISOString();
+
+                if (!formData.evaluation_id) {
+                    formData.evaluation_id = api.generateId('MULTI_');
+                    formData.created_at = new Date().toISOString();
+                    await api.appendRow(CONFIG.SHEET_NAMES.MULTIFACET, formData);
+                } else {
+                    await api.updateRow(CONFIG.SHEET_NAMES.MULTIFACET, 'evaluation_id', formData.evaluation_id, formData);
+                }
+
+                utils.hideLoading();
+                utils.showAlert('다면평가가 저장되었습니다.', 'success');
+
+            } catch (error) {
+                utils.hideLoading();
+                utils.showAlert('저장 실패: ' + error.message, 'error');
+            }
+        });
+    </script>
+</body>
+
+</html>

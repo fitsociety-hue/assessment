@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>직원 관리 - 강동어울림복지관</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body>
+    <div id="global-loader" class="loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p class="loader-message">처리 중...</p>
+        </div>
+    </div>
+    <div id="alert-container"></div>
+
+    <div class="container" style="padding: var(--spacing-xl) var(--spacing-lg);">
+        <div style="margin-bottom: var(--spacing-xl);">
+            <a href="../dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">직원 관리</h1>
+                <p class="card-subtitle">직원 정보를 조회하고 관리합니다.</p>
+            </div>
+
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="data-table" id="employeeTable">
+                        <thead>
+                            <tr>
+                                <th>직원 ID</th>
+                                <th>이름</th>
+                                <th>부서</th>
+                                <th>직급</th>
+                                <th>역할</th>
+                                <th>입사일</th>
+                                <th>이메일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">데이터 로딩 중...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage({ requiredRole: 'admin' });
+            await loadEmployees();
+        });
+
+        async function loadEmployees() {
+            try {
+                utils.showLoading('직원 목록 로딩 중...');
+
+                const data = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
+                const tbody = document.getElementById('employeeTableBody');
+
+                if (data.length <= 1) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">직원 데이터가 없습니다.</td></tr>';
+                    utils.hideLoading();
+                    return;
+                }
+
+                const headers = data[0];
+                const rows = data.slice(1);
+
+                let html = '';
+                rows.forEach(row => {
+                    html += `
+            <tr>
+              <td>${row[0] || '-'}</td>
+              <td><strong>${row[1] || '-'}</strong></td>
+              <td>${row[2] || '-'}</td>
+              <td>${row[3] || '-'}</td>
+              <td><span class="badge badge-${row[4] === 'admin' ? 'error' : row[4] === 'manager' ? 'warning' : 'info'}">${row[4] || '-'}</span></td>
+              <td>${utils.formatDate(row[5]) || '-'}</td>
+              <td>${row[6] || '-'}</td>
+            </tr>
+          `;
+                });
+
+                tbody.innerHTML = html;
+                utils.hideLoading();
+
+            } catch (error) {
+                utils.hideLoading();
+                utils.showAlert('직원 목록 로드 실패: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+
+</html>

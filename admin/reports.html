@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리포트 - 강동어울림복지관</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body>
+    <div id="global-loader" class="loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p class="loader-message">처리 중...</p>
+        </div>
+    </div>
+    <div id="alert-container"></div>
+
+    <div class="container" style="padding: var(--spacing-xl) var(--spacing-lg);">
+        <div style="margin-bottom: var(--spacing-xl);">
+            <a href="../dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">평가 리포트</h1>
+                <p class="card-subtitle">평가 결과 통계 및 분석 자료</p>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="period" class="form-label">평가 기간</label>
+                    <select id="period" class="form-select"></select>
+                </div>
+
+                <button type="button" id="generateBtn" class="btn btn-primary"
+                    style="margin-bottom: var(--spacing-xl);">📊 리포트 생성</button>
+
+                <div id="reportSection" style="display:none;">
+                    <!-- 통계 카드 -->
+                    <div class="stats-grid" style="margin-bottom: var(--spacing-xl);">
+                        <div class="stat-card primary">
+                            <div class="stat-label">총 직원 수</div>
+                            <div class="stat-value" id="totalEmployees">0</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-label">평가 완료</div>
+                            <div class="stat-value" id="completedCount">0</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-label">평가 미완료</div>
+                            <div class="stat-value" id="pendingCount">0</div>
+                        </div>
+                        <div class="stat-card info">
+                            <div class="stat-label">평균 점수</div>
+                            <div class="stat-value" id="avgScore">0</div>
+                        </div>
+                    </div>
+
+                    <!-- 등급별 분포 -->
+                    <div class="card" style="margin-bottom: var(--spacing-xl);">
+                        <div class="card-header">
+                            <h3 class="card-title">등급별 분포</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>등급</th>
+                                        <th>인원</th>
+                                        <th>비율</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gradeDistribution">
+                                    <tr>
+                                        <td colspan="3" class="text-center">데이터 없음</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 상세 평가 결과 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">상세 평가 결과</h3>
+                            <button type="button" id="downloadBtn" class="btn btn-sm btn-success">📥 CSV 다운로드</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="data-table" id="detailTable">
+                                    <thead>
+                                        <tr>
+                                            <th>직원 ID</th>
+                                            <th>이름</th>
+                                            <th>성과</th>
+                                            <th>역량</th>
+                                            <th>다면</th>
+                                            <th>총점</th>
+                                            <th>등급</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detailTableBody">
+                                        <tr>
+                                            <td colspan="7" class="text-center">데이터 없음</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        let reportData = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage({ requiredRole: 'admin' });
+            loadPeriods();
+        });
+
+        function loadPeriods() {
+            const select = document.getElementById('period');
+            CONFIG.EVALUATION_PERIODS.forEach(period => {
+                select.add(new Option(period, period));
+            });
+            select.value = CONFIG.EVALUATION_PERIODS[CONFIG.EVALUATION_PERIODS.length - 1];
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const period = document.getElementById('period').value;
+
+            try {
+                utils.showLoading('리포트 생성 중...');
+
+                const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
+                const comprehensive = await api.readSheet(CONFIG.SHEET_NAMES.COMPREHENSIVE);
+
+                const totalEmployees = employees.length - 1;
+                const completedEvals = comprehensive.filter(row => row[2] === period).slice(1);
+                const completedCount = completedEvals.length;
+                const pendingCount = totalEmployees - completedCount;
+
+                // 평균 점수
+                const scores = completedEvals.map(row => parseFloat(row[6] || 0));
+                const avgScore = scores.length > 0 ? utils.average(scores) : 0;
+
+                // 등급별 분포
+                const gradeCount = { S: 0, A: 0, B: 0, C: 0, D: 0 };
+                completedEvals.forEach(row => {
+                    const grade = row[7];
+                    if (gradeCount.hasOwnProperty(grade)) gradeCount[grade]++;
+                });
+
+                // UI 업데이트
+                document.getElementById('totalEmployees').textContent = totalEmployees;
+                document.getElementById('completedCount').textContent = completedCount;
+                document.getElementById('pendingCount').textContent = pendingCount;
+                document.getElementById('avgScore').textContent = avgScore.toFixed(1);
+
+                // 등급 분포 테이블
+                let gradeHtml = '';
+                Object.entries(gradeCount).forEach(([grade, count]) => {
+                    const percent = completedCount > 0 ? ((count / completedCount) * 100).toFixed(1) : 0;
+                    gradeHtml += `
+            <tr>
+              <td><span class="badge badge-grade-${grade.toLowerCase()}">${grade}등급</span></td>
+              <td>${count}명</td>
+              <td>${percent}%</td>
+            </tr>
+          `;
+                });
+                document.getElementById('gradeDistribution').innerHTML = gradeHtml;
+
+                // 상세 결과 테이블
+                let detailHtml = '';
+                reportData = [];
+
+                for (const eval of completedEvals) {
+                    const employee = employees.find(row => row[0] === eval[1]);
+                    const name = employee ? employee[1] : '-';
+
+                    detailHtml += `
+            <tr>
+              <td>${eval[1]}</td>
+              <td><strong>${name}</strong></td>
+              <td>${parseFloat(eval[3] || 0).toFixed(1)}</td>
+              <td>${parseFloat(eval[4] || 0).toFixed(1)}</td>
+              <td>${parseFloat(eval[5] || 0).toFixed(1)}</td>
+              <td><strong>${parseFloat(eval[6] || 0).toFixed(1)}</strong></td>
+              <td><span class="badge badge-grade-${(eval[7] || 'D').toLowerCase()}">${eval[7]}</span></td>
+            </tr>
+          `;
+
+                    reportData.push([eval[1], name, eval[3], eval[4], eval[5], eval[6], eval[7]]);
+                }
+
+                document.getElementById('detailTableBody').innerHTML = detailHtml || '<tr><td colspan="7" class="text-center">데이터 없음</td></tr>';
+                document.getElementById('reportSection').style.display = '';
+
+                utils.hideLoading();
+
+            } catch (error) {
+                utils.hideLoading();
+                utils.showAlert('리포트 생성 실패: ' + error.message, 'error');
+                console.error(error);
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (reportData.length === 0) {
+                utils.showAlert('다운로드할 데이터가 없습니다.', 'warning');
+                return;
+            }
+
+            const csvData = [
+                ['직원 ID', '이름', '성과점수', '역량점수', '다면점수', '총점', '등급'],
+                ...reportData
+            ];
+
+            utils.downloadCSV(csvData, `평가리포트_${document.getElementById('period').value}.csv`);
+        });
+    </script>
+</body>
+
+</html>
