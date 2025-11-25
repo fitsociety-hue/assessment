@@ -10,7 +10,7 @@ const CONFIG = {
   // 1. Google Sheets 기본 정보
   // ============================================================
 
-  VERSION: '20241125-03',
+  VERSION: '20241125-04',
 
   /**
    * Google Spreadsheet ID
