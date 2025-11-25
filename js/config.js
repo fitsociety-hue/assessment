@@ -10,7 +10,7 @@ const CONFIG = {
   // 1. Google Sheets 기본 정보
   // ============================================================
 
-  VERSION: '20241125-01',
+  VERSION: '20241125-03',
 
   /**
    * Google Spreadsheet ID
@@ -23,6 +23,23 @@ const CONFIG = {
   // ============================================================
   // 2. 연동 방식 선택 (둘 중 하나만 사용)
   // ============================================================
+
+  /**
+   * 방식 1: Google Apps Script 웹앱 사용 (권장)
+   * - 장점: API 키 노출 없음, 서버 로직 처리 가능, 보안 우수
+   * - 단점: 초기 설정이 약간 복잡
+   * - 설정 방법: docs/SETUP_GUIDE.md 참조
+   */
+  USE_APPS_SCRIPT: true,
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxNw_VZMxrwFTZGUYE5mF-jCtakx67OTnzETDE7ni12eBUrFabci3kU7gwv_qAOUUiP/exec',
+
+  /**
+   * 방식 2: 클라이언트에서 직접 Google Sheets API 호출
+   * - 장점: 설정 간단
+   * - 단점: API 키가 소스코드에 노출됨 (읽기 전용 권한 필수)
+   * - 설정 방법: docs/SETUP_GUIDE.md 참조
+   */
+  GOOGLE_API_KEY: 'YOUR_API_KEY_HERE',
 
   // ============================================================
   // 3. Google Sheets 시트 이름 (스프레드시트 내 탭 이름)
