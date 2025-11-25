@@ -196,74 +196,90 @@
         <p>© 2024 강동어울림복지관. All rights reserved.</p>
         <p style="margin-top: var(--spacing-xs);">
           문제가 있으신가요? <a href="docs/SETUP_GUIDE.md" target="_blank">설정 가이드</a> 참조
-          // 대시보드로 리다이렉트
-          window.location.href = 'dashboard.html';
-          return;
-          }
+        </p>
+      </div>
+    </div>
+  </div>
 
-          // Google Sheets API 초기화
-          try {
-          await api.initialize();
-          console.log('✅ API 초기화 완료 (v' + (CONFIG.VERSION || 'unknown') + ')');
-          } catch (error) {
-          console.error('❌ API 초기화 실패:', error);
-          utils.showAlert(
+  <!-- Scripts -->
+  <script src="js/config.js?v=20241125-02"></script>
+  <script src="js/utils.js?v=20241125-02"></script>
+  <script src="js/api.js?v=20241125-02"></script>
+  <script src="js/auth.js?v=20241125-02"></script>
+
+  <script>
+    // 페이지 로드 시
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 이미 로그인되어 있는지 확인
+      if (auth.restoreSession()) {
+        // 대시보드로 리다이렉트
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // Google Sheets API 초기화
+      try {
+        await api.initialize();
+        console.log('✅ API 초기화 완료 (v' + (CONFIG.VERSION || 'unknown') + ')');
+      } catch (error) {
+        console.error('❌ API 초기화 실패:', error);
+        utils.showAlert(
           'Google Sheets 연결에 실패했습니다. 설정을 확인해주세요. (docs/SETUP_GUIDE.md 참조)',
           'error'
-          );
-          }
+        );
+      }
 
-          // 디버그 모드가 아니면 데모 계정 안내 숨기기
-          if (!CONFIG.DEBUG) {
-          const demoAccounts = document.getElementById('demoAccounts');
-          if (demoAccounts) {
+      // 디버그 모드가 아니면 데모 계정 안내 숨기기
+      if (!CONFIG.DEBUG) {
+        const demoAccounts = document.getElementById('demoAccounts');
+        if (demoAccounts) {
           demoAccounts.style.display = 'none';
-          }
-          }
-          });
+        }
+      }
+    });
 
-          // 로그인 폼 제출
-          document.getElementById('loginForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
+    // 로그인 폼 제출
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-          const employeeId = document.getElementById('employeeId').value.trim();
-          const password = document.getElementById('password').value;
+      const employeeId = document.getElementById('employeeId').value.trim();
+      const password = document.getElementById('password').value;
 
-          // 유효성 검사
-          if (!employeeId || !password) {
-          utils.showAlert('직원 ID와 비밀번호를 입력해주세요.', 'warning');
-          return;
-          }
+      // 유효성 검사
+      if (!employeeId || !password) {
+        utils.showAlert('직원 ID와 비밀번호를 입력해주세요.', 'warning');
+        return;
+      }
 
-          try {
-          utils.showLoading('로그인 중...');
+      try {
+        utils.showLoading('로그인 중...');
 
-          // 로그인 시도
-          await auth.login(employeeId, password);
+        // 로그인 시도
+        await auth.login(employeeId, password);
 
-          utils.hideLoading();
-          utils.showAlert(`환영합니다, ${auth.getCurrentUser().name}님!`, 'success');
+        utils.hideLoading();
+        utils.showAlert(`환영합니다, ${auth.getCurrentUser().name}님!`, 'success');
 
-          // 대시보드로 이동
-          setTimeout(() => {
+        // 대시보드로 이동
+        setTimeout(() => {
           window.location.href = 'dashboard.html';
-          }, 500);
+        }, 500);
 
-          } catch (error) {
-          utils.hideLoading();
-          utils.showAlert(error.message || '로그인에 실패했습니다.', 'error');
-          console.error('로그인 에러:', error);
-          }
-          });
+      } catch (error) {
+        utils.hideLoading();
+        utils.showAlert(error.message || '로그인에 실패했습니다.', 'error');
+        console.error('로그인 에러:', error);
+      }
+    });
 
-          // Enter 키로 로그인
-          document.getElementById('password').addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-          e.preventDefault();
-          document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-          }
-          });
-          </script>
+    // Enter 키로 로그인
+    document.getElementById('password').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+      }
+    });
+  </script>
 </body>
 
 </html>
