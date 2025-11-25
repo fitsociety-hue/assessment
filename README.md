@@ -47,7 +47,7 @@ cd assessment-app
 `index.html` 파일을 브라우저로 열어 테스트하세요.
 
 **테스트 계정:**
-- 관리자: ID `ADMIN` / PW `admin123 4`
+- 관리자: ID `ADMIN` / PW `admin1234`
 - 팀장: ID `EMP002` / PW `kim1234`
 - 일반 직원: ID `EMP001` / PW `hong1234`
 
