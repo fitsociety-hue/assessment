@@ -31,7 +31,7 @@ const CONFIG = {
    * - 설정 방법: docs/SETUP_GUIDE.md 참조
    */
   USE_APPS_SCRIPT: true,
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxNw_VZMxrwFTZGUYE5mF-jCtakx67OTnzETDE7ni12eBUrFabci3kU7gwv_qAOUUiP/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyZn25yIUbM5zD7qj1JHi14nwnoea1K2QQcp7QaNrJIUNNajf5ER5fQT5dGxhO_WO0/exec',
 
   /**
    * 방식 2: 클라이언트에서 직접 Google Sheets API 호출
@@ -151,13 +151,25 @@ const CONFIG = {
   RETRY_CONFIG: {
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000, // 1초
-    BACKOFF_MULTIPLIER: 2
+    BACKOFF_MULTIPLIER: 2,
+    TIMEOUT: 10000 // 10초
   },
 
   /**
    * 디버그 모드 (개발 시에만 true로 설정)
    */
   DEBUG: true,
+
+  /**
+   * 모의 데이터 사용 여부 (개발/테스트용)
+   * Apps Script 연결이 없을 때도 로그인 테스트 가능
+   */
+  USE_MOCK_DATA: false,  // GitHub Pages 배포: 실제 Google Sheets 사용
+
+  /**
+   * API 타임아웃 (밀리초)
+   */
+  API_TIMEOUT: 10000, // 10초
 
 
   // ============================================================
@@ -180,7 +192,45 @@ const CONFIG = {
       '대리(4급)',
       '사원(5급)'
     ]
-  }
+  },
+
+  // ============================================================
+  // 7. 모의 데이터 (개발/테스트용)
+  // ============================================================
+
+  /**
+   * 테스트용 사용자 계정
+   * USE_MOCK_DATA가 true일 때 사용됩니다.
+   */
+  MOCK_USERS: [
+    {
+      employee_id: 'ADMIN',
+      password_hash: 'YWRtaW4xMjM0YXNzZXNzbWVudF9zYWx0XzIwMjQ=', // admin1234
+      name: '시스템 관리자',
+      department: '행정관리팀',
+      position: '관장',
+      role: 'admin',
+      email: 'admin@dongul.or.kr'
+    },
+    {
+      employee_id: 'EMP002',
+      password_hash: 'a2ltMTIzNGFzc2Vzc21lbnRfc2FsdF8yMDI0', // kim1234
+      name: '김팀장',
+      department: '사회복지팀',
+      position: '팀장(3급)',
+      role: 'manager',
+      email: 'kim@dongul.or.kr'
+    },
+    {
+      employee_id: 'EMP001',
+      password_hash: 'aG9uZzEyMzRhc3Nlc3NtZW50X3NhbHRfMjAyNA==', // hong1234
+      name: '홍길동',
+      department: '사회복지팀',
+      position: '사원(5급)',
+      role: 'staff',
+      email: 'hong@dongul.or.kr'
+    }
+  ]
 };
 
 // CONFIG 객체를 다른 파일에서 사용할 수 있도록 내보내기

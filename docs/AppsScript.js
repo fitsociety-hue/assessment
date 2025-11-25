@@ -1,107 +1,169 @@
 /**
- * Google Apps Script 웹앱 코드
+ * Google Apps Script for 강동어울림복지관 평가 시스템
  * 
- * 이 코드를 Google Sheets의 Apps Script 에디터에 복사하세요.
- * 설정 방법: docs/SETUP_GUIDE.md 참조
+ * 배포 방법:
+ * 1. Google Sheets에서 확장 프로그램 > Apps Script 열기
+ * 2. 이 코드를 Code.gs에 붙여넣기
+ * 3. 배포 > 새 배포
+ * 4. 유형 선택: 웹 앱
+ * 5. 실행 계정: 나
+ * 6. 액세스 권한: "모든 사용자"
+ * 7. 배포 후 웹 앱 URL을 복사하여 config.js의 APPS_SCRIPT_URL에 설정
  */
 
 // ============================================================
-// 웹앱 진입점
+// 설정
+// ============================================================
+
+const SHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID')
+    || SpreadsheetApp.getActiveSpreadsheet().getId();
+
+// ============================================================
+// 메인 진입점 (doGet/doPost)
 // ============================================================
 
 /**
- * GET 요청 처리
+ * GET 요청 핸들러
  */
 function doGet(e) {
-    return createResponse({
-        status: 'ok',
-        message: '강동어울림복지관 평가 시스템 API'
-    });
+    return handleRequest(e);
 }
 
 /**
- * POST 요청 처리
+ * POST 요청 핸들러
  */
 function doPost(e) {
+    return handleRequest(e);
+}
+
+/**
+ * 통합 요청 핸들러
+ */
+function handleRequest(e) {
     try {
-        // CORS Preflight 처리 (옵션)
-        if (!e.postData || !e.postData.contents) {
-            return createResponse({ status: 'ok', message: 'Preflight check passed' });
+        // e가 undefined인 경우 처리 (테스트 실행 시)
+        if (!e) {
+            e = { parameter: { action: 'ping' }, postData: null };
         }
 
-        const params = JSON.parse(e.postData.contents);
-        const action = e.parameter.action || params.action;
+        // CORS 헤더가 포함된 응답 생성
+        const output = ContentService.createTextOutput();
+        output.setMimeType(ContentService.MimeType.JSON);
 
+        // OPTIONS 프리플라이트 요청 처리
+        if (e.parameter.httpMethod === 'OPTIONS' || (e.postData && e.postData.type === 'OPTIONS')) {
+            output.setContent(JSON.stringify({ status: 'ok' }));
+            return output;
+        }
+
+        // 액션 파라미터 가져오기
+        const action = (e.parameter && e.parameter.action) || 'ping';
+
+        // 요청 본문 파싱
+        let requestData = {};
+        if (e.postData && e.postData.contents) {
+            try {
+                requestData = JSON.parse(e.postData.contents);
+            } catch (error) {
+                Logger.log('JSON 파싱 오류: ' + error);
+            }
+        }
+
+        Logger.log('Action: ' + action);
+        Logger.log('Request Data: ' + JSON.stringify(requestData));
+
+        // 액션에 따라 처리
         let result;
-
         switch (action) {
             case 'ping':
-                result = { status: 'ok', message: '연결 성공' };
+                result = handlePing();
                 break;
-
             case 'read':
-                result = readSheet(params.sheetName);
+                result = handleRead(requestData);
                 break;
-
             case 'append':
-                result = appendRow(params.sheetName, params.values);
+                result = handleAppend(requestData);
                 break;
-
             case 'update':
-                result = updateRow(params.sheetName, params.rowIndex, params.values);
+                result = handleUpdate(requestData);
                 break;
-
             case 'delete':
-                result = deleteRow(params.sheetName, params.idColumn, params.idValue);
+                result = handleDelete(requestData);
                 break;
-
             default:
-                result = { status: 'error', message: '알 수 없는 액션: ' + action };
+                result = {
+                    status: 'error',
+                    message: '알 수 없는 액션: ' + action
+                };
         }
 
-        return createResponse(result);
+        output.setContent(JSON.stringify(result));
+        return output;
 
     } catch (error) {
-        return createResponse({
+        Logger.log('오류 발생: ' + error);
+        const output = ContentService.createTextOutput();
+        output.setMimeType(ContentService.MimeType.JSON);
+        output.setContent(JSON.stringify({
             status: 'error',
             message: error.toString()
-        });
+        }));
+        return output;
     }
 }
 
-/**
- * 응답 생성 헬퍼 (CORS 헤더 추가)
- */
-function createResponse(data) {
-    return ContentService.createTextOutput(JSON.stringify(data))
-        .setMimeType(ContentService.MimeType.JSON);
-}
+// ============================================================
+// 액션 핸들러
+// ============================================================
 
-// ============================================================
-// 시트 작업 함수
-// ============================================================
+/**
+ * Ping (연결 테스트)
+ */
+function handlePing() {
+    return {
+        status: 'ok',
+        message: '강동어울림복지관 평가 시스템 API',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+    };
+}
 
 /**
  * 시트 읽기
  */
-function readSheet(sheetName) {
+function handleRead(data) {
+    const sheetName = data.sheetName;
+
+    if (!sheetName) {
+        return {
+            status: 'error',
+            message: 'sheetName이 필요합니다.'
+        };
+    }
+
     try {
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+        const ss = SpreadsheetApp.openById(SHEET_ID);
+        const sheet = ss.getSheetByName(sheetName);
+
         if (!sheet) {
-            throw new Error('시트를 찾을 수 없습니다: ' + sheetName);
+            return {
+                status: 'error',
+                message: '시트를 찾을 수 없습니다: ' + sheetName
+            };
         }
 
-        const data = sheet.getDataRange().getValues();
+        const range = sheet.getDataRange();
+        const values = range.getValues();
 
         return {
             status: 'ok',
-            data: data
+            data: values
         };
 
     } catch (error) {
         return {
             status: 'error',
-            message: error.toString()
+            message: '시트 읽기 실패: ' + error.toString()
         };
     }
 }
@@ -109,11 +171,26 @@ function readSheet(sheetName) {
 /**
  * 행 추가
  */
-function appendRow(sheetName, values) {
+function handleAppend(data) {
+    const sheetName = data.sheetName;
+    const values = data.values;
+
+    if (!sheetName || !values) {
+        return {
+            status: 'error',
+            message: 'sheetName과 values가 필요합니다.'
+        };
+    }
+
     try {
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+        const ss = SpreadsheetApp.openById(SHEET_ID);
+        const sheet = ss.getSheetByName(sheetName);
+
         if (!sheet) {
-            throw new Error('시트를 찾을 수 없습니다: ' + sheetName);
+            return {
+                status: 'error',
+                message: '시트를 찾을 수 없습니다: ' + sheetName
+            };
         }
 
         sheet.appendRow(values);
@@ -126,7 +203,7 @@ function appendRow(sheetName, values) {
     } catch (error) {
         return {
             status: 'error',
-            message: error.toString()
+            message: '행 추가 실패: ' + error.toString()
         };
     }
 }
@@ -134,11 +211,27 @@ function appendRow(sheetName, values) {
 /**
  * 행 업데이트
  */
-function updateRow(sheetName, rowIndex, values) {
+function handleUpdate(data) {
+    const sheetName = data.sheetName;
+    const rowIndex = data.rowIndex;
+    const values = data.values;
+
+    if (!sheetName || !rowIndex || !values) {
+        return {
+            status: 'error',
+            message: 'sheetName, rowIndex, values가 필요합니다.'
+        };
+    }
+
     try {
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+        const ss = SpreadsheetApp.openById(SHEET_ID);
+        const sheet = ss.getSheetByName(sheetName);
+
         if (!sheet) {
-            throw new Error('시트를 찾을 수 없습니다: ' + sheetName);
+            return {
+                status: 'error',
+                message: '시트를 찾을 수 없습니다: ' + sheetName
+            };
         }
 
         const range = sheet.getRange(rowIndex, 1, 1, values.length);
@@ -152,7 +245,7 @@ function updateRow(sheetName, rowIndex, values) {
     } catch (error) {
         return {
             status: 'error',
-            message: error.toString()
+            message: '행 업데이트 실패: ' + error.toString()
         };
     }
 }
@@ -160,11 +253,27 @@ function updateRow(sheetName, rowIndex, values) {
 /**
  * 행 삭제
  */
-function deleteRow(sheetName, idColumn, idValue) {
+function handleDelete(data) {
+    const sheetName = data.sheetName;
+    const idColumn = data.idColumn;
+    const idValue = data.idValue;
+
+    if (!sheetName || !idColumn || !idValue) {
+        return {
+            status: 'error',
+            message: 'sheetName, idColumn, idValue가 필요합니다.'
+        };
+    }
+
     try {
-        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+        const ss = SpreadsheetApp.openById(SHEET_ID);
+        const sheet = ss.getSheetByName(sheetName);
+
         if (!sheet) {
-            throw new Error('시트를 찾을 수 없습니다: ' + sheetName);
+            return {
+                status: 'error',
+                message: '시트를 찾을 수 없습니다: ' + sheetName
+            };
         }
 
         const data = sheet.getDataRange().getValues();
@@ -172,13 +281,16 @@ function deleteRow(sheetName, idColumn, idValue) {
         const columnIndex = headers.indexOf(idColumn);
 
         if (columnIndex === -1) {
-            throw new Error('컬럼을 찾을 수 없습니다: ' + idColumn);
+            return {
+                status: 'error',
+                message: '컬럼을 찾을 수 없습니다: ' + idColumn
+            };
         }
 
-        // 해당 행 찾기
+        // 삭제할 행 찾기
         for (let i = 1; i < data.length; i++) {
             if (data[i][columnIndex] === idValue) {
-                sheet.deleteRow(i + 1); // 1-based index
+                sheet.deleteRow(i + 1);
                 return {
                     status: 'ok',
                     message: '행 삭제 성공'
@@ -186,12 +298,15 @@ function deleteRow(sheetName, idColumn, idValue) {
             }
         }
 
-        throw new Error('행을 찾을 수 없습니다');
+        return {
+            status: 'error',
+            message: '삭제할 행을 찾을 수 없습니다.'
+        };
 
     } catch (error) {
         return {
             status: 'error',
-            message: error.toString()
+            message: '행 삭제 실패: ' + error.toString()
         };
     }
 }
@@ -201,17 +316,25 @@ function deleteRow(sheetName, idColumn, idValue) {
 // ============================================================
 
 /**
- * 현재 타임스탬프
+ * 스프레드시트 ID 설정
+ * Apps Script 편집기에서 수동으로 실행
  */
-function getCurrentTimestamp() {
-    return new Date().toISOString();
+function setSpreadsheetId() {
+    // 현재 스프레드시트 ID 자동 감지
+    const id = SpreadsheetApp.getActiveSpreadsheet().getId();
+    PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', id);
+    Logger.log('Spreadsheet ID 설정 완료: ' + id);
 }
 
 /**
- * 고유 ID 생성
+ * 테스트 함수
  */
-function generateId(prefix) {
-    const timestamp = new Date().getTime();
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return prefix + timestamp + random;
+function testPing() {
+    const result = handlePing();
+    Logger.log(JSON.stringify(result));
+}
+
+function testRead() {
+    const result = handleRead({ sheetName: '직원정보' });
+    Logger.log(JSON.stringify(result));
 }
