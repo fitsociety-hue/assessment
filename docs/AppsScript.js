@@ -1,13 +1,13 @@
 /**
  * Google Apps Script for 강동어울림복지관 평가 시스템
  * 
- * ✅ CORS 지원 포함 - GitHub Pages에서 접근 가능
+ * ✅ 웹 앱 배포 시 "모든 사용자" 액세스로 설정하면 CORS 자동 지원
  * 
  * 배포 방법:
  * 1. Google Sheets에서 확장 프로그램 > Apps Script 열기
  * 2. 이 코드를 Code.gs에 붙여넣기
  * 3. 배포 > 배포 관리 > 수정 > 새 버전 > 배포
- * 4. 액세스 권한: "모든 사용자"
+ * 4. 액세스 권한: "모든 사용자" ⚠️ 필수!
  */
 
 // ============================================================
@@ -22,35 +22,21 @@ const SHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEE
 // ============================================================
 
 /**
- * GET 요청 핸들러 - CORS 헤더 포함
+ * GET 요청 핸들러
  */
 function doGet(e) {
     const result = handleRequest(e);
-    return createCorsResponse(result);
+    return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
- * POST 요청 핸들러 - CORS 헤더 포함
+ * POST 요청 핸들러
  */
 function doPost(e) {
     const result = handleRequest(e);
-    return createCorsResponse(result);
-}
-
-/**
- * CORS 헤더가 포함된 응답 생성
- */
-function createCorsResponse(result) {
-    const output = ContentService.createTextOutput(JSON.stringify(result))
+    return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
-
-    // 모든 origin 허용
-    output.setHeader('Access-Control-Allow-Origin', '*');
-    output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    output.setHeader('Access-Control-Max-Age', '86400');
-
-    return output;
 }
 
 /**
@@ -61,11 +47,6 @@ function handleRequest(e) {
         // e가 undefined인 경우 처리 (테스트 실행 시)
         if (!e) {
             e = { parameter: { action: 'ping' }, postData: null };
-        }
-
-        // OPTIONS 프리플라이트 요청 처리
-        if (e.parameter && e.parameter.httpMethod === 'OPTIONS') {
-            return { status: 'ok' };
         }
 
         // 액션 파라미터 가져오기
@@ -132,7 +113,7 @@ function handlePing() {
         status: 'ok',
         message: '강동어울림복지관 평가 시스템 API',
         timestamp: new Date().toISOString(),
-        version: '2.0.0'
+        version: '2.0.1'
     };
 }
 
@@ -328,7 +309,6 @@ function handleDelete(data) {
  * Apps Script 편집기에서 수동으로 실행
  */
 function setSpreadsheetId() {
-    // 현재 스프레드시트 ID 자동 감지
     const id = SpreadsheetApp.getActiveSpreadsheet().getId();
     PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', id);
     Logger.log('Spreadsheet ID 설정 완료: ' + id);
