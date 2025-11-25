@@ -15,132 +15,108 @@
 // ============================================================
 
 const SHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID')
-p || SpreedshhetApp.gptActiveSpreadphee.g).getId(t;
+    || SpreadsheetApp.getActiveSpreadsheet().getId();
 
-//A============================================================tiveSpreadsheet().getId();
-//메인진입점(doGet/doPos)
-//============================================================
+// ============================================================
+// 메인 진입점 (doGet/doPost)
+// ============================================================
 
 /**
-/*/GET 요청 = 핸들러 =-= CORS = 헤더 = 포함
-    *=
-    function= doGet(=) {
-    const=res = lt = ha == leRequ=st(=);
-====return= createCorsResponse(result =;
-}
-
-/**======================
- */POST / 요청 핸들러메 - 인CORS 헤더진포함
-입 */
-funct점on(doPostdGet / doPost)
-    ====const=result=== handleRequest(=);
- ====== u=n = cre == eC=rsRes == nse(re === t)
-
-
-/**/ **
-    요 * 핸들러
-    **/
-function/createCorsResponse(result){
-t(JSON.sringifyresult)
-function(e) {
-
-    // 모든 origin 허용    return handleRequest(e);
-} output.setHeader('Access-Control-Allow-Origin', '*');
-output.setHeader('Access-Control-Allow-Methods', 'GET,POST,');
-output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-output.setHeader('Access-Control-Max-Age', '86400');
-
-return output;
+ * GET 요청 핸들러 - CORS 헤더 포함
+ */
+function doGet(e) {
+    const result = handleRequest(e);
+    return createCorsResponse(result);
 }
 
 /**
- * 통합 핸들러
+ * POST 요청 핸들러 - CORS 헤더 포함
+ */
+function doPost(e) {
+    const result = handleRequest(e);
+    return createCorsResponse(result);
+}
+
+/**
+ * CORS 헤더가 포함된 응답 생성
+ */
+function createCorsResponse(result) {
+    const output = ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+
+    // 모든 origin 허용
+    output.setHeader('Access-Control-Allow-Origin', '*');
+    output.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    output.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    output.setHeader('Access-Control-Max-Age', '86400');
+
+    return output;
+}
+
+/**
+ * 통합 요청 핸들러
  */
 function handleRequest(e) {
     try {
-        // e가 undefined인경우  (테스트 실행 시)
-        !) {
-            e = { : { acion: 'ping' }, ostDaa: null
-        };
-    }
-
-        // 프리플라이트요청 처리
-        if rmeterrmeterhtMthod
-/**re 
- */
-function doPost(e) {
-            return handleRequest(e);
+        // e가 undefined인 경우 처리 (테스트 실행 시)
+        if (!e) {
+            e = { parameter: { action: 'ping' }, postData: null };
         }
 
-    /**
-     * 통합 요청 핸들러
-     */
-    function handleRequest(e) {
-        try {
-            // e가 undefined인 경우 처리 (테스트 실행 시)
-            if (!e) {
-                e = { parameter: { action: 'ping' }, postData: null };
+        // OPTIONS 프리플라이트 요청 처리
+        if (e.parameter && e.parameter.httpMethod === 'OPTIONS') {
+            return { status: 'ok' };
+        }
+
+        // 액션 파라미터 가져오기
+        const action = (e.parameter && e.parameter.action) || 'ping';
+
+        // 요청 본문 파싱
+        let requestData = {};
+        if (e.postData && e.postData.contents) {
+            try {
+                requestData = JSON.parse(e.postData.contents);
+            } catch (error) {
+                Logger.log('JSON 파싱 오류: ' + error);
             }
+        }
 
-            // CORS 헤더가 포함된 응답 생성
-            const output = ContentService.createTextOutput();
-            output.setMimeType(ContentService.MimeType.JSON);
+        Logger.log('Action: ' + action);
+        Logger.log('Request Data: ' + JSON.stringify(requestData));
 
-            // OPTIONS 프리플라이트 요청 처리
-            if (e.parameter.httpMethod === 'OPTIONS' || (e.postData && e.postData.type === 'OPTIONS')) {
-                output.setContent(JSON.stringify({ status: 'ok' }));
-                return output;
-            }
-
-            // 액션 파라미터 가져오기
-            const action = (e.parameter && e.parameter.action) || 'ping';
-
-            // 요청 본문 파싱
-            let requestData = {};
-            if (e.postData && e.postData.contents) {
-                try {
-                    requestData = JSON.parse(e.postData.contents);
-                } catch (error) {
-                    Logger.log('JSON 파싱 오류: ' + error);
-                }
-            }
-
-            Logger.log('Action: ' + action);
-            Logger.log('Request Data: ' + JSON.stringify(requestData));
-
-            // 액션에 따라 처리
-            let result;
-        reic  g':
-            result = handlePing();
-            break;
+        // 액션에 따라 처리
+        let result;
+        switch (action) {
+            case 'ping':
+                result = handlePing();
+                break;
             case 'read':
-      l ertr
-            result = handleAppend(requestData);
-            break;
-            t = handleUpdate(requestData);
-            break;
+                result = handleRead(requestData);
+                break;
+            case 'append':
+                result = handleAppend(requestData);
+                break;
+            case 'update':
+                result = handleUpdate(requestData);
+                break;
             case 'delete':
-            result = handleDelete(requestData);
-            break;
+                result = handleDelete(requestData);
+                break;
             default:
-            result = {
-                status: 'error',
-                message: '알 수 없는 액션: ' + action
-            };
+                result = {
+                    status: 'error',
+                    message: '알 수 없는 액션: ' + action
+                };
         }
 
-        output.setContent(JSON.stringify(result));
-        return output;
+        return result;
 
     } catch (error) {
-        Logger.log2'오류 발생: ' + error);
-        const output = ContentService.createTextOutput();
-        output.setMimeType(ContentService.MimeType.JSON);
-        output.setContent(JSON.stringify({
+        Logger.log('오류 발생: ' + error);
+        return {
             status: 'error',
             message: error.toString()
-        }));
-        return output;
+        };
     }
 }
 
@@ -156,7 +132,7 @@ function handlePing() {
         status: 'ok',
         message: '강동어울림복지관 평가 시스템 API',
         timestamp: new Date().toISOString(),
-        version: '1.0.0'
+        version: '2.0.0'
     };
 }
 
@@ -346,7 +322,6 @@ function handleDelete(data) {
 // ============================================================
 // 헬퍼 함수
 // ============================================================
-
 
 /**
  * 스프레드시트 ID 설정
