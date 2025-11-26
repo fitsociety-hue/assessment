@@ -31,7 +31,7 @@ const CONFIG = {
    * - 설정 방법: docs/SETUP_GUIDE.md 참조
    */
   USE_APPS_SCRIPT: true,
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyVurPObAEOwoOxpAwHoZw3N5ArYf6NY1KgK_8e5kG6sjeRZYLD8-tnIvpGjZVglKPk/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbw2h-Dav-HNJ5oWuO_RGR80y3Alab5e_LQyUhbge7p5IqqgkDMV5Xc3Hgj-D56CfSHm/exec',
 
   /**
    * 방식 2: 클라이언트에서 직접 Google Sheets API 호출
