@@ -119,6 +119,8 @@ class SheetsAPI {
             options.body = JSON.stringify(payload);
         }
 
+        if (CONFIG.DEBUG) console.log(`📡 API 호출: ${url}`, options);
+
         return await this._retryFetch(url, options);
     }
 
