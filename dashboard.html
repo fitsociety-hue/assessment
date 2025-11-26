@@ -292,478 +292,179 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Scripts -->
-    <script src="js/config.js?v=3"></script>
-    <script src="js/utils.js?v=3"></script>
-    <script src="js/api.js?v=3"></script>
-    <script src="js/auth.js?v=3"></script>
-
-    <script>
-        // 페이지 로드 시
-        document.addEventListener('DOMContentLoaded', async () => {
-            // 1. 페이지 접근 권한 확인
-            if (!auth.checkPageAccess()) {
-                return;
-            }
-
-            // 2. 사용자 정보 표시
-            const user = auth.getCurrentUser();
-            if (user) {
-                const userInfoHtml = `
-                    <div style="font-weight: 500;">${user.name} ${user.position}</div>
-                    <div style="font-size: 0.85em; opacity: 0.8;">${user.department}</div>
-                `;
-                document.getElementById('sidebarUserInfo').innerHTML = userInfoHtml;
-                document.getElementById('topbarUserInfo').innerHTML = userInfoHtml;
-
-                // 관리자 메뉴 표시/숨김
-                if (!auth.isAdmin()) {
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-                }
-            }
-
-            // 3. 대시보드 데이터 로드
-            try {
-                await loadDashboardData();
-            } catch (error) {
-                { name: '성과평가', sheet: CONFIG.SHEET_NAMES.PERFORMANCE, url: 'evaluation/performance.html' },
-
-
-                // 최종 등급 표시
-                try {
-                    const comprehensive = await api.findRow(CONFIG.SHEET_NAMES.COMPREHENSIVE, 'employee_id', employeeId);
-                    if (comprehensive && comprehensive.grade) {
-                        const gradeInfo = utils.calculateGrade(comprehensive.total_score);
-                        document.getElementById('finalGrade').innerHTML = `
-                        <span class="badge badge-grade-${comprehensive.grade.toLowerCase()}">${comprehensive.grade}</span>
-                        ${gradeInfo.label}
-                    `;
-                    }
-                } catch (error) {
-                    console.error('종합평가 로드 실패:', error);
-                }
-
-                // 최근 활동 표시
-                displayRecentActivities();
-            }
-
-            // 최근 활동 표시
-            function displayRecentActivities() {
-                const activities = [
-                    { date: '2024-11-20', action: '자기평가 작성 완료' },
-                    { date: '2024-11-18', action: '성과평가 작성 완료' },
-                    { date: '2024-11-15', action: '역량평가 수정' }
-                ];
-
-                let html = '';
-                activities.forEach(activity => {
-                    html += `
-                    <div class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>${activity.action}</h4>
-                            <div class="evaluation-meta">${activity.date}</div>
-                        </div>
-                    </div>
-                `;
-                    ```html
-        }
-
-        .evaluation-info h4 {
-            font-size: var(--font-md);
-            margin-bottom: var(--spacing-xs);
-        }
-
-        .evaluation-meta {
-            font-size: var(--font-sm);
-            color: var(--text-secondary);
-        }
-
-        /* 반응형 */
-        @media (max-width: 768px) {
-            .dashboard-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                display: none;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <!-- 대시보드 레이아웃 -->
-    <div class="dashboard-layout">
-        <!-- 사이드바 -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>강동어울림복지관</h2>
-                <div class="user-info" id="sidebarUserInfo"></div>
-            </div>
-            <nav>
-                <ul class="sidebar-nav">
-                    <li><a href="dashboard.html" class="active">📊 대시보드</a></li>
-                    <li><a href="evaluation/self.html">✍️ 자기평가</a></li>
-                    <li><a href="evaluation/performance.html">📈 성과평가</a></li>
-                    <li><a href="evaluation/competency.html">🎯 역량평가</a></li>
-                    <li><a href="evaluation/multifacet.html">👥 다면평가</a></li>
-                    <li><a href="evaluation/comprehensive.html">📋 종합평가</a></li>
-                    <li class="admin-only"><a href="admin/employees.html">👤 직원 관리</a></li>
-                    <li class="admin-only"><a href="admin/reports.html">📊 리포트</a></li>
-                </ul>
-            </nav>
-            <div class="sidebar-footer">
-                <button class="btn" onclick="auth.logout()">🚪 로그아웃</button>
-            </div>
-        </aside>
-
-        <!-- 메인 컨텐츠 -->
-        <main class="main-content">
-            <!-- 상단 바 -->
-            <header class="top-bar">
-                <h1 class="page-title">대시보드</h1>
-                <div class="user-menu">
-                    <div class="user-info" id="topbarUserInfo"></div>
+                <div class="sidebar-header">
+                    <h2>강동어울림복지관</h2>
+                    <div class="user-info" id="sidebarUserInfo"></div>
                 </div>
-            </header>
-
-            <!-- 컨텐츠 영역 -->
-            <div class="content-area">
-                <!-- 통계 카드 -->
-                <div class="stats-grid" id="statsGrid">
-                    <div class="stat-card primary">
-                        <div class="stat-label">현재 평가 기간</div>
-                        <div class="stat-value" id="currentPeriod">-</div>
-                    </div>
-                    <div class="stat-card success">
-                        <div class="stat-label">완료한 평가</div>
-                        <div class="stat-value" id="completedEvals">0</div>
-                        <div class="stat-change">/ 총 5개</div>
-                    </div>
-                    <div class="stat-card warning">
-                        <div class="stat-label">진행 중인 평가</div>
-                        <div class="stat-value" id="pendingEvals">0</div>
-                    </div>
-                    <div class="stat-card info">
-                        <div class="stat-label">최종 등급</div>
-                        <div class="stat-value" id="finalGrade">-</div>
-                    </div>
+                <nav>
+                    <ul class="sidebar-nav">
+                        <li><a href="dashboard.html" class="active">📊 대시보드</a></li>
+                        <li><a href="evaluation/self.html">✍️ 자기평가</a></li>
+                        <li><a href="evaluation/performance.html">📈 성과평가</a></li>
+                        <li><a href="evaluation/competency.html">🎯 역량평가</a></li>
+                        <li><a href="evaluation/multifacet.html">👥 다면평가</a></li>
+                        <li><a href="evaluation/comprehensive.html">📋 종합평가</a></li>
+                        <li class="admin-only"><a href="admin/employees.html">👤 직원 관리</a></li>
+                        <li class="admin-only"><a href="admin/reports.html">📊 리포트</a></li>
+                    </ul>
+                </nav>
+                <div class="sidebar-footer">
+                    <button class="btn" onclick="auth.logout()">🚪 로그아웃</button>
                 </div>
+                </aside>
 
-                <!-- 평가 목록 -->
-                <div class="grid grid-2">
-                    <!-- 내 평가 현황 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">내 평가 현황</h3>
+                <!-- 메인 컨텐츠 -->
+                <main class="main-content">
+                    <!-- 상단 바 -->
+                    <header class="top-bar">
+                        <h1 class="page-title">대시보드</h1>
+                        <div class="user-menu">
+                            <div class="user-info" id="topbarUserInfo"></div>
                         </div>
-                        <div class="card-body" id="myEvaluations">
-                            <!-- 동적으로 채워질 내용 -->
-                        </div>
-                    </div>
+                    </header>
 
-                    <!-- 최근 활동 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">최근 활동</h3>
-                        </div>
-                        <div class="card-body" id="recentActivities">
-                            <!-- 동적으로 채워질 내용 -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 관리자 전용 섹션 -->
-                <div class="admin-only" style="margin-top: var(--spacing-xl);">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">전체 평가 진행 현황 (관리자)</h3>
-                        </div>
-                        <div class="card-body" id="adminOverview">
-                            <!-- 동적으로 채워질 내용 -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Scripts -->
-    <script src="js/utils.js?v=3"></script>
-    <script src="js/api.js?v=3"></script>
-    <script src="js/auth.js?v=3"></script>
-
-    <script>
-        // 페이지 로드 시
-        document.addEventListener('DOMContentLoaded', async () => {
-            // 1. 페이지 접근 권한 확인
-            if (!auth.checkPageAccess()) {
-                return;
-            }
-
-            // 2. 사용자 정보 표시
-            const user = auth.getCurrentUser();
-            if (user) {
-                const userInfoHtml = `
-                        < div style = "font-weight: 500;" > ${ user.name } ${ user.position }</div >
-                            <div style="font-size: 0.85em; opacity: 0.8;">${user.department}</div>
-                    `;
-                document.getElementById('sidebarUserInfo').innerHTML = userInfoHtml;
-                document.getElementById('topbarUserInfo').innerHTML = userInfoHtml;
-
-                // 관리자 메뉴 표시/숨김
-                if (!auth.isAdmin()) {
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-                }
-            }
-
-            // 3. 대시보드 데이터 로드
-            try {
-                await loadDashboardData();
-            } catch (error) {
-                { name: '성과평가', sheet: CONFIG.SHEET_NAMES.PERFORMANCE, url: 'evaluation/performance.html' },
-
-
-                // 최종 등급 표시
-                try {
-                    const comprehensive = await api.findRow(CONFIG.SHEET_NAMES.COMPREHENSIVE, 'employee_id', employeeId);
-                    if (comprehensive && comprehensive.grade) {
-                        const gradeInfo = utils.calculateGrade(comprehensive.total_score);
-                        document.getElementById('finalGrade').innerHTML = `
-                        < span class="badge badge-grade-${comprehensive.grade.toLowerCase()}" > ${ comprehensive.grade }</span >
-                            ${ gradeInfo.label }
-                    `;
-                    }
-                } catch (error) {
-                    console.error('종합평가 로드 실패:', error);
-                }
-
-                // 최근 활동 표시
-                displayRecentActivities();
-            }
-
-            // 최근 활동 표시
-            function displayRecentActivities() {
-                const activities = [
-                    { date: '2024-11-20', action: '자기평가 작성 완료' },
-                    { date: '2024-11-18', action: '성과평가 작성 완료' },
-                    { date: '2024-11-15', action: '역량평가 수정' }
-                ];
-
-                let html = '';
-                activities.forEach(activity => {
-                    html += `
-                        < div class="evaluation-item" >
-                            <div class="evaluation-info">
-                                <h4>${activity.action}</h4>
-                                <div class="evaluation-meta">${activity.date}</div>
+                    <!-- 컨텐츠 영역 -->
+                    <div class="content-area">
+                        <!-- 통계 카드 -->
+                        <div class="stats-grid" id="statsGrid">
+                            <div class="stat-card primary">
+                                <div class="stat-label">현재 평가 기간</div>
+                                <div class="stat-value" id="currentPeriod">-</div>
                             </div>
-                    </div >
-                        `;
-                    ```html
-                }
-
-        .evaluation - info h4 {
-                    font- size: var(--font - md);
-                margin - bottom: var(--spacing - xs);
-            }
-
-        .evaluation - meta {
-                font - size: var(--font - sm);
-                color: var(--text - secondary);
-            }
-
-            /* 반응형 */
-            @media(max - width: 768px) {
-            .dashboard - layout {
-                    grid - template - columns: 1fr;
-                }
-
-            .sidebar {
-                    display: none;
-                }
-            }
-    </style >
-</head >
-
-                <body>
-    <!-- 대시보드 레이아웃 -->
-                    <div class="dashboard-layout">
-                        <!-- 사이드바 -->
-                        <aside class="sidebar">
-                            <div class="sidebar-header">
-                                <h2>강동어울림복지관</h2>
-                                <div class="user-info" id="sidebarUserInfo"></div>
+                            <div class="stat-card success">
+                                <div class="stat-label">완료한 평가</div>
+                                <div class="stat-value" id="completedEvals">0</div>
+                                <div class="stat-change">/ 총 5개</div>
                             </div>
-                            <nav>
-                                <ul class="sidebar-nav">
-                                    <li><a href="dashboard.html" class="active">📊 대시보드</a></li>
-                                    <li><a href="evaluation/self.html">✍️ 자기평가</a></li>
-                                    <li><a href="evaluation/performance.html">📈 성과평가</a></li>
-                                    <li><a href="evaluation/competency.html">🎯 역량평가</a></li>
-                                    <li><a href="evaluation/multifacet.html">👥 다면평가</a></li>
-                                    <li><a href="evaluation/comprehensive.html">📋 종합평가</a></li>
-                                    <li class="admin-only"><a href="admin/employees.html">👤 직원 관리</a></li>
-                                    <li class="admin-only"><a href="admin/reports.html">📊 리포트</a></li>
-                                </ul>
-                            </nav>
-                            <div class="sidebar-footer">
-                                <button class="btn" onclick="auth.logout()">🚪 로그아웃</button>
+                            <div class="stat-card warning">
+                                <div class="stat-label">진행 중인 평가</div>
+                                <div class="stat-value" id="pendingEvals">0</div>
                             </div>
-                        </aside>
+                            <div class="stat-card info">
+                                <div class="stat-label">최종 등급</div>
+                                <div class="stat-value" id="finalGrade">-</div>
+                            </div>
+                        </div>
 
-                        <!-- 메인 컨텐츠 -->
-                        <main class="main-content">
-                            <!-- 상단 바 -->
-                            <header class="top-bar">
-                                <h1 class="page-title">대시보드</h1>
-                                <div class="user-menu">
-                                    <div class="user-info" id="topbarUserInfo"></div>
+                        <!-- 평가 목록 -->
+                        <div class="grid grid-2">
+                            <!-- 내 평가 현황 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">내 평가 현황</h3>
                                 </div>
-                            </header>
+                                <div class="card-body" id="myEvaluations">
+                                    <!-- 동적으로 채워질 내용 -->
+                                </div>
+                            </div>
 
-                            <!-- 컨텐츠 영역 -->
-                            <div class="content-area">
-                                <!-- 통계 카드 -->
-                                <div class="stats-grid" id="statsGrid">
-                                    <div class="stat-card primary">
-                                        <div class="stat-label">현재 평가 기간</div>
-                                        <div class="stat-value" id="currentPeriod">-</div>
-                                    </div>
-                                    <div class="stat-card success">
-                                        <div class="stat-label">완료한 평가</div>
-                                        <div class="stat-value" id="completedEvals">0</div>
-                                        <div class="stat-change">/ 총 5개</div>
-                                    </div>
-                                    <div class="stat-card warning">
-                                        <div class="stat-label">진행 중인 평가</div>
-                                        <div class="stat-value" id="pendingEvals">0</div>
-                                    </div>
-                                    <div class="stat-card info">
-                                        <div class="stat-label">최종 등급</div>
-                                        <div class="stat-value" id="finalGrade">-</div>
+                            <!-- 최근 활동 -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">최근 활동</h3>
+                                </div>
+                                <div class="card-body" id="recentActivities">
+                                    <!-- 동적으로 채워질 내용 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 관리자 전용 섹션 -->
+                        <div class="admin-only" style="margin-top: var(--spacing-xl);">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">전체 평가 진행 현황 (관리자)</h3>
+                                </div>
+                                <div class="card-body" id="adminOverview">
+                                    <!-- 동적으로 채워질 내용 -->
+                                </div>
+                            </div>
+                            const comprehensive = await api.findRow(CONFIG.SHEET_NAMES.COMPREHENSIVE, 'employee_id',
+                            employeeId);
+                            if (comprehensive && comprehensive.grade) {
+                            const gradeInfo = utils.calculateGrade(comprehensive.total_score);
+                            document.getElementById('finalGrade').innerHTML = `
+                            <span
+                                class="badge badge-grade-${comprehensive.grade.toLowerCase()}">${comprehensive.grade}</span>
+                            ${gradeInfo.label}
+                            `;
+                            }
+                            } catch (error) {
+                            console.error('종합평가 로드 실패:', error);
+                            }
+
+                            // 최근 활동 표시
+                            displayRecentActivities();
+                            }
+
+                            // 최근 활동 표시
+                            function displayRecentActivities() {
+                            const activities = [
+                            {date: '2024-11-20', action: '자기평가 작성 완료' },
+                            {date: '2024-11-18', action: '성과평가 작성 완료' },
+                            {date: '2024-11-15', action: '역량평가 수정' }
+                            ];
+
+                            let html = '';
+                            activities.forEach(activity => {
+                            html += `
+                            <div class="evaluation-item">
+                                <div class="evaluation-info">
+                                    <h4>${activity.action}</h4>
+                                    <div class="evaluation-meta">${activity.date}</div>
+                                </div>
+                            </div>
+                            `;
+                            });
+
+                            document.getElementById('recentActivities').innerHTML = html || '<p class="text-secondary">
+                                최근 활동이 없습니다.</p>';
+                            }
+
+                            // 관리자 전체 현황 로드
+                            async function loadAdminOverview(period) {
+                            try {
+                            // 병렬 로드
+                            const [employees, comprehensive] = await Promise.all([
+                            api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES),
+                            api.readSheet(CONFIG.SHEET_NAMES.COMPREHENSIVE)
+                            ]);
+
+                            const totalEmployees = employees.length - 1; // 헤더 제외
+                            const completedCount = comprehensive.filter(row => row.period === period).length - 1;
+
+                            const html = `
+                            <div class="stats-grid">
+                                <div class="stat-card primary">
+                                    <div class="stat-label">총 직원 수</div>
+                                    <div class="stat-value">${totalEmployees}</div>
+                                </div>
+                                <div class="stat-card success">
+                                    <div class="stat-label">평가 완료</div>
+                                    <div class="stat-value">${completedCount}</div>
+                                </div>
+                                <div class="stat-card warning">
+                                    <div class="stat-label">미완료</div>
+                                    <div class="stat-value">${totalEmployees - completedCount}</div>
+                                </div>
+                                <div class="stat-card info">
+                                    <div class="stat-label">완료율</div>
+                                    <div class="stat-value">${Math.round((completedCount / totalEmployees) * 100)}%
                                     </div>
                                 </div>
+                            </div>
+                            <div style="margin-top: var(--spacing-lg)">
+                                <a href="admin/reports.html" class="btn btn-primary">상세 리포트 보기</a>
+                            </div>
+                            `;
 
-                                <!-- 평가 목록 -->
-                                <div class="grid grid-2">
-                                    <!-- 내 평가 현황 -->
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h3 class="card-title">내 평가 현황</h3>
-                                        </div>
-                                        <div class="card-body" id="myEvaluations">
-                                            <!-- 동적으로 채워질 내용 -->
-                                        </div>
-                                    </div>
+                            document.getElementById('adminOverview').innerHTML = html;
 
-                                    <!-- 최근 활동 -->
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h3 class="card-title">최근 활동</h3>
-                                        </div>
-                                        <div class="card-body" id="recentActivities">
-                                            <!-- 동적으로 채워질 내용 -->
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- 관리자 전용 섹션 -->
-                                <div class="admin-only" style="margin-top: var(--spacing-xl);">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h3 class="card-title">전체 평가 진행 현황 (관리자)</h3>
-                                        </div>
-                                        <div class="card-body" id="adminOverview">
-                                            <!-- 동적으로 채워질 내용 -->
-                                        </div>
-                                    </div>
-                                    const comprehensive = await api.findRow(CONFIG.SHEET_NAMES.COMPREHENSIVE, 'employee_id', employeeId);
-                                    if (comprehensive && comprehensive.grade) {
-                    const gradeInfo = utils.calculateGrade(comprehensive.total_score);
-                                    document.getElementById('finalGrade').innerHTML = `
-                                    <span class="badge badge-grade-${comprehensive.grade.toLowerCase()}">${comprehensive.grade}</span>
-                                    ${gradeInfo.label}
-                                    `;
-                }
-            } catch (error) {
-                                        console.error('종합평가 로드 실패:', error);
-            }
-
-                                    // 최근 활동 표시
-                                    displayRecentActivities();
-        }
-
-                                    // 최근 활동 표시
-                                    function displayRecentActivities() {
-            const activities = [
-                                    {date: '2024-11-20', action: '자기평가 작성 완료' },
-                                    {date: '2024-11-18', action: '성과평가 작성 완료' },
-                                    {date: '2024-11-15', action: '역량평가 수정' }
-                                    ];
-
-                                    let html = '';
-            activities.forEach(activity => {
-                                        html += `
-                    <div class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>${activity.action}</h4>
-                            <div class="evaluation-meta">${activity.date}</div>
-                        </div>
-                    </div>
-                `;
-            });
-
-                                    document.getElementById('recentActivities').innerHTML = html || '<p class="text-secondary">최근 활동이 없습니다.</p>';
-        }
-
-                                    // 관리자 전체 현황 로드
-                                    async function loadAdminOverview(period) {
-            try {
-                // 병렬 로드
-                const [employees, comprehensive] = await Promise.all([
-                                    api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES),
-                                    api.readSheet(CONFIG.SHEET_NAMES.COMPREHENSIVE)
-                                    ]);
-
-                                    const totalEmployees = employees.length - 1; // 헤더 제외
-                const completedCount = comprehensive.filter(row => row.period === period).length - 1;
-
-                                    const html = `
-                                    <div class="stats-grid">
-                                        <div class="stat-card primary">
-                                            <div class="stat-label">총 직원 수</div>
-                                            <div class="stat-value">${totalEmployees}</div>
-                                        </div>
-                                        <div class="stat-card success">
-                                            <div class="stat-label">평가 완료</div>
-                                            <div class="stat-value">${completedCount}</div>
-                                        </div>
-                                        <div class="stat-card warning">
-                                            <div class="stat-label">미완료</div>
-                                            <div class="stat-value">${totalEmployees - completedCount}</div>
-                                        </div>
-                                        <div class="stat-card info">
-                                            <div class="stat-label">완료율</div>
-                                            <div class="stat-value">${Math.round((completedCount / totalEmployees) * 100)}%</div>
-                                        </div>
-                                    </div>
-                                    <div style="margin-top: var(--spacing-lg)">
-                                        <a href="admin/reports.html" class="btn btn-primary">상세 리포트 보기</a>
-                                    </div>
-                `;
-
-                document.getElementById('adminOverview').innerHTML = html;
-
-            } catch (error) {
-                console.error('관리자 현황 로드 실패:', error);
-            }
-        }
-    </script>
+                            } catch (error) {
+                            console.error('관리자 현황 로드 실패:', error);
+                            }
+                            }
+                            </script>
 </body>
 
 </html>
