@@ -248,6 +248,35 @@ class AuthManager {
             throw error;
         }
     }
+
+    /**
+     * 회원가입
+     * @param {Object} userData - 사용자 정보
+     */
+    async register(userData) {
+        try {
+            // 비밀번호 해시
+            const passwordHash = this._hashPassword(userData.password);
+
+            // 전송할 데이터 준비
+            const dataToSend = {
+                ...userData,
+                password: passwordHash // 해시된 비밀번호로 교체
+            };
+
+            // Apps Script 호출
+            if (CONFIG.USE_APPS_SCRIPT) {
+                const response = await api._callAppsScript('register', { userData: dataToSend }, 'POST');
+                return response;
+            } else {
+                throw new Error('회원가입은 Apps Script 연동이 필요합니다.');
+            }
+
+        } catch (error) {
+            console.error('❌ 회원가입 실패:', error);
+            throw error;
+        }
+    }
 }
 
 // 전역 인증 관리자 인스턴스

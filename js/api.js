@@ -167,12 +167,30 @@ class SheetsAPI {
     async readSheet(sheetName) {
         const cacheKey = `sheet_${sheetName}`;
 
-        // 캐시 확인
+        // 1. 메모리 캐시 확인
         if (CONFIG.USE_CACHE && this.cache.has(cacheKey)) {
             const cached = this.cache.get(cacheKey);
             if (Date.now() - cached.timestamp < CONFIG.CACHE_DURATION) {
-                if (CONFIG.DEBUG) console.log(`📦 캐시에서 로드: ${sheetName}`);
+                if (CONFIG.DEBUG) console.log(`📦 메모리 캐시에서 로드: ${sheetName}`);
                 return cached.data;
+            }
+        }
+
+        // 2. 세션 스토리지 캐시 확인 (새로고침 후에도 유지됨)
+        if (CONFIG.USE_CACHE) {
+            try {
+                const sessionCached = sessionStorage.getItem(cacheKey);
+                if (sessionCached) {
+                    const cached = JSON.parse(sessionCached);
+                    if (Date.now() - cached.timestamp < CONFIG.CACHE_DURATION) {
+                        // 메모리 캐시 복구
+                        this.cache.set(cacheKey, cached);
+                        if (CONFIG.DEBUG) console.log(`💾 세션 스토리지에서 로드: ${sheetName}`);
+                        return cached.data;
+                    }
+                }
+            } catch (e) {
+                console.warn('세션 스토리지 읽기 실패:', e);
             }
         }
 
@@ -186,12 +204,20 @@ class SheetsAPI {
                 data = await this._readSheetDirectAPI(sheetName);
             }
 
-            // 캐시 저장
+            // 캐시 저장 (메모리 + 세션 스토리지)
             if (CONFIG.USE_CACHE) {
-                this.cache.set(cacheKey, {
+                const cacheData = {
                     data,
                     timestamp: Date.now()
-                });
+                };
+                this.cache.set(cacheKey, cacheData);
+
+                // 세션 스토리지에도 저장 (새로고침 시 유지)
+                try {
+                    sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                } catch (e) {
+                    console.warn('세션 스토리지 저장 실패 (용량 초과 가능성):', e);
+                }
             }
 
             if (CONFIG.DEBUG) console.log(`📖 시트 읽기 성공: ${sheetName} (${data.length}행)`);

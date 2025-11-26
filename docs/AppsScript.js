@@ -100,6 +100,9 @@ function handleRequest(e) {
             case 'delete':
                 result = handleDelete(requestData);
                 break;
+            case 'register':
+                result = handleRegister(requestData);
+                break;
             default:
                 result = {
                     status: 'error',
@@ -342,4 +345,85 @@ function testPing() {
 function testRead() {
     const result = handleRead({ sheetName: '직원정보' });
     Logger.log(JSON.stringify(result));
+}
+
+/**
+ * 회원가입 처리
+ */
+function handleRegister(data) {
+    const sheetName = '직원정보'; // CONFIG.SHEET_NAMES.EMPLOYEES
+    const userData = data.userData;
+
+    if (!userData || !userData.employeeId || !userData.password) {
+        return {
+            status: 'error',
+            message: '필수 정보가 누락되었습니다.'
+        };
+    }
+
+    try {
+        const ss = SpreadsheetApp.openById(SHEET_ID);
+        const sheet = ss.getSheetByName(sheetName);
+
+        if (!sheet) {
+            return {
+                status: 'error',
+                message: '직원정보 시트를 찾을 수 없습니다.'
+            };
+        }
+
+        const range = sheet.getDataRange();
+        const values = range.getValues();
+
+        // 헤더 확인 (employee_id 컬럼 인덱스 찾기)
+        const headers = values[0];
+        const idIndex = headers.indexOf('employee_id');
+
+        if (idIndex === -1) {
+            return {
+                status: 'error',
+                message: 'employee_id 컬럼을 찾을 수 없습니다.'
+            };
+        }
+
+        // 중복 ID 확인
+        for (let i = 1; i < values.length; i++) {
+            if (values[i][idIndex] === userData.employeeId) {
+                return {
+                    status: 'error',
+                    message: '이미 존재하는 아이디입니다.'
+                };
+            }
+        }
+
+        // 새 직원 데이터 행 생성
+        // 헤더 순서에 맞게 데이터 정렬
+        const newRow = headers.map(header => {
+            switch (header) {
+                case 'employee_id': return userData.employeeId;
+                case 'password_hash': return userData.password; // 클라이언트에서 해시된 값
+                case 'name': return userData.name;
+                case 'department': return userData.department;
+                case 'position': return userData.position;
+                case 'role': return 'staff'; // 기본값
+                case 'email': return ''; // 이메일은 선택사항
+                case 'join_date': return userData.joinDate;
+                case 'job_type': return userData.jobType;
+                default: return '';
+            }
+        });
+
+        sheet.appendRow(newRow);
+
+        return {
+            status: 'ok',
+            message: '회원가입이 완료되었습니다.'
+        };
+
+    } catch (error) {
+        return {
+            status: 'error',
+            message: '회원가입 처리 실패: ' + error.toString()
+        };
+    }
 }

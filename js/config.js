@@ -70,6 +70,11 @@ const CONFIG = {
   ],
 
   /**
+   * 현재 평가 연도 (기본값)
+   */
+  CURRENT_YEAR: '2025',
+
+  /**
    * 평가 등급 기준
    */
   GRADE_CRITERIA: {
