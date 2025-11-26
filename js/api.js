@@ -235,7 +235,11 @@ class SheetsAPI {
         }
 
         for (let i = 1; i < rows.length; i++) {
-            if (rows[i][columnIndex] === value) {
+            const cellValue = rows[i][columnIndex];
+            // Exact match or case-insensitive match for strings
+            if (cellValue === value ||
+                (typeof cellValue === 'string' && typeof value === 'string' &&
+                    cellValue.toLowerCase() === value.toLowerCase())) {
                 return this._rowToObject(headers, rows[i]);
             }
         }
