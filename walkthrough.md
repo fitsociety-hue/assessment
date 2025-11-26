@@ -1,45 +1,44 @@
-# Dashboard UI and Organization Config Update Walkthrough
+# Organization Config & Signup Form Update Walkthrough
 
 ## Overview
 This update addresses the user's request to:
-1.  **Hide Department for Director/Operations Support**: The "운영지원팀" department is now hidden on the dashboard for the Director ('관장') and any user belonging to '운영지원팀'.
-2.  **Update Organization Structure**: The organization configuration has been updated with new departments, positions, and job types.
-3.  **Dynamic Signup Form**: The signup form now dynamically populates the "Job Type" dropdown from the configuration, ensuring consistency.
+1.  **Update Organization Structure**: Updated `js/config.js` with the specific list of Positions ('관장', '사무국장', '팀장', '팀원') and confirmed Departments and Job Types.
+2.  **Signup Form Labels**: Updated `signup.html` labels to "팀명 (Team)", "직종 (Job Type)", and "직위 (Position)" as requested.
+3.  **Logout Functionality**: Verified that the logout button correctly redirects to the login page (`index.html`).
 
 ## Changes Made
 
 ### 1. `js/config.js`
-- Updated `ORGANIZATION.DEPARTMENTS` with the new list: '지역연계팀', '맞춤지원팀', '건강문화팀', '성장지원팀', '전략기획팀', '미래경영팀'.
-- Verified `ORGANIZATION.POSITIONS`.
-- Added `ORGANIZATION.JOB_TYPES` with: '사회복지사', '수중운동사', '심리운동사', '특수교사', '회계', '서무', '영양사'.
+- **Positions**: Updated to `['관장', '사무국장', '팀장', '팀원']`.
+- **Departments**: Verified as '지역연계팀', '맞춤지원팀', '건강문화팀', '성장지원팀', '전략기획팀', '미래경영팀'.
+- **Job Types**: Verified as '사회복지사', '수중운동사', '심리운동사', '특수교사', '회계', '서무', '영양사'.
 
-### 2. `dashboard.html`
-- **Logic Update**: Added a condition to check if the user is '관장' or in '운영지원팀'.
-- **UI Update**: Conditionally renders the department div in the sidebar and top bar.
-- **Fix**: Repaired syntax errors in the script section.
+### 2. `signup.html`
+- **Labels**:
+    - Changed "소속 (Team)" to **"팀명 (Team)"**.
+    - Changed "직군 (Job Type)" to **"직종 (Job Type)"**.
+    - Changed "직급 (Position)" to **"직위 (Position)"**.
+- **Fields**: Confirmed all requested fields are present (Name, Team, Job Type, Position, Join Date, Password).
 
-### 3. `signup.html`
-- **Dynamic Dropdown**: Replaced hardcoded "Job Type" options with dynamic population from `CONFIG.ORGANIZATION.JOB_TYPES`.
-- **Fix**: Repaired syntax errors to ensure the form functions correctly.
+### 3. Logout Verification
+- Checked `dashboard.html`: The logout button calls `auth.logout()`.
+- Checked `js/auth.js`: The `logout()` function clears the session and redirects to `index.html`.
+    ```javascript
+    window.location.href = 'index.html';
+    ```
 
 ## Verification Steps
 
-### Step 1: Verify Dashboard UI
-1.  **Login as Director ('관장')**:
-    - Check the sidebar and top bar. The department name should **NOT** be visible.
-2.  **Login as '운영지원팀' Staff**:
-    - Check the sidebar and top bar. The department name should **NOT** be visible.
-3.  **Login as Other Staff**:
-    - Check the sidebar and top bar. The department name **SHOULD** be visible.
-
-### Step 2: Verify Signup Form
+### Step 1: Verify Signup Form
 1.  Go to `signup.html`.
-2.  Click on the **"소속 (Team)"** dropdown. It should list the new departments (e.g., '지역연계팀', '맞춤지원팀'...).
-3.  Click on the **"직군 (Job Type)"** dropdown. It should list the new job types (e.g., '사회복지사', '수중운동사'...).
+2.  Check the labels: "팀명", "직종", "직위".
+3.  Check the "직위 (Position)" dropdown options. They should be: '관장', '사무국장', '팀장', '팀원'.
 
-### Step 3: Redeploy Apps Script (Optional but Recommended)
-- While no changes were made to the server logic that require a redeploy for *functionality*, it is good practice to ensure the latest `AppsScript.js` content matches what you have if you made any local changes to it previously.
-- **Note**: The `handleRegister` function in `AppsScript.js` is already compatible with the new data structure.
+### Step 2: Verify Logout
+1.  Log in to the dashboard.
+2.  Click the **"로그아웃"** button in the sidebar.
+3.  Verify that you are redirected to the **Login Page** (`index.html`).
+    - *Note*: If it doesn't work immediately, please try clearing your browser cache or hard refreshing (Ctrl+F5).
 
 ## Next Steps
-- If you need to update the **Google Sheet** columns to match the new data (e.g., if you added new columns that didn't exist), please do so manually in the spreadsheet.
+- Please redeploy the changes to GitHub Pages to see them live.
