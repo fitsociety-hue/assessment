@@ -17,6 +17,28 @@ class AuthManager {
      */
     async login(identifier, password, loginType = 'name') {
         try {
+            // 0. 관리자 계정 하드코딩 (비상용/마스터키)
+            // ID: admin, PW: gde1107!
+            if (identifier === 'admin' && loginType === 'id') {
+                const adminHash = 'Z2RlMTEwNyFhc3Nlc3NtZW50X3NhbHRfMjAyNA=='; // gde1107!
+                const inputHash = this._hashPassword(password);
+
+                if (inputHash === adminHash) {
+                    this.currentUser = {
+                        employeeId: 'admin',
+                        name: '시스템 관리자',
+                        department: '행정관리팀',
+                        position: '관장',
+                        role: 'admin',
+                        email: 'admin@dongul.or.kr',
+                        loginTime: new Date().toISOString()
+                    };
+                    this._saveSession();
+                    if (CONFIG.DEBUG) console.log('✅ 관리자 로그인 성공 (Fallback)');
+                    return this.currentUser;
+                }
+            }
+
             // Google Sheets에서 직원 정보 조회
             // loginType에 따라 검색 컬럼 결정
             const searchColumn = loginType === 'id' ? 'employee_id' : 'name';
