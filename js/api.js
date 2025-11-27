@@ -139,6 +139,13 @@ class SheetsAPI {
             return data;
 
         } catch (error) {
+            // 네트워크 에러 (CORS, 오프라인 등) 처리
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                console.error('🚨 네트워크 오류 발생 (CORS 또는 연결 문제):', error);
+                // 첫 번째 시도에서 바로 실패하면 재시도하지 않고 사용자에게 알림을 줄 수도 있음
+                // 하지만 일시적인 문제일 수 있으므로 재시도 로직은 유지
+            }
+
             if (retryCount < CONFIG.RETRY_CONFIG.MAX_RETRIES) {
                 const delay = CONFIG.RETRY_CONFIG.RETRY_DELAY *
                     Math.pow(CONFIG.RETRY_CONFIG.BACKOFF_MULTIPLIER, retryCount);
