@@ -31,165 +31,16 @@
                 <h1 class="card-title">역량평가</h1>
                 <p class="card-subtitle">직무역량 및 핵심역량을 평가합니다.</p>
             </div>
-
-            <form id="competencyForm" class="card-body">
-                <input type="hidden" name="evaluation_id">
-                <input type="hidden" name="employee_id">
-                <input type="hidden" name="evaluator_id">
-
-                <div class="form-group">
-                    <label for="period" class="form-label required">평가 기간</label>
-                    <select id="period" name="period" class="form-select" required></select>
-                </div>
-
-                <!-- 직무역량 (20점) -->
-                <div class="card" style="margin-bottom: var(--spacing-lg);">
-                    <div class="card-header">
-                        <h3 class="card-title">직무역량 (20점)</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="form-label required">사례관리 능력 (0-5점)</label>
-                            <input type="number" name="case_mgmt" class="form-input" min="0" max="5" step="0.5"
-                                required>
-                            <span class="form-help">욕구 사정, 자원 연계, 위기 개입</span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">프로그램 기획·운영 (0-5점)</label>
-                            <input type="number" name="program_planning" class="form-input" min="0" max="5" step="0.5"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">이용자 지원 능력 (0-5점)</label>
-                            <input type="number" name="user_support" class="form-input" min="0" max="5" step="0.5"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">행정 및 문서 관리 (0-5점)</label>
-                            <input type="number" name="admin_doc" class="form-input" min="0" max="5" step="0.5"
-                                required>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 핵심역량 (20점) -->
-                <div class="card" style="margin-bottom: var(--spacing-lg);">
-                    <div class="card-header">
-                        <h3 class="card-title">핵심역량 (20점)</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="form-label required">의사소통 (0-4점)</label>
-                            <input type="number" name="communication" class="form-input" min="0" max="4" step="0.5"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">협업 및 팀워크 (0-4점)</label>
-                            <input type="number" name="teamwork" class="form-input" min="0" max="4" step="0.5" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">문제해결 (0-4점)</label>
-                            <input type="number" name="problem_solving" class="form-input" min="0" max="4" step="0.5"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">자기개발 (0-4점)</label>
-                            <input type="number" name="self_development" class="form-input" min="0" max="4" step="0.5"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label required">책임감 및 윤리 (0-4점)</label>
-                            <input type="number" name="responsibility" class="form-input" min="0" max="4" step="0.5"
-                                required>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 리더십역량 (관리자만, 15점) -->
-                <div class="card admin-only" id="leadershipSection"
-                    style="margin-bottom: var(--spacing-lg); display:none;">
-                    <div class="card-header">
-                        <h3 class="card-title">리더십역량 (15점, 관리자만)</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="form-label">비전 제시 (0-3점)</label>
-                            <input type="number" name="leadership_vision" class="form-input" min="0" max="3" step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">부하 육성 (0-3점)</label>
-                            <input type="number" name="leadership_coaching" class="form-input" min="0" max="3"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">의사결정 (0-3점)</label>
-                            <input type="number" name="leadership_decision" class="form-input" min="0" max="3"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">변화 주도 (0-3점)</label>
-                            <input type="number" name="leadership_change" class="form-input" min="0" max="3" step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">조직 관리 (0-3점)</label>
-                            <input type="number" name="leadership_management" class="form-input" min="0" max="3"
-                                step="0.5">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">평가 코멘트</label>
-                    <textarea name="comments" class="form-textarea" rows="4"></textarea>
-                </div>
-
-                <div class="alert alert-info">
-                    <strong>총점: <span id="totalScore">0</span> / <span id="maxScore">40</span>점</strong>
-                </div>
-
-                <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
-                    <button type="submit" class="btn btn-primary">💾 저장</button>
-                    <button type="button" class="btn btn-success" id="submitBtn">✅ 제출</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script src="../js/config.js"></script>
-    <script src="../js/utils.js"></script>
-    <script src="../js/api.js"></script>
-    <script src="../js/auth.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initializePage();
-            loadPeriods();
-            checkLeadershipSection();
-            setupAutoCalculation();
-        });
-
-        function loadPeriods() {
-            const select = document.getElementById('period');
-            CONFIG.EVALUATION_PERIODS.forEach(period => {
-                select.add(new Option(period, period));
-            });
-            select.value = CONFIG.EVALUATION_PERIODS[CONFIG.EVALUATION_PERIODS.length - 1];
-        }
-
-        function checkLeadershipSection() {
-            // 평가 대상이 관리자인 경우에만 리더십 항목 표시
-            if (auth.isManager()) {
-                document.getElementById('leadershipSection').style.display = '';
-                document.getElementById('maxScore').textContent = '55';
             }
-        }
+            }
 
-        function setupAutoCalculation() {
+            function setupAutoCalculation() {
             document.querySelectorAll('input[type="number"]').forEach(input => {
-                input.addEventListener('input', calculateTotal);
+            input.addEventListener('input', calculateTotal);
             });
-        }
+            }
 
-        function calculateTotal() {
+            function calculateTotal() {
             const form = document.getElementById('competencyForm');
             const data = utils.formToObject(form);
 
@@ -205,51 +56,51 @@
             total += parseFloat(data.responsibility || 0);
 
             if (auth.isManager()) {
-                total += parseFloat(data.leadership_vision || 0);
-                total += parseFloat(data.leadership_coaching || 0);
-                total += parseFloat(data.leadership_decision || 0);
-                total += parseFloat(data.leadership_change || 0);
-                total += parseFloat(data.leadership_management || 0);
+            total += parseFloat(data.leadership_vision || 0);
+            total += parseFloat(data.leadership_coaching || 0);
+            total += parseFloat(data.leadership_decision || 0);
+            total += parseFloat(data.leadership_change || 0);
+            total += parseFloat(data.leadership_management || 0);
             }
 
             document.getElementById('totalScore').textContent = total.toFixed(1);
             return total;
-        }
+            }
 
-        document.getElementById('competencyForm').addEventListener('submit', async (e) => {
+            document.getElementById('competencyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             try {
-                utils.showLoading('저장 중...');
+            utils.showLoading('저장 중...');
 
-                const formData = utils.formToObject(e.target);
-                const user = auth.getCurrentUser();
+            const formData = utils.formToObject(e.target);
+            const user = auth.getCurrentUser();
 
-                formData.evaluator_id = user.employeeId;
-                formData.total_score = calculateTotal();
-                formData.updated_at = new Date().toISOString();
+            formData.evaluator_id = user.employeeId;
+            formData.total_score = calculateTotal();
+            formData.updated_at = new Date().toISOString();
 
-                if (!formData.evaluation_id) {
-                    formData.evaluation_id = api.generateId('COMP_');
-                    formData.created_at = new Date().toISOString();
-                    await api.appendRow(CONFIG.SHEET_NAMES.COMPETENCY, formData);
-                } else {
-                    await api.updateRow(CONFIG.SHEET_NAMES.COMPETENCY, 'evaluation_id', formData.evaluation_id, formData);
-                }
+            if (!formData.evaluation_id) {
+            formData.evaluation_id = api.generateId('COMP_');
+            formData.created_at = new Date().toISOString();
+            await api.appendRow(CONFIG.SHEET_NAMES.COMPETENCY, formData);
+            } else {
+            await api.updateRow(CONFIG.SHEET_NAMES.COMPETENCY, 'evaluation_id', formData.evaluation_id, formData);
+            }
 
-                utils.hideLoading();
-                utils.showAlert('역량평가가 저장되었습니다.', 'success');
+            utils.hideLoading();
+            utils.showAlert('역량평가가 저장되었습니다.', 'success');
 
             } catch (error) {
-                utils.hideLoading();
-                utils.showAlert('저장 실패: ' + error.message, 'error');
+            utils.hideLoading();
+            utils.showAlert('저장 실패: ' + error.message, 'error');
             }
-        });
+            });
 
-        document.getElementById('submitBtn').addEventListener('click', () => {
+            document.getElementById('submitBtn').addEventListener('click', () => {
             document.getElementById('competencyForm').dispatchEvent(new Event('submit'));
-        });
-    </script>
+            });
+            </script>
 </body>
 
 </html>

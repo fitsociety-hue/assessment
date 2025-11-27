@@ -31,153 +31,109 @@
                 <h1 class="card-title">자기평가</h1>
                 <p class="card-subtitle">개인 목표 설정 및 자기진단을 작성하세요.</p>
             </div>
-        </div>
-
-        <div class="form-group">
-            <label for="development_area" class="form-label">역량 개발 희망 분야</label>
-            <textarea id="development_area" name="development_area" class="form-textarea" rows="3"
-                placeholder="교육이나 지원이 필요한 영역을 작성하세요"></textarea>
-        </div>
-
-        <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
-            <button type="submit" class="btn btn-primary">💾 저장</button>
-            <button type="button" class="btn btn-success" id="submitBtn">✅ 제출</button>
-            <button type="reset" class="btn btn-secondary">🔄 초기화</button>
-        </div>
-        </form>
-    </div>
-    </div>
-
-    <script src="../js/config.js"></script>
-    <script src="../js/utils.js"></script>
-    <script src="../js/api.js"></script>
-    <script src="../js/auth.js"></script>
-    <script>
-        let currentEvaluation = null;
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initializePage();
-            loadPeriods();
-            createGoalFields();
-            await loadExistingEvaluation();
-        });
-
-        function loadPeriods() {
-            const select = document.getElementById('period');
-            CONFIG.EVALUATION_PERIODS.forEach(period => {
-                const option = document.createElement('option');
-                option.value = period;
-                option.textContent = period;
-                select.appendChild(option);
-            });
-            select.value = CONFIG.EVALUATION_PERIODS[CONFIG.EVALUATION_PERIODS.length - 1];
-        }
-
-        function createGoalFields() {
-            const container = document.getElementById('goalsContainer');
-            for (let i = 1; i <= 3; i++) {
-                const goalDiv = document.createElement('div');
-                goalDiv.className = 'card';
-                goalDiv.style.marginBottom = 'var(--spacing-lg)';
-                goalDiv.innerHTML = `
-          <div class="card-header"><h3 class="card-title">목표 ${i}</h3></div>
-          <div class="card-body">
-            <div class="form-group">
-              <label class="form-label required">목표 내용</label>
-              <input type="text" name="goal_${i}" class="form-input" placeholder="구체적인 목표를 입력하세요" required>
+            goalDiv.style.marginBottom = 'var(--spacing-lg)';
+            goalDiv.innerHTML = `
+            <div class="card-header">
+                <h3 class="card-title">목표 ${i}</h3>
             </div>
-            <div class="grid grid-3">
-              <div class="form-group">
-                <label class="form-label required">목표치</label>
-                <input type="number" name="goal_${i}_target" class="form-input" placeholder="0" step="0.01" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label required">실적</label>
-                <input type="number" name="goal_${i}_result" class="form-input" placeholder="0" step="0.01" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">달성률 (%)</label>
-                <input type="text" name="goal_${i}_achievement" class="form-input" readonly style="background: var(--gray-100);">
-              </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label required">목표 내용</label>
+                    <input type="text" name="goal_${i}" class="form-input" placeholder="구체적인 목표를 입력하세요" required>
+                </div>
+                <div class="grid grid-3">
+                    <div class="form-group">
+                        <label class="form-label required">목표치</label>
+                        <input type="number" name="goal_${i}_target" class="form-input" placeholder="0" step="0.01"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">실적</label>
+                        <input type="number" name="goal_${i}_result" class="form-input" placeholder="0" step="0.01"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">달성률 (%)</label>
+                        <input type="text" name="goal_${i}_achievement" class="form-input" readonly
+                            style="background: var(--gray-100);">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">자기평가 점수 (1-5)</label>
+                    <select name="goal_${i}_score" class="form-select" required>
+                        <option value="">선택하세요</option>
+                        <option value="5">5점 - 매우 우수</option>
+                        <option value="4">4점 - 우수</option>
+                        <option value="3">3점 - 보통</option>
+                        <option value="2">2점 - 미흡</option>
+                        <option value="1">1점 - 매우 미흡</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-              <label class="form-label required">자기평가 점수 (1-5)</label>
-              <select name="goal_${i}_score" class="form-select" required>
-                <option value="">선택하세요</option>
-                <option value="5">5점 - 매우 우수</option>
-                <option value="4">4점 - 우수</option>
-                <option value="3">3점 - 보통</option>
-                <option value="2">2점 - 미흡</option>
-                <option value="1">1점 - 매우 미흡</option>
-              </select>
-            </div>
-          </div>
-        `;
-                container.appendChild(goalDiv);
+            `;
+            container.appendChild(goalDiv);
 
-                // 달성률 자동 계산
-                const targetInput = goalDiv.querySelector(`input[name="goal_${i}_target"]`);
-                const resultInput = goalDiv.querySelector(`input[name="goal_${i}_result"]`);
-                const achievementInput = goalDiv.querySelector(`input[name="goal_${i}_achievement"]`);
+            // 달성률 자동 계산
+            const targetInput = goalDiv.querySelector(`input[name="goal_${i}_target"]`);
+            const resultInput = goalDiv.querySelector(`input[name="goal_${i}_result"]`);
+            const achievementInput = goalDiv.querySelector(`input[name="goal_${i}_achievement"]`);
 
-                const calculateAchievement = () => {
-                    const target = parseFloat(targetInput.value) || 0;
-                    const result = parseFloat(resultInput.value) || 0;
-                    if (target > 0) {
-                        const achievement = ((result / target) * 100).toFixed(1);
-                        achievementInput.value = achievement + '%';
-                    } else {
-                        achievementInput.value = '';
-                    }
-                };
-
-                targetInput.addEventListener('input', calculateAchievement);
-                resultInput.addEventListener('input', calculateAchievement);
+            const calculateAchievement = () => {
+            const target = parseFloat(targetInput.value) || 0;
+            const result = parseFloat(resultInput.value) || 0;
+            if (target > 0) {
+            const achievement = ((result / target) * 100).toFixed(1);
+            achievementInput.value = achievement + '%';
+            } else {
+            achievementInput.value = '';
             }
-        }
+            };
 
-        async function loadExistingEvaluation() {
+            targetInput.addEventListener('input', calculateAchievement);
+            resultInput.addEventListener('input', calculateAchievement);
+            }
+            }
+
+            async function loadExistingEvaluation() {
             const user = auth.getCurrentUser();
             const period = document.getElementById('period').value;
 
             if (!period) return;
 
             try {
-                utils.showLoading('데이터 로딩 중...');
-                const evaluation = await api.findRow(
-                    CONFIG.SHEET_NAMES.SELF_EVALUATION,
-                    'employee_id',
-                    user.employeeId
-                );
+            utils.showLoading('데이터 로딩 중...');
+            const evaluation = await api.findRow(
+            CONFIG.SHEET_NAMES.SELF_EVALUATION,
+            'employee_id',
+            user.employeeId
+            );
 
-                if (evaluation && evaluation.period === period) {
-                    currentEvaluation = evaluation;
-                    utils.objectToForm(document.getElementById('selfEvaluationForm'), evaluation);
+            if (evaluation && evaluation.period === period) {
+            currentEvaluation = evaluation;
+            utils.objectToForm(document.getElementById('selfEvaluationForm'), evaluation);
 
-                    // 달성률 재계산
-                    for (let i = 1; i <= 3; i++) {
-                        const target = parseFloat(evaluation[`goal_${i}_target`]) || 0;
-                        const result = parseFloat(evaluation[`goal_${i}_result`]) || 0;
-                        if (target > 0) {
-                            document.querySelector(`input[name="goal_${i}_achievement"]`).value =
-                                ((result / target) * 100).toFixed(1) + '%';
-                        }
-                    }
+            // 달성률 재계산
+            for (let i = 1; i <= 3; i++) { const target=parseFloat(evaluation[`goal_${i}_target`]) || 0; const
+                result=parseFloat(evaluation[`goal_${i}_result`]) || 0; if (target> 0) {
+                document.querySelector(`input[name="goal_${i}_achievement"]`).value =
+                ((result / target) * 100).toFixed(1) + '%';
+                }
+                }
                 }
 
                 utils.hideLoading();
-            } catch (error) {
+                } catch (error) {
                 utils.hideLoading();
                 console.error('데이터 로드 실패:', error);
-            }
-        }
+                }
+                }
 
-        document.getElementById('period').addEventListener('change', loadExistingEvaluation);
+                document.getElementById('period').addEventListener('change', loadExistingEvaluation);
 
-        document.getElementById('selfEvaluationForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+                document.getElementById('selfEvaluationForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-            try {
+                try {
                 utils.showLoading('저장 중...');
 
                 const formData = utils.formToObject(e.target);
@@ -187,35 +143,35 @@
                 formData.updated_at = utils.getCurrentTimestamp();
 
                 if (currentEvaluation) {
-                    // 업데이트
-                    await api.updateRow(
-                        CONFIG.SHEET_NAMES.SELF_EVALUATION,
-                        'employee_id',
-                        user.employeeId,
-                        formData
-                    );
+                // 업데이트
+                await api.updateRow(
+                CONFIG.SHEET_NAMES.SELF_EVALUATION,
+                'employee_id',
+                user.employeeId,
+                formData
+                );
                 } else {
-                    // 새로 추가
-                    formData.evaluation_id = api.generateId('SELF_');
-                    formData.created_at = utils.getCurrentTimestamp();
-                    await api.appendRow(CONFIG.SHEET_NAMES.SELF_EVALUATION, formData);
+                // 새로 추가
+                formData.evaluation_id = api.generateId('SELF_');
+                formData.created_at = utils.getCurrentTimestamp();
+                await api.appendRow(CONFIG.SHEET_NAMES.SELF_EVALUATION, formData);
                 }
 
                 utils.hideLoading();
                 utils.showAlert('자기평가가 저장되었습니다.', 'success');
 
-            } catch (error) {
+                } catch (error) {
                 utils.hideLoading();
                 utils.showAlert('저장 실패: ' + error.message, 'error');
                 console.error(error);
-            }
-        });
+                }
+                });
 
-        document.getElementById('submitBtn').addEventListener('click', async () => {
-            if (!await utils.confirm('제출하시겠습니까? 제출 후에도 수정 가능합니다.')) return;
-            document.getElementById('selfEvaluationForm').dispatchEvent(new Event('submit'));
-        });
-    </script>
+                document.getElementById('submitBtn').addEventListener('click', async () => {
+                if (!await utils.confirm('제출하시겠습니까? 제출 후에도 수정 가능합니다.')) return;
+                document.getElementById('selfEvaluationForm').dispatchEvent(new Event('submit'));
+                });
+                </script>
 </body>
 
 </html>
