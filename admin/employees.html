@@ -67,23 +67,6 @@
             </div>
             <div class="card-body">
                 <input type="hidden" id="editEmployeeId">
-                <div class="form-group">
-                    <label class="form-label">이름</label>
-                    <input type="text" id="editName" class="form-input" readonly>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">권한</label>
-                    <select id="editRole" class="form-select">
-                        <option value="staff">팀원 (일반)</option>
-                        <option value="manager">팀장 (부서 관리)</option>
-                        <option value="director">관장/사무국장 (전체 열람)</option>
-                        <option value="admin">시스템 관리자</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <button type="button" id="saveRoleBtn" class="btn btn-primary w-100">저장</button>
-                    <button type="button" id="closeRoleModalBtn" class="btn btn-secondary w-100 mt-sm">취소</button>
-                </div>
             </div>
         </div>
     </div>
@@ -131,34 +114,6 @@
         }
 
         function renderTable(employees) {
-            const tbody = document.querySelector('#employeeTable tbody');
-            tbody.innerHTML = '';
-
-            employees.forEach(emp => {
-                const tr = document.createElement('tr');
-
-                // 권한 한글 표시
-                let roleLabel = '팀원';
-                if (emp.role === 'admin') roleLabel = '관리자';
-                else if (emp.role === 'director') roleLabel = '관장/사무국장';
-                else if (emp.role === 'manager') roleLabel = '팀장';
-
-                tr.innerHTML = `
-                    <td>${emp.employee_id}</td>
-                    <td>${emp.name}</td>
-                    <td>${emp.department}</td>
-                    <td>${emp.position}</td>
-                    <td><span class="badge badge-${getRoleBadgeClass(emp.role)}">${roleLabel}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="openRoleModal('${emp.employee_id}', '${emp.name}', '${emp.role}')">권한 수정</button>
-                        <button class="btn btn-sm btn-warning" onclick="resetPassword('${emp.employee_id}', '${emp.name}')">비번 초기화</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function getRoleBadgeClass(role) {
             if (role === 'admin') return 'primary';
             if (role === 'director') return 'success';
             if (role === 'manager') return 'info';
