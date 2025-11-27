@@ -31,148 +31,120 @@
                 <h1 class="card-title">다면평가</h1>
                 <p class="card-subtitle">상사, 동료, 부하, 자기평가를 진행합니다.</p>
             </div>
-
-            <form id="multifacetForm" class="card-body">
-                <input type="hidden" name="evaluation_id">
-                <input type="hidden" name="employee_id">
-                <input type="hidden" name="evaluator_id">
-
-                <div class="form-group">
-                    <label for="period" class="form-label required">평가 기간</label>
-                    <select id="period" name="period" class="form-select" required></select>
-                </div>
-
-                <div class="form-group">
-                    <label for="evaluator_type" class="form-label required">평가자 유형</label>
-                    <select id="evaluator_type" name="evaluator_type" class="form-select" required>
-                        <option value="self">자기평가</option>
-                        <option value="supervisor">상사평가</option>
-                        <option value="peer">동료평가</option>
-                        <option value="subordinate">부하평가</option>
-                    </select>
-                </div>
-
-                <!-- 상사 평가 항목 -->
-                <div class="card evaluation-section" id="supervisorSection"
-                    style="margin-bottom: var(--spacing-lg); display:none;">
-                    <div class="card-header">
-                        <h3 class="card-title">상사 평가 (10점)</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="form-label">업무 수행 태도 (0-2.5점)</label>
-                            <input type="number" name="supervisor_attitude" class="form-input" min="0" max="2.5"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">지시사항 이해 및 실행 (0-2.5점)</label>
-                            <input type="number" name="supervisor_execution" class="form-input" min="0" max="2.5"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">업무 보고 및 의사소통 (0-2.5점)</label>
-                            <input type="number" name="supervisor_communication" class="form-input" min="0" max="2.5"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">자기개발 노력 (0-2.5점)</label>
-                            <input type="number" name="supervisor_development" class="form-input" min="0" max="2.5"
-                                step="0.5">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 동료 평가 항목 -->
-                <div class="card evaluation-section" id="peerSection"
-                    style="margin-bottom: var(--spacing-lg); display:none;">
-                    <div class="card-header">
-                        <h3 class="card-title">동료 평가 (5점)</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="form-label">협업 및 팀워크 (0-1.25점)</label>
-                            <input type="number" name="peer_collaboration" class="form-input" min="0" max="1.25"
-                                step="0.25">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">정보 공유 및 지원 (0-1.25점)</label>
-                            <input type="number" name="peer_support" class="form-input" min="0" max="1.25" step="0.25">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">친절성 및 배려 (0-1.25점)</label>
-                            <input type="number" name="peer_kindness" class="form-input" min="0" max="1.25" step="0.25">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">갈등 조정 능력 (0-1.25점)</label>
-                            <input type="number" name="peer_conflict" class="form-input" min="0" max="1.25" step="0.25">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 부하 평가 항목 -->
-                <div class="card evaluation-section" id="subordinateSection"
-                    style="margin-bottom: var(--spacing-lg); display:none;">
-                    <div class="card-header">
-                        <h3 class="card-title">부하 평가 (6점)</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="form-label">리더십 및 방향 제시 (0-1.5점)</label>
-                            <input type="number" name="subordinate_leadership" class="form-input" min="0" max="1.5"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">공정성 및 투명성 (0-1.5점)</label>
-                            <input type="number" name="subordinate_fairness" class="form-input" min="0" max="1.5"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">지원 및 육성 (0-1.5점)</label>
-                            <input type="number" name="subordinate_support" class="form-input" min="0" max="1.5"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">의사소통 (0-1.5점)</label>
-                            <input type="number" name="subordinate_communication" class="form-input" min="0" max="1.5"
-                                step="0.5">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 자기 평가 항목 -->
-                <div class="card evaluation-section" id="selfSection"
-                    style="margin-bottom: var(--spacing-lg); display:none;">
-                    <div class="card-header">
-                        <h3 class="card-title">자기 평가 (5점)</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="form-label">목표 달성도 자기 평가 (0-2.5점)</label>
-                            <input type="number" name="self_goal_achievement" class="form-input" min="0" max="2.5"
-                                step="0.5">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">강점</label>
-                            <textarea name="self_strengths" class="form-textarea" rows="2"
-                                placeholder="본인의 강점을 작성하세요"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">개선점</label>
-                            <textarea name="self_improvements" class="form-textarea" rows="2"
-                                placeholder="개선이 필요한 부분을 작성하세요"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-info">
-                    <strong>총점: <span id="totalScore">0</span> / 20점</strong>
-                </div>
-
-                <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
-                    <button type="submit" class="btn btn-primary">💾 저장</button>
-                </div>
-            </form>
+            </select>
         </div>
+
+        <!-- 상사 평가 항목 -->
+        <div class="card evaluation-section" id="supervisorSection"
+            style="margin-bottom: var(--spacing-lg); display:none;">
+            <div class="card-header">
+                <h3 class="card-title">상사 평가 (10점)</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">업무 수행 태도 (0-2.5점)</label>
+                    <input type="number" name="supervisor_attitude" class="form-input" min="0" max="2.5" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">지시사항 이해 및 실행 (0-2.5점)</label>
+                    <input type="number" name="supervisor_execution" class="form-input" min="0" max="2.5" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">업무 보고 및 의사소통 (0-2.5점)</label>
+                    <input type="number" name="supervisor_communication" class="form-input" min="0" max="2.5"
+                        step="0.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">자기개발 노력 (0-2.5점)</label>
+                    <input type="number" name="supervisor_development" class="form-input" min="0" max="2.5" step="0.5">
+                </div>
+            </div>
+        </div>
+
+        <!-- 동료 평가 항목 -->
+        <div class="card evaluation-section" id="peerSection" style="margin-bottom: var(--spacing-lg); display:none;">
+            <div class="card-header">
+                <h3 class="card-title">동료 평가 (5점)</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">협업 및 팀워크 (0-1.25점)</label>
+                    <input type="number" name="peer_collaboration" class="form-input" min="0" max="1.25" step="0.25">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">정보 공유 및 지원 (0-1.25점)</label>
+                    <input type="number" name="peer_support" class="form-input" min="0" max="1.25" step="0.25">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">친절성 및 배려 (0-1.25점)</label>
+                    <input type="number" name="peer_kindness" class="form-input" min="0" max="1.25" step="0.25">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">갈등 조정 능력 (0-1.25점)</label>
+                    <input type="number" name="peer_conflict" class="form-input" min="0" max="1.25" step="0.25">
+                </div>
+            </div>
+        </div>
+
+        <!-- 부하 평가 항목 -->
+        <div class="card evaluation-section" id="subordinateSection"
+            style="margin-bottom: var(--spacing-lg); display:none;">
+            <div class="card-header">
+                <h3 class="card-title">부하 평가 (6점)</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">리더십 및 방향 제시 (0-1.5점)</label>
+                    <input type="number" name="subordinate_leadership" class="form-input" min="0" max="1.5" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">공정성 및 투명성 (0-1.5점)</label>
+                    <input type="number" name="subordinate_fairness" class="form-input" min="0" max="1.5" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">지원 및 육성 (0-1.5점)</label>
+                    <input type="number" name="subordinate_support" class="form-input" min="0" max="1.5" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">의사소통 (0-1.5점)</label>
+                    <input type="number" name="subordinate_communication" class="form-input" min="0" max="1.5"
+                        step="0.5">
+                </div>
+            </div>
+        </div>
+
+        <!-- 자기 평가 항목 -->
+        <div class="card evaluation-section" id="selfSection" style="margin-bottom: var(--spacing-lg); display:none;">
+            <div class="card-header">
+                <h3 class="card-title">자기 평가 (5점)</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">목표 달성도 자기 평가 (0-2.5점)</label>
+                    <input type="number" name="self_goal_achievement" class="form-input" min="0" max="2.5" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">강점</label>
+                    <textarea name="self_strengths" class="form-textarea" rows="2"
+                        placeholder="본인의 강점을 작성하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">개선점</label>
+                    <textarea name="self_improvements" class="form-textarea" rows="2"
+                        placeholder="개선이 필요한 부분을 작성하세요"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>총점: <span id="totalScore">0</span> / 20점</strong>
+        </div>
+
+        <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
+            <button type="submit" class="btn btn-primary">💾 저장</button>
+        </div>
+        </form>
+    </div>
     </div>
 
     <script src="../js/config.js"></script>

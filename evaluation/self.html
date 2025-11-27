@@ -31,42 +31,21 @@
                 <h1 class="card-title">자기평가</h1>
                 <p class="card-subtitle">개인 목표 설정 및 자기진단을 작성하세요.</p>
             </div>
-
-            <form id="selfEvaluationForm" class="card-body">
-                <input type="hidden" id="evaluation_id" name="evaluation_id">
-                <input type="hidden" id="employee_id" name="employee_id">
-
-                <!-- 평가 기간 선택 -->
-                <div class="form-group">
-                    <label for="period" class="form-label required">평가 기간</label>
-                    <select id="period" name="period" class="form-select" required>
-                        <option value="">선택하세요</option>
-                    </select>
-                </div>
-
-                <!-- 목표 1-3 -->
-                <div id="goalsContainer"></div>
-
-                <!-- 차기 목표 및 개발 분야 -->
-                <div class="form-group">
-                    <label for="future_goals" class="form-label">차기 목표</label>
-                    <textarea id="future_goals" name="future_goals" class="form-textarea" rows="3"
-                        placeholder="다음 평가 기간의 목표를 작성하세요"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="development_area" class="form-label">역량 개발 희망 분야</label>
-                    <textarea id="development_area" name="development_area" class="form-textarea" rows="3"
-                        placeholder="교육이나 지원이 필요한 영역을 작성하세요"></textarea>
-                </div>
-
-                <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
-                    <button type="submit" class="btn btn-primary">💾 저장</button>
-                    <button type="button" class="btn btn-success" id="submitBtn">✅ 제출</button>
-                    <button type="reset" class="btn btn-secondary">🔄 초기화</button>
-                </div>
-            </form>
         </div>
+
+        <div class="form-group">
+            <label for="development_area" class="form-label">역량 개발 희망 분야</label>
+            <textarea id="development_area" name="development_area" class="form-textarea" rows="3"
+                placeholder="교육이나 지원이 필요한 영역을 작성하세요"></textarea>
+        </div>
+
+        <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
+            <button type="submit" class="btn btn-primary">💾 저장</button>
+            <button type="button" class="btn btn-success" id="submitBtn">✅ 제출</button>
+            <button type="reset" class="btn btn-secondary">🔄 초기화</button>
+        </div>
+        </form>
+    </div>
     </div>
 
     <script src="../js/config.js"></script>

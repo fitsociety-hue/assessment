@@ -161,7 +161,7 @@
     <script src="../js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            await initializePage({ requiredRole: 'manager' });
+            await initializePage();
             loadPeriods();
             checkLeadershipSection();
             setupAutoCalculation();
