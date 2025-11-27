@@ -4,180 +4,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회원가입 - 강동어울림복지관 평가 시스템</title>
+    <title>강동어울림복지관 평가 시스템 - 회원가입</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/main.css">
+
     <style>
-        body {
-            background-color: var(--bg-secondary);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .signup-container {
             min-height: 100vh;
-            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-lg);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .signup-container {
-            background: white;
-            padding: var(--spacing-2xl);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
+        .signup-card {
             width: 100%;
             max-width: 500px;
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
         }
 
         .signup-header {
+            padding: var(--spacing-xl);
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            color: white;
             text-align: center;
-            margin-bottom: var(--spacing-xl);
         }
 
         .signup-header h1 {
-            color: var(--primary-color);
-            font-size: var(--font-2xl);
-            margin-bottom: var(--spacing-sm);
-        }
-
-        .signup-header p {
-            color: var(--text-secondary);
-        }
-
-        .form-group {
-            margin-bottom: var(--spacing-md);
-        }
-
-        .form-label {
-            display: block;
+            font-size: var(--font-xl);
+            font-weight: 700;
             margin-bottom: var(--spacing-xs);
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .form-input,
-        .form-select {
-            width: 100%;
-            padding: var(--spacing-sm) var(--spacing-md);
-            border: 1px solid var(--gray-300);
-            border-radius: var(--radius-md);
-            font-size: var(--font-md);
-            transition: border-color var(--transition-fast);
-        }
-
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px var(--primary-light);
-        }
-
-        .btn-signup {
-            width: 100%;
-            padding: var(--spacing-md);
-            background-color: var(--primary-color);
             color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: var(--font-md);
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color var(--transition-fast);
-            margin-top: var(--spacing-lg);
         }
 
-        .btn-signup:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .login-link {
-            text-align: center;
-            margin-top: var(--spacing-lg);
-            font-size: var(--font-sm);
-            color: var(--text-secondary);
-        }
-
-        .login-link a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .login-link a:hover {
-            text-decoration: underline;
+        .signup-body {
+            padding: var(--spacing-xl);
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
         .form-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: var(--spacing-md);
         }
 
-        .form-row .form-group {
-            flex: 1;
+        .signup-footer {
+            padding: var(--spacing-lg);
+            background: var(--gray-50);
+            text-align: center;
+            border-top: 1px solid var(--gray-200);
         }
     </style>
 </head>
 
 <body>
-    <div class="signup-container">
-        <div class="signup-header">
-            <h1>회원가입</h1>
-            <p>강동어울림복지관 평가 시스템</p>
+    <!-- 로딩 스피너 -->
+    <div id="global-loader" class="loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p class="loader-message">처리 중...</p>
         </div>
+    </div>
 
-        <form id="signupForm">
-            <div class="form-group">
-                <label for="name" class="form-label">이름</label>
-                <input type="text" id="name" class="form-input" required placeholder="홍길동">
+    <!-- 알림 컨테이너 -->
+    <div id="alert-container"></div>
+
+    <div class="signup-container">
+        <div class="signup-card">
+            <div class="signup-header">
+                <h1>회원가입</h1>
+                <p>강동어울림복지관 직원 평가 시스템</p>
             </div>
 
-            <div class="form-group">
-                <label for="employeeId" class="form-label">아이디</label>
-                <input type="text" id="employeeId" class="form-input" required placeholder="영문, 숫자 조합">
+            <div class="signup-body">
+                <form id="signupForm">
+                    <!-- 기본 정보 -->
+                    <div class="form-group">
+                        <label for="employeeId" class="form-label required">직원 ID</label>
+                        <input type="text" id="employeeId" name="employeeId" class="form-input" required
+                            placeholder="사번을 입력하세요">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label required">비밀번호</label>
+                        <input type="password" id="password" name="password" class="form-input" required
+                            placeholder="비밀번호를 입력하세요">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="name" class="form-label required">이름</label>
+                        <input type="text" id="name" name="name" class="form-input" required placeholder="이름을 입력하세요">
+                    </div>
+
+                    <!-- 소속 정보 -->
+                    <div class="form-group">
+                        <label for="department" class="form-label required">팀명 (소속)</label>
+                        <select id="department" name="department" class="form-select" required>
+                            <option value="">선택하세요</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="jobType" class="form-label required">직종</label>
+                            <select id="jobType" name="jobType" class="form-select" required>
+                                <option value="">선택하세요</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="position" class="form-label required">직위 (직급)</label>
+                            <select id="position" name="position" class="form-select" required>
+                                <option value="">선택하세요</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 입사일 -->
+                    <div class="form-group">
+                        <label class="form-label required">입사 연월</label>
+                        <div class="form-row">
+                            <input type="number" id="joinYear" name="joinYear" class="form-input" placeholder="년(YYYY)"
+                                min="2000" max="2099" required>
+                            <select id="joinMonth" name="joinMonth" class="form-select" required>
+                                <option value="">월</option>
+                                <option value="1">1월</option>
+                                <option value="2">2월</option>
+                                <option value="3">3월</option>
+                                <option value="4">4월</option>
+                                <option value="5">5월</option>
+                                <option value="6">6월</option>
+                                <option value="7">7월</option>
+                                <option value="8">8월</option>
+                                <option value="9">9월</option>
+                                <option value="10">10월</option>
+                                <option value="11">11월</option>
+                                <option value="12">12월</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary"
+                        style="width: 100%; margin-top: var(--spacing-lg);">가입하기</button>
+                </form>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">입사년월</label>
-                <div class="form-row">
-                    <input type="number" id="joinYear" class="form-input" placeholder="YYYY" min="2000" max="2099"
-                        required>
-                    <select id="joinMonth" class="form-select" required>
-                        <option value="">월</option>
-                        <option value="01">1월</option>
-                        <option value="02">2월</option>
-                        <option value="03">3월</option>
-                        <option value="04">4월</option>
-                        <option value="05">5월</option>
-                        <option value="06">6월</option>
-                        <option value="07">7월</option>
-                        <option value="08">8월</option>
-                        <option value="09">9월</option>
-                        <option value="10">10월</option>
-                        <option value="11">11월</option>
-                        <option value="12">12월</option>
-                    </select>
-                </div>
+            <div class="signup-footer">
+                이미 계정이 있으신가요? <a href="index.html" class="text-primary">로그인하기</a>
             </div>
-
-            <button type="submit" class="btn-signup">가입하기</button>
-        </form>
-
-        <div class="login-link">
-            이미 계정이 있으신가요? <a href="index.html">로그인하기</a>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="js/config.js?v=3"></script>
-    <script src="js/utils.js?v=3"></script>
-    <script src="js/api.js?v=3"></script>
-    <script src="js/auth.js?v=3"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // 부서 목록 로드
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. 필수 라이브러리 로드 확인
+            if (typeof CONFIG === 'undefined' || typeof utils === 'undefined' || typeof api === 'undefined' || typeof auth === 'undefined') {
+                console.error('필수 스크립트가 로드되지 않았습니다.');
+                alert('시스템 초기화 오류: 필수 스크립트를 불러오지 못했습니다. 새로고침 해주세요.');
+                return;
+            }
+
+            // 2. API 초기화
+            try {
+                await api.initialize();
+            } catch (error) {
+                console.error('API 초기화 실패:', error);
+            }
+
+            // 3. 옵션 채우기
+            populateOptions();
+
+            // 4. 폼 제출 처리
+            document.getElementById('signupForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = {
+                    employeeId: document.getElementById('employeeId').value.trim(),
+                    password: document.getElementById('password').value,
+                    name: document.getElementById('name').value.trim(),
+                    department: document.getElementById('department').value,
+                    jobType: document.getElementById('jobType').value,
+                    position: document.getElementById('position').value,
+                    joinDate: `${document.getElementById('joinYear').value}-${document.getElementById('joinMonth').value.padStart(2, '0')}-01`
+                };
+
+                try {
+                    utils.showLoading('회원가입 처리 중...');
+
+                    // auth.register 호출 (auth.js에 구현되어 있다고 가정)
+                    await auth.register(formData);
+
+                    utils.hideLoading();
+                    alert('회원가입이 완료되었습니다. 로그인해주세요.');
+                    window.location.href = 'index.html';
+
+                } catch (error) {
+                    utils.hideLoading();
+                    utils.showAlert(error.message || '회원가입 실패', 'error');
+                }
+            });
+        });
+
+        function populateOptions() {
+            // 부서
             const deptSelect = document.getElementById('department');
             CONFIG.ORGANIZATION.DEPARTMENTS.forEach(dept => {
                 const option = document.createElement('option');
@@ -186,7 +232,16 @@
                 deptSelect.appendChild(option);
             });
 
-            // 직급 목록 로드
+            // 직종
+            const jobSelect = document.getElementById('jobType');
+            CONFIG.ORGANIZATION.JOB_TYPES.forEach(job => {
+                const option = document.createElement('option');
+                option.value = job;
+                option.textContent = job;
+                jobSelect.appendChild(option);
+            });
+
+            // 직위
             const posSelect = document.getElementById('position');
             CONFIG.ORGANIZATION.POSITIONS.forEach(pos => {
                 const option = document.createElement('option');
@@ -194,46 +249,7 @@
                 option.textContent = pos;
                 posSelect.appendChild(option);
             });
-
-            // 직군 목록 로드
-            const jobTypeSelect = document.getElementById('jobType');
-            if (CONFIG.ORGANIZATION.JOB_TYPES) {
-                CONFIG.ORGANIZATION.JOB_TYPES.forEach(type => {
-                    const option = document.createElement('option');
-                    option.value = type;
-                    option.textContent = type;
-                    jobTypeSelect.appendChild(option);
-                });
-            }
-
-            // 회원가입 처리
-            document.getElementById('signupForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const userData = {
-                    name: document.getElementById('name').value,
-                    employeeId: document.getElementById('employeeId').value,
-                    password: document.getElementById('password').value,
-                    department: document.getElementById('department').value,
-                    jobType: document.getElementById('jobType').value,
-                    position: document.getElementById('position').value,
-                    joinDate: `${document.getElementById('joinYear').value}-${document.getElementById('joinMonth').value}`
-                };
-
-                utils.showLoading('회원가입 처리 중...');
-
-                try {
-                    await auth.register(userData);
-                    utils.hideLoading();
-                    alert('회원가입이 완료되었습니다. 로그인해주세요.');
-                    window.location.href = 'index.html';
-                } catch (error) {
-                    utils.hideLoading();
-                    console.error('회원가입 실패:', error);
-                    alert('회원가입 실패: ' + error.message);
-                }
-            });
-        });
+        }
     </script>
 </body>
 
