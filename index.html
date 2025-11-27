@@ -87,7 +87,12 @@
 
       // 2. 이미 로그인되어 있는지 확인
       if (auth.restoreSession()) {
-        window.location.href = 'dashboard.html';
+        const currentUser = auth.getCurrentUser();
+        if (currentUser && currentUser.role === 'admin') {
+          window.location.href = 'admin/dashboard.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
         return;
       }
 
@@ -157,9 +162,13 @@
           utils.hideLoading();
           utils.showAlert(`환영합니다, ${user.name}님!`, 'success');
 
-          // 잠시 후 대시보드로 이동
+          // 잠시 후 대시보드로 이동 (관리자는 관리자 대시보드로)
           setTimeout(() => {
-            window.location.href = 'dashboard.html';
+            if (user.role === 'admin') {
+              window.location.href = 'admin/dashboard.html';
+            } else {
+              window.location.href = 'dashboard.html';
+            }
           }, 1000);
 
         } catch (error) {

@@ -103,6 +103,12 @@ function handleRequest(e) {
             case 'register':
                 result = handleRegister(requestData);
                 break;
+            case 'updateRole':
+                result = handleUpdateRole(requestData);
+                break;
+            case 'resetPassword':
+                result = handleResetPassword(requestData);
+                break;
             default:
                 result = {
                     status: 'error',
@@ -133,7 +139,7 @@ function handlePing() {
         status: 'ok',
         message: '강동어울림복지관 평가 시스템 API',
         timestamp: new Date().toISOString(),
-        version: '2.0.1'
+        version: '2.1.0'
     };
 }
 
@@ -452,6 +458,143 @@ function handleRegister(data) {
         return {
             status: 'error',
             message: '회원가입 처리 실패: ' + error.toString()
+        };
+    }
+}
+
+/**
+ * 권한 업데이트 처리
+ */
+function handleUpdateRole(data) {
+    const sheetName = '직원정보';
+    const employeeId = data.employeeId;
+    const newRole = data.newRole;
+
+    if (!employeeId || !newRole) {
+        return {
+            status: 'error',
+            message: '직원 ID와 새 권한이 필요합니다.'
+        };
+    }
+
+    // 권한 유효성 검사
+    const validRoles = ['admin', 'director', 'manager', 'staff'];
+    if (!validRoles.includes(newRole)) {
+        return {
+            status: 'error',
+            message: '유효하지 않은 권한입니다.'
+        };
+    }
+
+    try {
+        const ss = SpreadsheetApp.openById(SHEET_ID);
+        const sheet = ss.getSheetByName(sheetName);
+
+        if (!sheet) {
+            return {
+                status: 'error',
+                message: '직원정보 시트를 찾을 수 없습니다.'
+            };
+        }
+
+        const range = sheet.getDataRange();
+        const values = range.getValues();
+        const headers = values[0];
+
+        const idIndex = headers.indexOf('employee_id');
+        const roleIndex = headers.indexOf('role');
+
+        if (idIndex === -1 || roleIndex === -1) {
+            return {
+                status: 'error',
+                message: '필요한 컬럼을 찾을 수 없습니다.'
+            };
+        }
+
+        // 직원 찾기 및 권한 업데이트
+        for (let i = 1; i < values.length; i++) {
+            if (values[i][idIndex] === employeeId) {
+                sheet.getRange(i + 1, roleIndex + 1).setValue(newRole);
+                return {
+                    status: 'ok',
+                    message: '권한이 성공적으로 업데이트되었습니다.'
+                };
+            }
+        }
+
+        return {
+            status: 'error',
+            message: '해당 직원을 찾을 수 없습니다.'
+        };
+
+    } catch (error) {
+        return {
+            status: 'error',
+            message: '권한 업데이트 실패: ' + error.toString()
+        };
+    }
+}
+
+/**
+ * 비밀번호 재설정 처리
+ */
+function handleResetPassword(data) {
+    const sheetName = '직원정보';
+    const employeeId = data.employeeId;
+    const newPasswordHash = data.newPasswordHash;
+
+    if (!employeeId || !newPasswordHash) {
+        return {
+            status: 'error',
+            message: '직원 ID와 새 비밀번호 해시가 필요합니다.'
+        };
+    }
+
+    try {
+        const ss = SpreadsheetApp.openById(SHEET_ID);
+        const sheet = ss.getSheetByName(sheetName);
+
+        if (!sheet) {
+            return {
+                status: 'error',
+                message: '직원정보 시트를 찾을 수 없습니다.'
+            };
+        }
+
+        const range = sheet.getDataRange();
+        const values = range.getValues();
+        const headers = values[0];
+
+        const idIndex = headers.indexOf('employee_id');
+        const passwordIndex = headers.indexOf('password_hash');
+
+        if (idIndex === -1 || passwordIndex === -1) {
+            return {
+                status: 'error',
+                message: '필요한 컬럼을 찾을 수 없습니다.'
+            };
+        }
+
+        // 직원 찾기 및 비밀번호 업데이트
+        for (let i = 1; i < values.length; i++) {
+            if (values[i][idIndex] === employeeId) {
+                sheet.getRange(i + 1, passwordIndex + 1).setValue(newPasswordHash);
+                return {
+                    status: 'ok',
+                    message: '비밀번호가 성공적으로 재설정되었습니다.'
+                };
+            }
+        }
+
+        return {
+            status: 'error',
+            message: '해당 직원을 찾을 수 없습니다.'
+        };
+
+    } catch (error) {
+        return {
+            status: 'error',
+            message: '비밀번호 재설정 실패: ' + error.toString()
         };
     }
 }

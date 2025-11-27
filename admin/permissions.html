@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>직원 권한 관리 - 관리자</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .permissions-container {
+            max-width: 1200px;
+            margin: var(--spacing-xl) auto;
+            padding: var(--spacing-lg);
+        }
+
+        .permissions-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+        }
+
+        .permissions-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: var(--spacing-xl);
+        }
+
+        .permissions-header h1 {
+            margin: 0 0 var(--spacing-sm) 0;
+            font-size: var(--font-2xl);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .permissions-body {
+            padding: var(--spacing-xl);
+        }
+
+        .filter-section {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+        }
+
+        .filter-section input,
+        .filter-section select {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .role-badge {
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: var(--font-sm);
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .role-admin {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .role-director {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .role-manager {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .role-staff {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-xl);
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: var(--font-lg);
+        }
+
+        .modal-body {
+            padding: var(--spacing-xl);
+        }
+
+        .modal-footer {
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="global-loader" class="loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p class="loader-message">처리 중...</p>
+        </div>
+    </div>
+    <div id="alert-container"></div>
+
+    <div class="permissions-container">
+        <div style="margin-bottom: var(--spacing-lg);">
+            <a href="dashboard.html" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 대시보드로 돌아가기
+            </a>
+        </div>
+
+        <div class="permissions-card">
+            <div class="permissions-header">
+                <h1>
+                    <i class="fas fa-user-shield"></i>
+                    직원 권한 관리
+                </h1>
+                <p>직원의 시스템 권한을 설정하고 관리합니다</p>
+            </div>
+
+            <div class="permissions-body">
+                <div class="filter-section">
+                    <input type="text" id="searchInput" class="form-input" placeholder="이름 또는 사번으로 검색...">
+                    <select id="departmentFilter" class="form-select">
+                        <option value="">전체 부서</option>
+                    </select>
+                    <select id="roleFilter" class="form-select">
+                        <option value="">전체 권한</option>
+                        <option value="admin">시스템 관리자</option>
+                        <option value="director">관장/사무국장</option>
+                        <option value="manager">팀장</option>
+                        <option value="staff">팀원</option>
+                    </select>
+                    <button id="refreshBtn" class="btn btn-primary">
+                        <i class="fas fa-sync-alt"></i> 새로고침
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>사번</th>
+                                <th>이름</th>
+                                <th>부서</th>
+                                <th>직급</th>
+                                <th>현재 권한</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                            <!-- 데이터가 여기에 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 권한 수정 모달 -->
+    <div id="roleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-cog"></i> 권한 변경</h3>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editEmployeeId">
+
+                <div class="form-group">
+                    <label class="form-label">직원 정보</label>
+                    <div id="editEmployeeInfo"
+                        style="padding: var(--spacing-md); background: var(--gray-50); border-radius: var(--radius-md);">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editRole" class="form-label required">새 권한</label>
+                    <select id="editRole" class="form-select" required>
+                        <option value="staff">팀원 (staff)</option>
+                        <option value="manager">팀장 (manager)</option>
+                        <option value="director">관장/사무국장 (director)</option>
+                        <option value="admin">시스템 관리자 (admin)</option>
+                    </select>
+                    <small class="form-help">
+                        <strong>권한 설명:</strong><br>
+                        • 팀원: 본인 평가만 조회/입력<br>
+                        • 팀장: 본인 팀 평가 조회 가능<br>
+                        • 관장/사무국장: 전체 직원 평가 조회 가능<br>
+                        • 시스템 관리자: 모든 권한 + 시스템 관리
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">취소</button>
+                <button type="button" class="btn btn-primary" onclick="saveRole()">
+                    <i class="fas fa-check"></i> 변경
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        let allEmployees = [];
+        let filteredEmployees = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 관리자 권한 확인
+            if (!auth.checkPageAccess('admin')) {
+                return;
+            }
+
+            // 부서 목록 채우기
+            populateDepartments();
+
+            // 직원 목록 로드
+            await loadEmployees();
+
+            // 이벤트 리스너
+            document.getElementById('searchInput').addEventListener('input', filterEmployees);
+            document.getElementById('departmentFilter').addEventListener('change', filterEmployees);
+            document.getElementById('roleFilter').addEventListener('change', filterEmployees);
+            document.getElementById('refreshBtn').addEventListener('click', loadEmployees);
+        });
+
+        function populateDepartments() {
+            const select = document.getElementById('departmentFilter');
+            CONFIG.ORGANIZATION.DEPARTMENTS.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                select.appendChild(option);
+            });
+        }
+
+        async function loadEmployees() {
+            try {
+                utils.showLoading('직원 목록 로딩 중...');
+                const data = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
+
+                if (data && data.length > 1) {
+                    const headers = data[0];
+                    allEmployees = data.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header] = row[index];
+                        });
+                        return obj;
+                    });
+
+                    filteredEmployees = [...allEmployees];
+                    renderTable();
+                }
+
+                utils.hideLoading();
+            } catch (error) {
+                utils.hideLoading();
+                utils.showAlert('데이터 로드 실패: ' + error.message, 'error');
+            }
+        }
+
+        function filterEmployees() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const deptFilter = document.getElementById('departmentFilter').value;
+            const roleFilter = document.getElementById('roleFilter').value;
+
+            filteredEmployees = allEmployees.filter(emp => {
+                const matchSearch = !searchTerm ||
+                    (emp.name && emp.name.toLowerCase().includes(searchTerm)) ||
+                    (emp.employee_id && emp.employee_id.toLowerCase().includes(searchTerm));
+
+                const matchDept = !deptFilter || emp.department === deptFilter;
+                const matchRole = !roleFilter || emp.role === roleFilter;
+
+                return matchSearch && matchDept && matchRole;
+            });
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('employeeTableBody');
+            tbody.innerHTML = '';
+
+            if (filteredEmployees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: var(--spacing-xl); color: var(--gray-500);">검색 결과가 없습니다.</td></tr>';
+                return;
+            }
+
+            filteredEmployees.forEach(emp => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${emp.employee_id || '-'}</td>
+                    <td>${emp.name || '-'}</td>
+                    <td>${emp.department || '-'}</td>
+                    <td>${emp.position || '-'}</td>
+                    <td>${getRoleBadge(emp.role)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="openRoleModal('${emp.employee_id}', '${emp.name}', '${emp.role || 'staff'}', '${emp.department}', '${emp.position}')">
+                            <i class="fas fa-edit"></i> 권한 변경
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getRoleBadge(role) {
+            const roleMap = {
+                'admin': { label: '시스템 관리자', class: 'role-admin' },
+                'director': { label: '관장/사무국장', class: 'role-director' },
+                'manager': { label: '팀장', class: 'role-manager' },
+                'staff': { label: '팀원', class: 'role-staff' }
+            };
+
+            const roleInfo = roleMap[role] || roleMap['staff'];
+            return `<span class="role-badge ${roleInfo.class}">${roleInfo.label}</span>`;
+        }
+
+        window.openRoleModal = (id, name, role, department, position) => {
+            document.getElementById('editEmployeeId').value = id;
+            document.getElementById('editEmployeeInfo').innerHTML = `
+                <strong>${name}</strong> (${id})<br>
+                ${department} / ${position}
+            `;
+            document.getElementById('editRole').value = role || 'staff';
+
+            const modal = document.getElementById('roleModal');
+            modal.classList.add('active');
+        };
+
+        function closeRoleModal() {
+            document.getElementById('roleModal').classList.remove('active');
+        }
+
+        async function saveRole() {
+            const employeeId = document.getElementById('editEmployeeId').value;
+            const newRole = document.getElementById('editRole').value;
+
+            if (!confirm('정말 이 직원의 권한을 변경하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                utils.showLoading('권한 변경 중...');
+
+                await api.updateRow(
+                    CONFIG.SHEET_NAMES.EMPLOYEES,
+                    'employee_id',
+                    employeeId,
+                    { role: newRole }
+                );
+
+                utils.hideLoading();
+                utils.showAlert('권한이 성공적으로 변경되었습니다.', 'success');
+                closeRoleModal();
+                await loadEmployees();
+
+            } catch (error) {
+                utils.hideLoading();
+                utils.showAlert('권한 변경 실패: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

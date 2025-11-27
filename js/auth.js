@@ -172,12 +172,17 @@ class AuthManager {
     /**
      * 특정 직원의 평가를 볼 수 있는지 확인
      * @param {Object} targetUser - 대상 직원 정보 (employee_id, department 등)
+     * @param {string} evaluationType - 평가 유형 ('comprehensive', 'performance', 'competency', etc.)
      */
-    canViewEvaluation(targetUser) {
+    canViewEvaluation(targetUser, evaluationType = null) {
         if (!this.currentUser) return false;
 
         // 1. 본인인 경우
         if (this.currentUser.employeeId === targetUser.employee_id) {
+            // 종합평가는 본인도 볼 수 없음
+            if (evaluationType === 'comprehensive') {
+                return false;
+            }
             return true;
         }
 
@@ -192,6 +197,45 @@ class AuthManager {
         }
 
         return false;
+    }
+
+    /**
+     * 종합평가 조회 권한 확인
+     * @param {Object} targetUser - 대상 직원 정보
+     */
+    canViewComprehensiveEvaluation(targetUser) {
+        if (!this.currentUser) return false;
+
+        // 본인의 종합평가는 절대 볼 수 없음
+        if (this.currentUser.employeeId === targetUser.employee_id) {
+            return false;
+        }
+
+        // 관리자, 관장, 사무국장만 타인의 종합평가 조회 가능
+        if (this.isAdmin() || this.isDirector()) {
+            return true;
+        }
+
+        // 팀장은 본인 팀원의 종합평가 조회 가능
+        if (this.isManager() && this.currentUser.department === targetUser.department) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 비밀번호 재설정 권한 확인 (관리자만)
+     */
+    canResetPassword() {
+        return this.isAdmin();
+    }
+
+    /**
+     * 권한 관리 권한 확인 (관리자만)
+     */
+    canManagePermissions() {
+        return this.isAdmin();
     }
 
     /**
