@@ -163,7 +163,7 @@ const CONFIG = {
   /**
    * 디버그 모드 (개발 시에만 true로 설정)
    */
-  DEBUG: true,
+  DEBUG: false,
 
   /**
    * 모의 데이터 사용 여부 (개발/테스트용)
