@@ -34,21 +34,140 @@
           </div>
 
           <div class="form-check">
+            <input type="checkbox" id="rememberMe" name="rememberMe" class="form-check-input">
+            <label for="rememberMe" class="form-check-label">
+              로그인 상태 유지
+            </label>
+          </div>
 
-            // Enter 키로 로그인
-            const passwordInput = document.getElementById('password');
-            if (passwordInput) {
-            passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-            e.preventDefault();
-            const loginForm = document.getElementById('loginForm');
-            if (loginForm) {
-            loginForm.dispatchEvent(new Event('submit'));
-            }
-            }
-            });
-            }
-            </script>
+          <button type="submit" class="btn btn-primary login-button">
+            로그인
+          </button>
+          <div
+            style="margin-top: var(--spacing-md); text-align: center; display: flex; flex-direction: column; gap: 8px;">
+            <a href="#" id="toggleLoginMode" class="text-secondary"
+              style="text-decoration: none; font-size: var(--font-sm);">관리자 로그인</a>
+            <a href="signup.html" class="text-primary" style="text-decoration: none; font-size: var(--font-sm);">계정이
+              없으신가요? 회원가입</a>
+          </div>
+        </form>
+      </div>
+      <div class="login-footer">
+        &copy; 2024 강동어울림복지관. All rights reserved.
+      </div>
+    </div>
+  </div>
+
+  <!-- 로딩 스피너 -->
+  <div id="loader" class="loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <div class="loader-message">처리 중...</div>
+    </div>
+  </div>
+
+  <!-- 알림 컨테이너 -->
+  <div id="alert-container"></div>
+
+  <script src="js/config.js?v=3"></script>
+  <script src="js/utils.js?v=3"></script>
+  <script src="js/api.js?v=3"></script>
+  <script src="js/auth.js?v=3"></script>
+
+  <script>
+    // 페이지 로드 시
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. 필수 라이브러리 로드 확인
+      if (typeof CONFIG === 'undefined' || typeof utils === 'undefined' || typeof api === 'undefined' || typeof auth === 'undefined') {
+        console.error('필수 스크립트가 로드되지 않았습니다.');
+        alert('시스템 초기화 오류: 필수 스크립트를 불러오지 못했습니다. 새로고침 해주세요.');
+        return;
+      }
+
+      // 2. 이미 로그인되어 있는지 확인
+      if (auth.restoreSession()) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // 3. Google Sheets API 초기화
+      try {
+        await api.initialize();
+        console.log('✅ API 초기화 완료 (v' + (CONFIG.VERSION || 'unknown') + ')');
+      } catch (error) {
+        console.error('❌ API 초기화 실패:', error);
+        // 사용자에게 더 친절한 메시지 표시
+        utils.showAlert(
+          '서버 연결에 실패했습니다. (Google Apps Script 배포 설정을 확인해주세요)',
+          'error'
+        );
+      }
+    });
+
+    // 로그인 모드 관리
+    let loginMode = 'name'; // 'name' or 'id'
+    const toggleBtn = document.getElementById('toggleLoginMode');
+    const nameLabel = document.querySelector('label[for="name"]');
+    const nameInput = document.getElementById('name');
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        if (loginMode === 'name') {
+          // 관리자 모드로 전환
+          loginMode = 'id';
+          nameLabel.textContent = '아이디';
+          nameInput.placeholder = '아이디를 입력하세요';
+          nameInput.setAttribute('autocomplete', 'username');
+          toggleBtn.textContent = '직원 로그인';
+        } else {
+          // 직원 모드로 전환
+          loginMode = 'name';
+          nameLabel.textContent = '이름';
+          nameInput.placeholder = '이름을 입력하세요';
+          nameInput.setAttribute('autocomplete', 'username');
+          toggleBtn.textContent = '관리자 로그인';
+        }
+      });
+    }
+
+    // 로그인 폼 제출 처리
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const identifier = document.getElementById('name').value.trim();
+        const password = document.getElementById('password').value;
+        const rememberMe = document.getElementById('rememberMe').checked;
+
+        if (!identifier || !password) {
+          utils.showAlert('이름(아이디)과 비밀번호를 모두 입력해주세요.', 'warning');
+          return;
+        }
+
+        try {
+          utils.showLoading('로그인 중...');
+
+          // 로그인 시도 (모드에 따라 처리)
+          const user = await auth.login(identifier, password, loginMode);
+
+          utils.hideLoading();
+          utils.showAlert(`환영합니다, ${user.name}님!`, 'success');
+
+          // 잠시 후 대시보드로 이동
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+
+        } catch (error) {
+          utils.hideLoading();
+          utils.showAlert(error.message, 'error');
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>
