@@ -10,21 +10,21 @@ class AuthManager {
 
     /**
      * 로그인
-     * @param {string} employeeId - 직원 ID
+     * @param {string} name - 이름
      * @param {string} password - 비밀번호
      * @returns {Promise<Object>} 사용자 정보
      */
-    async login(employeeId, password) {
+    async login(name, password) {
         try {
             // Google Sheets에서 직원 정보 조회
             const employee = await api.findRow(
                 CONFIG.SHEET_NAMES.EMPLOYEES,
-                'employee_id',
-                employeeId
+                'name',
+                name
             );
 
             if (!employee) {
-                throw new Error('존재하지 않는 직원 ID입니다.');
+                throw new Error('존재하지 않는 사용자입니다.');
             }
 
             // 비밀번호 검증
