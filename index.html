@@ -114,238 +114,121 @@
               placeholder="직원 ID를 입력하세요" required autocomplete="username">
           </div>
 
-          <!DOCTYPE html>
-          <html lang="ko">
+          <div class="form-group">
+            <label for="password" class="form-label required">비밀번호</label>
+            <input type="password" id="password" name="password" class="form-input login-input"
+              placeholder="비밀번호를 입력하세요" required autocomplete="current-password">
+          </div>
 
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta name="description" content="강동어울림복지관 직원 평가 시스템">
-            <title>강동어울림복지관 평가 시스템 - 로그인</title>
+          <div class="form-check">
+            <input type="checkbox" id="rememberMe" name="rememberMe" class="form-check-input">
+            <label for="rememberMe" class="form-check-label">
+              로그인 상태 유지
+            </label>
+          </div>
 
-            <!-- Google Fonts -->
-            <link rel="preconnect" href="https://fonts.googleapis.com">
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
-              rel="stylesheet">
+          <button type="submit" class="btn btn-primary login-button">
+            로그인
+          </button>
+          <div style="margin-top: var(--spacing-md); text-align: center;">
+            <a href="signup.html" class="text-primary" style="text-decoration: none; font-size: var(--font-sm);">계정이
+              없으신가요? 회원가입</a>
+          </div>
+        </form>
+      </div>
+      <div class="login-footer">
+        &copy; 2024 강동어울림복지관. All rights reserved.
+      </div>
+    </div>
+  </div>
 
-            <!-- Stylesheets -->
-            <link rel="stylesheet" href="css/main.css">
+  <script src="js/config.js?v=3"></script>
+  <script src="js/utils.js?v=3"></script>
+  <script src="js/api.js?v=3"></script>
+  <script src="js/auth.js?v=3"></script>
 
-            <style>
-              .login-container {
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: var(--spacing-lg);
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              }
+  <script>
+    // 페이지 로드 시
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. 필수 라이브러리 로드 확인
+      if (typeof CONFIG === 'undefined' || typeof utils === 'undefined' || typeof api === 'undefined' || typeof auth === 'undefined') {
+        console.error('필수 스크립트가 로드되지 않았습니다.');
+        alert('시스템 초기화 오류: 필수 스크립트를 불러오지 못했습니다. 새로고침 해주세요.');
+        return;
+      }
 
-              .login-card {
-                width: 100%;
-                max-width: 450px;
-                background: white;
-                border-radius: var(--radius-xl);
-                box-shadow: var(--shadow-xl);
-                overflow: hidden;
-              }
+      // 2. 이미 로그인되어 있는지 확인
+      if (auth.restoreSession()) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
 
-              .login-header {
-                padding: var(--spacing-2xl) var(--spacing-xl);
-                background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-                color: white;
-                text-align: center;
-              }
+      // 3. Google Sheets API 초기화
+      try {
+        await api.initialize();
+        console.log('✅ API 초기화 완료 (v' + (CONFIG.VERSION || 'unknown') + ')');
+      } catch (error) {
+        console.error('❌ API 초기화 실패:', error);
+        utils.showAlert(
+          'Google Sheets 연결에 실패했습니다. 설정을 확인해주세요. (docs/SETUP_GUIDE.md 참조)',
+          'error'
+        );
+      }
 
-              .login-header h1 {
-                font-size: var(--font-2xl);
-                font-weight: 700;
-                margin-bottom: var(--spacing-sm);
-                color: white;
-              }
+      // 4. 로그인 폼 이벤트 리스너 등록 (DOM이 준비된 후 실행)
+      const loginForm = document.getElementById('loginForm');
+      if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+          e.preventDefault(); // 폼 기본 제출 방지 (GET 요청 방지)
 
-              .login-header p {
-                font-size: var(--font-sm);
-                opacity: 0.9;
-                margin: 0;
-              }
+          const employeeId = document.getElementById('employeeId').value.trim();
+          const password = document.getElementById('password').value;
 
-              .login-body {
-                padding: var(--spacing-2xl) var(--spacing-xl);
-              }
+          // 유효성 검사
+          if (!employeeId || !password) {
+            utils.showAlert('직원 ID와 비밀번호를 입력해주세요.', 'warning');
+            return;
+          }
 
-              .login-form .form-group {
-                margin-bottom: var(--spacing-lg);
-              }
+          try {
+            utils.showLoading('로그인 중...');
 
-              .login-input {
-                padding: var(--spacing-md);
-                font-size: var(--font-md);
-              }
+            // 로그인 시도
+            await auth.login(employeeId, password);
 
-              .login-button {
-                width: 100%;
-                padding: var(--spacing-md);
-                font-size: var(--font-lg);
-                margin-top: var(--spacing-md);
-              }
+            utils.hideLoading();
+            utils.showAlert(`환영합니다, ${auth.getCurrentUser().name}님!`, 'success');
 
-              .login-footer {
-                padding: var(--spacing-lg) var(--spacing-xl);
-                background: var(--gray-50);
-                text-align: center;
-                font-size: var(--font-sm);
-                color: var(--text-secondary);
-              }
-            </style>
-          </head>
+            // 대시보드로 이동
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 500);
 
-          <body>
-            <!-- 로딩 스피너 -->
-            <div id="global-loader" class="loader">
-              <div class="loader-content">
-                <div class="spinner"></div>
-                <p class="loader-message">처리 중...</p>
-              </div>
-            </div>
+          } catch (error) {
+            utils.hideLoading();
+            utils.showAlert(error.message || '로그인에 실패했습니다.', 'error');
+            console.error('로그인 에러:', error);
+          }
+        });
+      } else {
+        console.error('로그인 폼 요소를 찾을 수 없습니다.');
+      }
+    });
 
-            <!-- 알림 컨테이너 -->
-            <div id="alert-container"></div>
+    // Enter 키로 로그인
+    const passwordInput = document.getElementById('password');
+    if (passwordInput) {
+      passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const loginForm = document.getElementById('loginForm');
+          if (loginForm) {
+            loginForm.dispatchEvent(new Event('submit'));
+          }
+        }
+      });
+    }
+  </script>
+</body>
 
-            <!-- 로그인 컨테이너 -->
-            <div class="login-container">
-              <div class="login-card">
-                <!-- 헤더 -->
-                <div class="login-header">
-                  <h1>강동어울림복지관</h1>
-                  <p>통합 근무평정 체계</p>
-                </div>
-
-                <!-- 로그인 폼 -->
-                <div class="login-body">
-                  <form id="loginForm" class="login-form">
-                    <div class="form-group">
-                      <label for="employeeId" class="form-label required">직원 ID</label>
-                      <input type="text" id="employeeId" name="employeeId" class="form-input login-input"
-                        placeholder="직원 ID를 입력하세요" required autocomplete="username">
-                    </div>
-
-                    <div class="form-group">
-                      <label for="password" class="form-label required">비밀번호</label>
-                      <input type="password" id="password" name="password" class="form-input login-input"
-                        placeholder="비밀번호를 입력하세요" required autocomplete="current-password">
-                    </div>
-
-                    <div class="form-check">
-                      <input type="checkbox" id="rememberMe" name="rememberMe" class="form-check-input">
-                      <label for="rememberMe" class="form-check-label">
-                        로그인 상태 유지
-                      </label>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary login-button">
-                      로그인
-                    </button>
-                    <div style="margin-top: var(--spacing-md); text-align: center;">
-                      <a href="signup.html" class="text-primary"
-                        style="text-decoration: none; font-size: var(--font-sm);">계정이 없으신가요? 회원가입</a>
-                    </div>
-                  </form>
-                </div>
-                <div class="login-footer">
-                  &copy; 2024 강동어울림복지관. All rights reserved.
-                </div>
-              </div>
-            </div>
-
-            <script src="js/config.js?v=3"></script>
-            <script src="js/utils.js?v=3"></script>
-            <script src="js/api.js?v=3"></script>
-            <script src="js/auth.js?v=3"></script>
-
-            <script>
-              // 페이지 로드 시
-              document.addEventListener('DOMContentLoaded', async () => {
-                // 1. 필수 라이브러리 로드 확인
-                if (typeof CONFIG === 'undefined' || typeof utils === 'undefined' || typeof api === 'undefined' || typeof auth === 'undefined') {
-                  console.error('필수 스크립트가 로드되지 않았습니다.');
-                  alert('시스템 초기화 오류: 필수 스크립트를 불러오지 못했습니다. 새로고침 해주세요.');
-                  return;
-                }
-
-                // 2. 이미 로그인되어 있는지 확인
-                if (auth.restoreSession()) {
-                  window.location.href = 'dashboard.html';
-                  return;
-                }
-
-                // 3. Google Sheets API 초기화
-                try {
-                  await api.initialize();
-                  console.log('✅ API 초기화 완료 (v' + (CONFIG.VERSION || 'unknown') + ')');
-                } catch (error) {
-                  console.error('❌ API 초기화 실패:', error);
-                  utils.showAlert(
-                    'Google Sheets 연결에 실패했습니다. 설정을 확인해주세요. (docs/SETUP_GUIDE.md 참조)',
-                    'error'
-                  );
-                }
-
-                // 4. 로그인 폼 이벤트 리스너 등록 (DOM이 준비된 후 실행)
-                const loginForm = document.getElementById('loginForm');
-                if (loginForm) {
-                  loginForm.addEventListener('submit', async (e) => {
-                    e.preventDefault(); // 폼 기본 제출 방지 (GET 요청 방지)
-
-                    const employeeId = document.getElementById('employeeId').value.trim();
-                    const password = document.getElementById('password').value;
-
-                    // 유효성 검사
-                    if (!employeeId || !password) {
-                      utils.showAlert('직원 ID와 비밀번호를 입력해주세요.', 'warning');
-                      return;
-                    }
-
-                    try {
-                      utils.showLoading('로그인 중...');
-
-                      // 로그인 시도
-                      await auth.login(employeeId, password);
-
-                      utils.hideLoading();
-                      utils.showAlert(`환영합니다, ${auth.getCurrentUser().name}님!`, 'success');
-
-                      // 대시보드로 이동
-                      setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                      }, 500);
-
-                    } catch (error) {
-                      utils.hideLoading();
-                      utils.showAlert(error.message || '로그인에 실패했습니다.', 'error');
-                      console.error('로그인 에러:', error);
-                    }
-                  });
-                } else {
-                  console.error('로그인 폼 요소를 찾을 수 없습니다.');
-                }
-              });
-
-              // Enter 키로 로그인
-              const passwordInput = document.getElementById('password');
-              if (passwordInput) {
-                passwordInput.addEventListener('keypress', (e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const loginForm = document.getElementById('loginForm');
-                    if (loginForm) {
-                      loginForm.dispatchEvent(new Event('submit'));
-                    }
-                  }
-                });
-              }
-            </script>
-          </body>
-
-          </html>
+</html>
