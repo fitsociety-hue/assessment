@@ -31,11 +31,145 @@
                 <h1 class="card-title">성과평가</h1>
                 <p class="card-subtitle">양적/질적 목표 달성도 및 조직 기여도를 평가합니다.</p>
             </div>
-            input.addEventListener('input', calculateTotal);
-            });
-            }
 
-            function calculateTotal() {
+            <form id="performanceForm" class="card-body">
+                <input type="hidden" name="evaluation_id">
+                <input type="hidden" name="employee_id">
+                <input type="hidden" name="evaluator_id">
+
+                <div class="form-group">
+                    <label for="period" class="form-label required">평가 기간</label>
+                    <input type="text" id="period" name="period" class="form-input" placeholder="예: 2024-상반기" required>
+                </div>
+
+                <!-- 정량 평가 -->
+                <div class="card evaluation-section" style="margin-bottom: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h3 class="card-title">정량 평가</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">업무량 (0-10점)</label>
+                            <input type="number" name="quantitative_workload" class="form-input" min="0" max="10"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">목표 달성도 (0-10점)</label>
+                            <input type="number" name="quantitative_achievement" class="form-input" min="0" max="10"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">적시성 (0-5점)</label>
+                            <input type="number" name="quantitative_timeliness" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 정성 평가 -->
+                <div class="card evaluation-section" style="margin-bottom: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h3 class="card-title">정성 평가</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">정확성 (0-5점)</label>
+                            <input type="number" name="qualitative_accuracy" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">창의성 (0-5점)</label>
+                            <input type="number" name="qualitative_creativity" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">전문성 (0-5점)</label>
+                            <input type="number" name="qualitative_expertise" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">만족도 (0-5점)</label>
+                            <input type="number" name="qualitative_satisfaction" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 기여도 -->
+                <div class="card evaluation-section" style="margin-bottom: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h3 class="card-title">기여도</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">프로그램 기여 (0-5점)</label>
+                            <input type="number" name="contribution_program" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">자원 연계 (0-5점)</label>
+                            <input type="number" name="contribution_resources" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">조직 기여 (0-5점)</label>
+                            <input type="number" name="contribution_organization" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">지식 공유 (0-5점)</label>
+                            <input type="number" name="contribution_knowledge" class="form-input" min="0" max="5"
+                                step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 감점 -->
+                <div class="card evaluation-section" style="margin-bottom: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h3 class="card-title">감점</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">지각 (회당 0.5점)</label>
+                            <input type="number" name="deduction_tardiness" class="form-input" min="0" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">결근 (회당 1점)</label>
+                            <input type="number" name="deduction_absence" class="form-input" min="0" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>총점: <span id="totalScore">0</span>점</strong>
+                </div>
+
+                <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
+                    <button type="submit" class="btn btn-primary">💾 저장</button>
+                    <button type="button" class="btn btn-success" id="submitBtn">✅ 제출</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage();
+            setupAutoCalculation();
+        });
+
+        function setupAutoCalculation() {
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('input', calculateTotal);
+            });
+        }
+
+        function calculateTotal() {
             const form = document.getElementById('performanceForm');
             const data = utils.formToObject(form);
 
@@ -56,66 +190,72 @@
 
             document.getElementById('totalScore').textContent = total.toFixed(1);
             return total;
-            }
+        }
 
-            async function loadExistingEvaluation() {
+        async function loadExistingEvaluation() {
             const user = auth.getCurrentUser();
             const period = document.getElementById('period').value;
 
+            if (!period) return;
+
             try {
-            const evaluations = await api.findRows(
-            CONFIG.SHEET_NAMES.PERFORMANCE,
-            row => row.evaluator_id === user.employeeId && row.period === period
-            );
+                const evaluations = await api.findRows(
+                    CONFIG.SHEET_NAMES.PERFORMANCE,
+                    row => row.evaluator_id === user.employeeId && row.period === period
+                );
 
-            if (evaluations.length > 0) {
-            utils.objectToForm(document.getElementById('performanceForm'), evaluations[0]);
-            calculateTotal();
-            }
+                if (evaluations.length > 0) {
+                    utils.objectToForm(document.getElementById('performanceForm'), evaluations[0]);
+                    calculateTotal();
+                }
             } catch (error) {
-            console.error('데이터 로드 실패:', error);
+                console.error('데이터 로드 실패:', error);
             }
-            }
+        }
 
-            document.getElementById('performanceForm').addEventListener('submit', async (e) => {
+        document.getElementById('period').addEventListener('change', loadExistingEvaluation);
+
+        document.getElementById('performanceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             try {
-            utils.showLoading('저장 중...');
+                utils.showLoading('저장 중...');
 
-            const formData = utils.formToObject(e.target);
-            const user = auth.getCurrentUser();
+                const formData = utils.formToObject(e.target);
+                const user = auth.getCurrentUser();
 
-            formData.evaluator_id = user.employeeId;
-            formData.total_score = calculateTotal();
-            formData.updated_at = utils.getCurrentTimestamp();
+                formData.evaluator_id = user.employeeId;
+                formData.total_score = calculateTotal();
+                formData.updated_at = utils.getCurrentTimestamp();
 
-            if (!formData.evaluation_id) {
-            formData.evaluation_id = api.generateId('PERF_');
-            formData.created_at = utils.getCurrentTimestamp();
-            await api.appendRow(CONFIG.SHEET_NAMES.PERFORMANCE, formData);
-            } else {
-            await api.updateRow(
-            CONFIG.SHEET_NAMES.PERFORMANCE,
-            'evaluation_id',
-            formData.evaluation_id,
-            formData
-            );
-            }
+                if (!formData.evaluation_id) {
+                    formData.evaluation_id = api.generateId('PERF_');
+                    formData.created_at = utils.getCurrentTimestamp();
+                    await api.appendRow(CONFIG.SHEET_NAMES.PERFORMANCE, formData);
+                } else {
+                    await api.updateRow(
+                        CONFIG.SHEET_NAMES.PERFORMANCE,
+                        'evaluation_id',
+                        formData.evaluation_id,
+                        formData
+                    );
+                }
 
-            utils.hideLoading();
-            utils.showAlert('성과평가가 저장되었습니다.', 'success');
+                utils.hideLoading();
+                utils.showAlert('성과평가가 저장되었습니다.', 'success');
+
+                await loadExistingEvaluation();
 
             } catch (error) {
-            utils.hideLoading();
-            utils.showAlert('저장 실패: ' + error.message, 'error');
+                utils.hideLoading();
+                utils.showAlert('저장 실패: ' + error.message, 'error');
             }
-            });
+        });
 
-            document.getElementById('submitBtn').addEventListener('click', () => {
+        document.getElementById('submitBtn').addEventListener('click', () => {
             document.getElementById('performanceForm').dispatchEvent(new Event('submit'));
-            });
-            </script>
+        });
+    </script>
 </body>
 
 </html>

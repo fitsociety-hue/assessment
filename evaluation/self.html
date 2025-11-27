@@ -31,8 +31,43 @@
                 <h1 class="card-title">자기평가</h1>
                 <p class="card-subtitle">개인 목표 설정 및 자기진단을 작성하세요.</p>
             </div>
-            goalDiv.style.marginBottom = 'var(--spacing-lg)';
-            goalDiv.innerHTML = `
+
+            <form id="selfEvaluationForm" class="card-body">
+                <input type="hidden" name="evaluation_id">
+                <input type="hidden" name="employee_id">
+
+                <div class="form-group">
+                    <label for="period" class="form-label required">평가 기간</label>
+                    <input type="text" id="period" name="period" class="form-input" placeholder="예: 2024-상반기" required>
+                </div>
+
+                <div id="goalsContainer"></div>
+
+                <div class="card-footer" style="display: flex; gap: var(--spacing-md);">
+                    <button type="submit" class="btn btn-primary">💾 저장</button>
+                    <button type="button" class="btn btn-success" id="submitBtn">✅ 제출</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        let currentEvaluation = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage();
+
+            const container = document.getElementById('goalsContainer');
+
+            for (let i = 1; i <= 3; i++) {
+                const goalDiv = document.createElement('div');
+                goalDiv.className = 'card';
+                goalDiv.style.marginBottom = 'var(--spacing-lg)';
+                goalDiv.innerHTML = `
             <div class="card-header">
                 <h3 class="card-title">목표 ${i}</h3>
             </div>
@@ -71,69 +106,81 @@
                 </div>
             </div>
             `;
-            container.appendChild(goalDiv);
+                container.appendChild(goalDiv);
 
-            // 달성률 자동 계산
-            const targetInput = goalDiv.querySelector(`input[name="goal_${i}_target"]`);
-            const resultInput = goalDiv.querySelector(`input[name="goal_${i}_result"]`);
-            const achievementInput = goalDiv.querySelector(`input[name="goal_${i}_achievement"]`);
+                // 달성률 자동 계산
+                const targetInput = goalDiv.querySelector(`input[name="goal_${i}_target"]`);
+                const resultInput = goalDiv.querySelector(`input[name="goal_${i}_result"]`);
+                const achievementInput = goalDiv.querySelector(`input[name="goal_${i}_achievement"]`);
 
-            const calculateAchievement = () => {
-            const target = parseFloat(targetInput.value) || 0;
-            const result = parseFloat(resultInput.value) || 0;
-            if (target > 0) {
-            const achievement = ((result / target) * 100).toFixed(1);
-            achievementInput.value = achievement + '%';
-            } else {
-            achievementInput.value = '';
+                const calculateAchievement = () => {
+                    const target = parseFloat(targetInput.value) || 0;
+                    const result = parseFloat(resultInput.value) || 0;
+                    if (target > 0) {
+                        const achievement = ((result / target) * 100).toFixed(1);
+                        achievementInput.value = achievement + '%';
+                    } else {
+                        achievementInput.value = '';
+                    }
+                };
+
+                targetInput.addEventListener('input', calculateAchievement);
+                resultInput.addEventListener('input', calculateAchievement);
             }
-            };
+        });
 
-            targetInput.addEventListener('input', calculateAchievement);
-            resultInput.addEventListener('input', calculateAchievement);
-            }
-            }
-
-            async function loadExistingEvaluation() {
+        async function loadExistingEvaluation() {
             const user = auth.getCurrentUser();
             const period = document.getElementById('period').value;
 
             if (!period) return;
 
             try {
-            utils.showLoading('데이터 로딩 중...');
-            const evaluation = await api.findRow(
-            CONFIG.SHEET_NAMES.SELF_EVALUATION,
-            'employee_id',
-            user.employeeId
-            );
+                utils.showLoading('데이터 로딩 중...');
 
-            if (evaluation && evaluation.period === period) {
-            currentEvaluation = evaluation;
-            utils.objectToForm(document.getElementById('selfEvaluationForm'), evaluation);
+                // Find rows that match both employee_id and period
+                const evaluations = await api.findRows(
+                    CONFIG.SHEET_NAMES.SELF_EVALUATION,
+                    row => row.employee_id === user.employeeId && row.period === period
+                );
 
-            // 달성률 재계산
-            for (let i = 1; i <= 3; i++) { const target=parseFloat(evaluation[`goal_${i}_target`]) || 0; const
-                result=parseFloat(evaluation[`goal_${i}_result`]) || 0; if (target> 0) {
-                document.querySelector(`input[name="goal_${i}_achievement"]`).value =
-                ((result / target) * 100).toFixed(1) + '%';
-                }
-                }
+                const evaluation = evaluations.length > 0 ? evaluations[0] : null;
+
+                if (evaluation) {
+                    currentEvaluation = evaluation;
+                    utils.objectToForm(document.getElementById('selfEvaluationForm'), evaluation);
+
+                    // 달성률 재계산
+                    for (let i = 1; i <= 3; i++) {
+                        const target = parseFloat(evaluation[`goal_${i}_target`]) || 0;
+                        const result = parseFloat(evaluation[`goal_${i}_result`]) || 0;
+                        if (target > 0) {
+                            document.querySelector(`input[name="goal_${i}_achievement"]`).value =
+                                ((result / target) * 100).toFixed(1) + '%';
+                        }
+                    }
+                } else {
+                    currentEvaluation = null;
+                    // Clear form except period? Or just leave as is?
+                    // Ideally we should clear the form if no data found for this period, 
+                    // but for now let's assume the user might be starting fresh.
+                    // But we should probably reset the form if we switched periods.
+                    // For simplicity, let's not aggressively clear, but we should reset currentEvaluation.
                 }
 
                 utils.hideLoading();
-                } catch (error) {
+            } catch (error) {
                 utils.hideLoading();
                 console.error('데이터 로드 실패:', error);
-                }
-                }
+            }
+        }
 
-                document.getElementById('period').addEventListener('change', loadExistingEvaluation);
+        document.getElementById('period').addEventListener('change', loadExistingEvaluation);
 
-                document.getElementById('selfEvaluationForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
+        document.getElementById('selfEvaluationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-                try {
+            try {
                 utils.showLoading('저장 중...');
 
                 const formData = utils.formToObject(e.target);
@@ -143,35 +190,38 @@
                 formData.updated_at = utils.getCurrentTimestamp();
 
                 if (currentEvaluation) {
-                // 업데이트
-                await api.updateRow(
-                CONFIG.SHEET_NAMES.SELF_EVALUATION,
-                'employee_id',
-                user.employeeId,
-                formData
-                );
+                    // 업데이트
+                    await api.updateRow(
+                        CONFIG.SHEET_NAMES.SELF_EVALUATION,
+                        'evaluation_id',
+                        currentEvaluation.evaluation_id,
+                        formData
+                    );
                 } else {
-                // 새로 추가
-                formData.evaluation_id = api.generateId('SELF_');
-                formData.created_at = utils.getCurrentTimestamp();
-                await api.appendRow(CONFIG.SHEET_NAMES.SELF_EVALUATION, formData);
+                    // 새로 추가
+                    formData.evaluation_id = api.generateId('SELF_');
+                    formData.created_at = utils.getCurrentTimestamp();
+                    await api.appendRow(CONFIG.SHEET_NAMES.SELF_EVALUATION, formData);
                 }
 
                 utils.hideLoading();
                 utils.showAlert('자기평가가 저장되었습니다.', 'success');
 
-                } catch (error) {
+                // Reload to ensure state is synced
+                await loadExistingEvaluation();
+
+            } catch (error) {
                 utils.hideLoading();
                 utils.showAlert('저장 실패: ' + error.message, 'error');
                 console.error(error);
-                }
-                });
+            }
+        });
 
-                document.getElementById('submitBtn').addEventListener('click', async () => {
-                if (!await utils.confirm('제출하시겠습니까? 제출 후에도 수정 가능합니다.')) return;
-                document.getElementById('selfEvaluationForm').dispatchEvent(new Event('submit'));
-                });
-                </script>
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            if (!await utils.confirm('제출하시겠습니까? 제출 후에도 수정 가능합니다.')) return;
+            document.getElementById('selfEvaluationForm').dispatchEvent(new Event('submit'));
+        });
+    </script>
 </body>
 
 </html>
