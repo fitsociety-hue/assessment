@@ -258,6 +258,23 @@ class AuthManager {
             // 비밀번호 해시
             const passwordHash = this._hashPassword(userData.password);
 
+            // 클라이언트 측 중복 검사 (UX 향상)
+            try {
+                const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
+                const isDuplicate = employees.some(emp =>
+                    emp.name === userData.name &&
+                    emp.department === userData.department &&
+                    emp.join_date === userData.joinDate
+                );
+
+                if (isDuplicate) {
+                    throw new Error('이미 가입된 사용자입니다. (이름, 부서, 입사일 중복)');
+                }
+            } catch (readError) {
+                // 읽기 실패해도 가입 시도는 계속 진행 (서버 측에서 다시 검증하므로)
+                console.warn('중복 검사 중 오류 (무시됨):', readError);
+            }
+
             // 전송할 데이터 준비
             const dataToSend = {
                 ...userData,

@@ -386,13 +386,41 @@ function handleRegister(data) {
             };
         }
 
-        // 중복 ID 확인
-        for (let i = 1; i < values.length; i++) {
-            if (values[i][idIndex] === userData.employeeId) {
-                return {
-                    status: 'error',
-                    message: '이미 존재하는 아이디입니다.'
-                };
+        // 중복 가입 확인 (이름 + 부서 + 입사일)
+        const nameIndex = headers.indexOf('name');
+        const deptIndex = headers.indexOf('department');
+        const joinDateIndex = headers.indexOf('join_date');
+
+        if (nameIndex === -1 || deptIndex === -1 || joinDateIndex === -1) {
+            // 컬럼이 없으면 ID 중복만 체크 (하위 호환성)
+            for (let i = 1; i < values.length; i++) {
+                if (values[i][idIndex] === userData.employeeId) {
+                    return {
+                        status: 'error',
+                        message: '이미 존재하는 아이디입니다.'
+                    };
+                }
+            }
+        } else {
+            for (let i = 1; i < values.length; i++) {
+                const row = values[i];
+                // 이름, 부서, 입사일이 모두 일치하면 중복으로 간주
+                if (row[nameIndex] === userData.name &&
+                    row[deptIndex] === userData.department &&
+                    row[joinDateIndex] === userData.joinDate) {
+                    return {
+                        status: 'error',
+                        message: '이미 가입된 사용자입니다. (이름, 부서, 입사일 중복)'
+                    };
+                }
+
+                // ID 중복도 체크 (혹시 모를 충돌 방지)
+                if (row[idIndex] === userData.employeeId) {
+                    return {
+                        status: 'error',
+                        message: '이미 존재하는 아이디입니다.'
+                    };
+                }
             }
         }
 
