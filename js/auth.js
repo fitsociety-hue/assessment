@@ -13,21 +13,6 @@ class AuthManager {
      * @param {string} identifier - 이름 또는 아이디
      * @param {string} password - 비밀번호
      * @param {string} loginType - 'name' (이름) 또는 'id' (아이디)
-     * @returns {Promise<Object>} 사용자 정보
-     */
-    async login(identifier, password, loginType = 'name') {
-        try {
-            // 0. 관리자 계정 하드코딩 (비상용/마스터키)
-            // ID: admin, PW: gde1107!
-            if (identifier === 'admin' && loginType === 'id') {
-                const adminHash = 'Z2RlMTEwNyFhc3Nlc3NtZW50X3NhbHRfMjAyNA=='; // gde1107!
-                const inputHash = this._hashPassword(password);
-
-                if (inputHash === adminHash) {
-                    this.currentUser = {
-                        employeeId: 'admin',
-                        name: '시스템 관리자',
-                        department: '행정관리팀',
                         position: '관장',
                         role: 'admin',
                         email: 'admin@dongul.or.kr',

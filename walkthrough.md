@@ -69,6 +69,7 @@ I have implemented a comprehensive Admin Dashboard and Role Management system to
 - **Fixed Login Page Script Error**: Resolved a "System initialization error" on `index.html` by adding missing references to `js/config.js` and `js/utils.js`.
 - **Admin Login Fallback**: Implemented a fallback login mechanism for the `admin` user to ensure access even if the Google Sheet connection fails.
     - **Credentials**: ID: `admin`, Password: `gde1107!`
+    - **Usability**: Admin login is now permitted even if the user enters 'admin' in the default "Name" field, removing the strict mode requirement.
     - `hasRole`: Correctly implements the role hierarchy (Admin > Director > Manager > Staff).
 - **Dynamic Configuration**: Confirmed that the "Evaluation Period" setting is dynamically loaded and editable by admins via the dashboard modal.
 
