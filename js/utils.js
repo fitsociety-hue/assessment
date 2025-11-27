@@ -368,7 +368,9 @@ async function initializePage(options = {}) {
 
         // 인증 확인
         if (options.requireAuth !== false) {
-            auth.checkPageAccess(options.requiredRole);
+            if (!auth.checkPageAccess(options.requiredRole)) {
+                return;
+            }
         }
 
         // Google Sheets API 초기화
