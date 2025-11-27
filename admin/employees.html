@@ -5,9 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>직원 관리 - 강동어울림복지관</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
     <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
@@ -19,37 +20,69 @@
     </div>
     <div id="alert-container"></div>
 
-    <div class="container" style="padding: var(--spacing-xl) var(--spacing-lg);">
+    <div class="container" style="padding: var(--spacing-xl) var(--spacing-lg); max-width: 1200px;">
         <div style="margin-bottom: var(--spacing-xl);">
             <a href="../dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
         </div>
 
         <div class="card">
-            <div class="card-header">
-                <h1 class="card-title">직원 관리</h1>
-                <p class="card-subtitle">직원 정보를 조회하고 관리합니다.</p>
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="card-title">직원 관리</h1>
+                    <p class="card-subtitle">직원 권한 설정 및 비밀번호 초기화</p>
+                </div>
+                <div>
+                    <button id="refreshBtn" class="btn btn-secondary"><i class="fas fa-sync-alt"></i> 새로고침</button>
+                </div>
             </div>
 
             <div class="card-body">
                 <div class="table-container">
-                    <table class="data-table" id="employeeTable">
+                    <table class="table" id="employeeTable">
                         <thead>
                             <tr>
-                                <th>직원 ID</th>
+                                <th>사번</th>
                                 <th>이름</th>
                                 <th>부서</th>
                                 <th>직급</th>
-                                <th>역할</th>
-                                <th>입사일</th>
-                                <th>이메일</th>
+                                <th>권한</th>
+                                <th>관리</th>
                             </tr>
                         </thead>
-                        <tbody id="employeeTableBody">
-                            <tr>
-                                <td colspan="7" class="text-center">데이터 로딩 중...</td>
-                            </tr>
+                        <tbody>
+                            <!-- 데이터가 여기에 로드됩니다 -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 권한 수정 모달 -->
+    <div id="roleModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="card" style="width: 400px; max-width: 90%;">
+            <div class="card-header">
+                <h3 class="card-title">권한 수정</h3>
+            </div>
+            <div class="card-body">
+                <input type="hidden" id="editEmployeeId">
+                <div class="form-group">
+                    <label class="form-label">이름</label>
+                    <input type="text" id="editName" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">권한</label>
+                    <select id="editRole" class="form-select">
+                        <option value="staff">팀원 (일반)</option>
+                        <option value="manager">팀장 (부서 관리)</option>
+                        <option value="director">관장/사무국장 (전체 열람)</option>
+                        <option value="admin">시스템 관리자</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="saveRoleBtn" class="btn btn-primary w-100">저장</button>
+                    <button type="button" id="closeRoleModalBtn" class="btn btn-secondary w-100 mt-sm">취소</button>
                 </div>
             </div>
         </div>
@@ -61,50 +94,128 @@
     <script src="../js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            await initializePage({ requiredRole: 'admin' });
+            // 관리자 권한 확인
+            if (!auth.checkPageAccess('admin')) {
+                return;
+            }
+
             await loadEmployees();
+
+            // 이벤트 리스너
+            document.getElementById('refreshBtn').addEventListener('click', loadEmployees);
+            document.getElementById('closeRoleModalBtn').addEventListener('click', closeRoleModal);
+            document.getElementById('saveRoleBtn').addEventListener('click', saveRole);
         });
 
         async function loadEmployees() {
             try {
                 utils.showLoading('직원 목록 로딩 중...');
+                const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
 
-                const data = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
-                const tbody = document.getElementById('employeeTableBody');
-
-                if (data.length <= 1) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">직원 데이터가 없습니다.</td></tr>';
-                    utils.hideLoading();
-                    return;
-                }
-
-                const headers = data[0];
-                const rows = data.slice(1);
-
-                let html = '';
-                rows.forEach(row => {
-                    html += `
-            <tr>
-              <td>${row[0] || '-'}</td>
-              <td><strong>${row[1] || '-'}</strong></td>
-              <td>${row[2] || '-'}</td>
-              <td>${row[3] || '-'}</td>
-              <td><span class="badge badge-${row[4] === 'admin' ? 'error' : row[4] === 'manager' ? 'warning' : 'info'}">${row[4] || '-'}</span></td>
-              <td>${utils.formatDate(row[5]) || '-'}</td>
-              <td>${row[6] || '-'}</td>
-            </tr>
-          `;
+                // 헤더 제외하고 데이터만 추출
+                const headers = employees[0];
+                const data = employees.slice(1).map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index];
+                    });
+                    return obj;
                 });
 
-                tbody.innerHTML = html;
+                renderTable(data);
                 utils.hideLoading();
-
             } catch (error) {
                 utils.hideLoading();
-                utils.showAlert('직원 목록 로드 실패: ' + error.message, 'error');
-                console.error(error);
+                utils.showAlert('데이터 로드 실패: ' + error.message, 'error');
             }
         }
+
+        function renderTable(employees) {
+            const tbody = document.querySelector('#employeeTable tbody');
+            tbody.innerHTML = '';
+
+            employees.forEach(emp => {
+                const tr = document.createElement('tr');
+
+                // 권한 한글 표시
+                let roleLabel = '팀원';
+                if (emp.role === 'admin') roleLabel = '관리자';
+                else if (emp.role === 'director') roleLabel = '관장/사무국장';
+                else if (emp.role === 'manager') roleLabel = '팀장';
+
+                tr.innerHTML = `
+                    <td>${emp.employee_id}</td>
+                    <td>${emp.name}</td>
+                    <td>${emp.department}</td>
+                    <td>${emp.position}</td>
+                    <td><span class="badge badge-${getRoleBadgeClass(emp.role)}">${roleLabel}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="openRoleModal('${emp.employee_id}', '${emp.name}', '${emp.role}')">권한 수정</button>
+                        <button class="btn btn-sm btn-warning" onclick="resetPassword('${emp.employee_id}', '${emp.name}')">비번 초기화</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getRoleBadgeClass(role) {
+            if (role === 'admin') return 'primary';
+            if (role === 'director') return 'success';
+            if (role === 'manager') return 'info';
+            return 'secondary';
+        }
+
+        // 권한 수정 모달
+        window.openRoleModal = (id, name, role) => {
+            document.getElementById('editEmployeeId').value = id;
+            document.getElementById('editName').value = name;
+            document.getElementById('editRole').value = role || 'staff';
+
+            const modal = document.getElementById('roleModal');
+            modal.style.display = 'flex';
+        };
+
+        function closeRoleModal() {
+            document.getElementById('roleModal').style.display = 'none';
+        }
+
+        async function saveRole() {
+            const id = document.getElementById('editEmployeeId').value;
+            const newRole = document.getElementById('editRole').value;
+
+            try {
+                utils.showLoading('저장 중...');
+                await api.updateRow(CONFIG.SHEET_NAMES.EMPLOYEES, 'employee_id', id, { role: newRole });
+                utils.hideLoading();
+                utils.showAlert('권한이 수정되었습니다.', 'success');
+                closeRoleModal();
+                await loadEmployees();
+            } catch (error) {
+                utils.hideLoading();
+                utils.showAlert('저장 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 비밀번호 초기화
+        window.resetPassword = async (id, name) => {
+            if (!await utils.confirm(`${name} 님의 비밀번호를 '1234'로 초기화하시겠습니까?`)) return;
+
+            try {
+                utils.showLoading('초기화 중...');
+
+                // '1234'의 해시값 (salt: assessment_salt_2024)
+                // 1234 + assessment_salt_2024 -> Base64
+                const defaultHash = btoa('1234assessment_salt_2024');
+
+                await api.updateRow(CONFIG.SHEET_NAMES.EMPLOYEES, 'employee_id', id, { password_hash: defaultHash });
+
+                utils.hideLoading();
+                utils.showAlert('비밀번호가 초기화되었습니다.', 'success');
+            } catch (error) {
+                utils.hideLoading();
+                utils.showAlert('초기화 실패: ' + error.message, 'error');
+            }
+        };
     </script>
 </body>
 

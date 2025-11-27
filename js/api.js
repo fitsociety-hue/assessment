@@ -504,12 +504,246 @@ class SheetsAPI {
     }
 
     /**
+     * @param {string} sheetName - 시트 이름
+     * @param {Object} data - 추가할 데이터 객체
+     * @returns {Promise<boolean>} 성공 여부
+     */
+    async appendRow(sheetName, data) {
+        try {
+            // 헤더 가져오기
+            const rows = await this.readSheet(sheetName);
+            if (rows.length === 0) {
+                throw new Error(`시트가 비어있습니다: ${sheetName}`);
+            }
+
+            const headers = rows[0];
+            const values = headers.map(header => data[header] || '');
+
+            if (CONFIG.USE_APPS_SCRIPT) {
+                await this._callAppsScript('append', { sheetName, values });
+            } else {
+                await this._appendRowDirectAPI(sheetName, values);
+            }
+
+            // 캐시 무효화
+            this._invalidateCache(sheetName);
+
+            if (CONFIG.DEBUG) console.log(`✅ 행 추가 성공: ${sheetName}`);
+            return true;
+
+        } catch (error) {
+            console.error(`❌ 행 추가 실패 (${sheetName}):`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * 직접 API로 행 추가
+     */
+    async _appendRowDirectAPI(sheetName, values) {
+        const range = `${sheetName}!A:A`;
+        await gapi.client.sheets.spreadsheets.values.append({
+            spreadsheetId: CONFIG.SPREADSHEET_ID,
+            range: range,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [values]
+            }
+        });
+    }
+
+    /**
+     * 특정 행 업데이트
+     * @param {string} sheetName - 시트 이름
+     * @param {string} idColumn - ID 컬럼 이름
+     * @param {any} idValue - ID 값
+     * @param {Object} data - 업데이트할 데이터
+     * @returns {Promise<boolean>} 성공 여부
+     */
+    async updateRow(sheetName, idColumn, idValue, data) {
+        try {
+            const rows = await this.readSheet(sheetName);
+            if (rows.length === 0) {
+                throw new Error(`시트가 비어있습니다: ${sheetName}`);
+            }
+
+            const headers = rows[0];
+            const idColumnIndex = headers.indexOf(idColumn);
+
+            if (idColumnIndex === -1) {
+                throw new Error(`ID 컬럼을 찾을 수 없습니다: ${idColumn}`);
+            }
+
+            // 업데이트할 행 찾기
+            let rowIndex = -1;
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i][idColumnIndex] === idValue) {
+                    rowIndex = i;
+                    break;
+                }
+            }
+
+            if (rowIndex === -1) {
+                throw new Error(`행을 찾을 수 없습니다: ${idColumn}=${idValue}`);
+            }
+
+            // 업데이트할 값 준비
+            const values = headers.map(header =>
+                data.hasOwnProperty(header) ? data[header] : rows[rowIndex][headers.indexOf(header)] || ''
+            );
+
+            if (CONFIG.USE_APPS_SCRIPT) {
+                await this._callAppsScript('update', {
+                    sheetName,
+                    rowIndex: rowIndex + 1, // 1-based index
+                    values
+                });
+            } else {
+                await this._updateRowDirectAPI(sheetName, rowIndex + 1, values);
+            }
+
+            // 캐시 무효화
+            this._invalidateCache(sheetName);
+
+            if (CONFIG.DEBUG) console.log(`✅ 행 업데이트 성공: ${sheetName} (행 ${rowIndex + 1})`);
+            return true;
+
+        } catch (error) {
+            console.error(`❌ 행 업데이트 실패 (${sheetName}):`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * 직접 API로 행 업데이트
+     */
+    async _updateRowDirectAPI(sheetName, rowIndex, values) {
+        const range = `${sheetName}!A${rowIndex}:ZZ${rowIndex}`;
+        await gapi.client.sheets.spreadsheets.values.update({
+            spreadsheetId: CONFIG.SPREADSHEET_ID,
+            range: range,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [values]
+            }
+        });
+    }
+
+    /**
+     * 특정 행 삭제
+     * @param {string} sheetName - 시트 이름
+     * @param {string} idColumn - ID 컬럼 이름
+     * @param {any} idValue - ID 값
+     * @returns {Promise<boolean>} 성공 여부
+     */
+    async deleteRow(sheetName, idColumn, idValue) {
+        try {
+            if (CONFIG.USE_APPS_SCRIPT) {
+                await this._callAppsScript('delete', { sheetName, idColumn, idValue });
+            } else {
+                // 직접 API로는 삭제가 복잡하므로 Apps Script 사용 권장
+                throw new Error('행 삭제는 Apps Script 방식에서만 지원됩니다.');
+            }
+
+            // 캐시 무효화
+            this._invalidateCache(sheetName);
+
+            if (CONFIG.DEBUG) console.log(`✅ 행 삭제 성공: ${sheetName}`);
+            return true;
+
+        } catch (error) {
+            console.error(`❌ 행 삭제 실패 (${sheetName}):`, error);
+            throw error;
+        }
+    }
+
+    // ============================================================
+    // 헬퍼 함수
+    // ============================================================
+
+    /**
+     * 배열을 객체로 변환
+     */
+    _rowToObject(headers, row) {
+        const obj = {};
+        headers.forEach((header, index) => {
+            obj[header] = row[index] || '';
+        });
+        return obj;
+    }
+
+    /**
+     * 캐시 무효화
+     */
+    _invalidateCache(sheetName) {
+        const cacheKey = `sheet_${sheetName}`;
+        this.cache.delete(cacheKey);
+        if (CONFIG.DEBUG) console.log(`🗑️ 캐시 무효화: ${sheetName}`);
+    }
+
+    /**
+     * 전체 캐시 지우기
+     */
+    clearCache() {
+        this.cache.clear();
+        if (CONFIG.DEBUG) console.log('🗑️ 전체 캐시 삭제');
+    }
+
+    /**
+     * 고유 ID 생성
+     */
+    generateId(prefix = '') {
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        return `${prefix}${timestamp}${random}`;
+    }
+
+    /**
      * 현재 시간 (ISO 형식)
      */
     getCurrentTimestamp() {
         return new Date().toISOString();
     }
+    /**
+     * 설정 값 가져오기
+     * @param {string} key 설정 키
+     * @returns {Promise<string|null>} 설정 값
+     */
+    async getSetting(key) {
+        try {
+            const settings = await this.readSheet(CONFIG.SHEET_NAMES.SETTINGS);
+            // 첫 번째 행은 헤더(Key, Value)라고 가정
+            const row = settings.find(r => r[0] === key);
+            return row ? row[1] : null;
+        } catch (error) {
+            console.warn(`설정(${key}) 로드 실패:`, error);
+            return null;
+        }
+    }
+
+    /**
+     * 설정 값 저장하기
+     * @param {string} key 설정 키
+     * @param {string} value 설정 값
+     */
+    async setSetting(key, value) {
+        try {
+            const settings = await this.readSheet(CONFIG.SHEET_NAMES.SETTINGS);
+            const rowIndex = settings.findIndex(r => r[0] === key);
+
+            if (rowIndex >= 0) {
+                // 기존 값 업데이트 (1-based index 고려)
+                await this.updateRow(CONFIG.SHEET_NAMES.SETTINGS, 'Key', key, { Value: value });
+            } else {
+                // 새로운 값 추가
+                await this.appendRow(CONFIG.SHEET_NAMES.SETTINGS, { Key: key, Value: value });
+            }
+        } catch (error) {
+            console.error(`설정(${key}) 저장 실패:`, error);
+            throw error;
+        }
+    }
 }
 
-// 전역 API 인스턴스 생성
+// 전역 인스턴스 생성
 const api = new SheetsAPI();

@@ -103,144 +103,275 @@
                 </div>
             </div>
         </div>
-    </div>
+        <!DOCTYPE html>
+        <html lang="ko">
 
-    <script src="../js/config.js"></script>
-    <script src="../js/utils.js"></script>
-    <script src="../js/api.js"></script>
-    <script src="../js/auth.js"></script>
-    <script>
-        let evaluationData = null;
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>종합평가 - 강동어울림복지관</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+                rel="stylesheet">
+            <link rel="stylesheet" href="../css/main.css">
+        </head>
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initializePage({ requiredRole: 'manager' });
-            await loadEmployees();
-        });
+        <body>
+            <div id="global-loader" class="loader">
+                <div class="loader-content">
+                    <div class="spinner"></div>
+                    <p class="loader-message">처리 중...</p>
+                </div>
+            </div>
+            <div id="alert-container"></div>
 
-        async function loadEmployees() {
-            try {
-                const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
-                const select = document.getElementById('employee_id');
+            <div class="container" style="padding: var(--spacing-xl) var(--spacing-lg); max-width: 900px;">
+                <div style="margin-bottom: var(--spacing-xl);">
+                    <a href="../dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
+                </div>
 
-                employees.slice(1).forEach(row => {
-                    const option = new Option(`${row[1]} (${row[0]})`, row[0]);
-                    select.add(option);
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="card-title">종합평가</h1>
+                        <p class="card-subtitle">성과, 역량, 다면평가를 종합하여 최종 등급을 산정합니다.</p>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="period" class="form-label required">평가 기간</label>
+                            <input type="text" id="period" class="form-input" placeholder="예: 2024-상반기">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="employee_id" class="form-label required">평가 대상 직원</label>
+                            <select id="employee_id" class="form-select"></select>
+                        </div>
+
+                        <button type="button" id="calculateBtn" class="btn btn-primary"
+                            style="margin-bottom: var(--spacing-lg);">📊 종합평가 계산</button>
+
+                        <!-- 평가 결과 -->
+                        <div id="resultSection" style="display:none;">
+                            <div class="stats-grid">
+                                <div class="stat-card primary">
+                                    <div class="stat-label">성과평가</div>
+                                    <div class="stat-value" id="performanceScore">0</div>
+                                    <div class="stat-change">/ 40점</div>
+                                </div>
+                                <div class="stat-card success">
+                                    <div class="stat-label">역량평가</div>
+                                    <div class="stat-value" id="competencyScore">0</div>
+                                    <div class="stat-change">/ 40점</div>
+                                </div>
+                                <div class="stat-card info">
+                                    <div class="stat-label">다면평가</div>
+                                    <div class="stat-value" id="multifacetScore">0</div>
+                                    <div class="stat-change">/ 20점</div>
+                                </div>
+                                <div class="stat-card" id="gradeCard">
+                                    <div class="stat-label">최종 등급</div>
+                                    <div class="stat-value" id="finalGrade">-</div>
+                                    <div class="stat-change" id="gradeLabel">-</div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="margin-top: var(--spacing-xl);">
+                                <div class="card-header">
+                                    <h3 class="card-title">평가 상세</h3>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table">
+                                        <tr>
+                                            <th>총점</th>
+                                            <td><strong id="totalScore">0</strong> / 100점</td>
+                                        </tr>
+                                        <tr>
+                                            <th>등급</th>
+                                            <td><span id="gradeBadge"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <th>성과급 계수</th>
+                                            <td><strong id="bonusCoefficient">1.0</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <th>평가일</th>
+                                            <td id="evaluationDate">-</td>
+                                        </tr>
+                                    </table>
+
+                                    <div class="admin-only" style="margin-top: var(--spacing-lg);">
+                                        <button type="button" id="approveBtn" class="btn btn-success">✅ 승인 및 저장</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script src="../js/config.js"></script>
+            <script src="../js/utils.js"></script>
+            <script src="../js/api.js"></script>
+            <script src="../js/auth.js"></script>
+            <script>
+                let evaluationData = null;
+
+                document.addEventListener('DOMContentLoaded', async () => {
+                    await initializePage({ requiredRole: 'manager' });
+                    await loadEmployees();
                 });
-            } catch (error) {
-                console.error('직원 목록 로드 실패:', error);
-            }
-        }
 
-        document.getElementById('calculateBtn').addEventListener('click', async () => {
-            const period = document.getElementById('period').value;
-            const employeeId = document.getElementById('employee_id').value;
+                async function loadEmployees() {
+                    try {
+                        const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
+                        const select = document.getElementById('employee_id');
 
-            if (!period || !employeeId) {
-                utils.showAlert('평가 기간과 직원을 선택하세요.', 'warning');
-                return;
-            }
+                        // 헤더 제외하고 데이터 매핑
+                        const employeeObjects = employees.slice(1).map(row => ({
+                            employee_id: row[0],
+                            name: row[1],
+                            department: row[2],
+                            position: row[3],
+                            role: row[4]
+                        }));
 
-            try {
-                utils.showLoading('평가 계산 중...');
+                        // 권한에 따라 필터링
+                        const accessibleEmployees = employeeObjects.filter(emp => auth.canViewEvaluation(emp));
 
-                // 성과평가
-                const performanceList = await api.findRows(CONFIG.SHEET_NAMES.PERFORMANCE,
-                    row => row.employee_id === employeeId && row.period === period
-                );
-                const performanceScore = performanceList.length > 0 ? parseFloat(performanceList[0].total_score || 0) : 0;
+                        accessibleEmployees.forEach(emp => {
+                            const option = new Option(`${emp.name} (${emp.employee_id})`, emp.employee_id);
+                            select.add(option);
+                        });
 
-                // 역량평가
-                const competencyList = await api.findRows(CONFIG.SHEET_NAMES.COMPETENCY,
-                    row => row.employee_id === employeeId && row.period === period
-                );
-                const competencyScore = competencyList.length > 0 ? parseFloat(competencyList[0].total_score || 0) : 0;
+                        if (accessibleEmployees.length === 0) {
+                            const option = new Option('열람 가능한 직원이 없습니다.', '');
+                            select.add(option);
+                            select.disabled = true;
+                        }
 
-                // 다면평가 (평균)
-                const multifacetList = await api.findRows(CONFIG.SHEET_NAMES.MULTIFACET,
-                    row => row.employee_id === employeeId && row.period === period
-                );
-                const multifacetScore = multifacetList.length > 0 ?
-                    utils.average(multifacetList.map(m => parseFloat(m.total_score || 0))) : 0;
+                    } catch (error) {
+                        console.error('직원 목록 로드 실패:', error);
+                    }
+                }
 
-                // 총점 계산
-                const totalScore = performanceScore + competencyScore + multifacetScore;
-                const gradeInfo = utils.calculateGrade(totalScore);
+                document.getElementById('calculateBtn').addEventListener('click', async () => {
+                    const period = document.getElementById('period').value;
+                    const employeeId = document.getElementById('employee_id').value;
 
-                // 결과 표시
-                document.getElementById('performanceScore').textContent = performanceScore.toFixed(1);
-                document.getElementById('competencyScore').textContent = competencyScore.toFixed(1);
-                document.getElementById('multifacetScore').textContent = multifacetScore.toFixed(1);
-                document.getElementById('totalScore').textContent = totalScore.toFixed(1);
-                document.getElementById('finalGrade').textContent = gradeInfo.grade;
-                document.getElementById('gradeLabel').textContent = gradeInfo.label;
-                document.getElementById('bonusCoefficient').textContent = gradeInfo.coefficient;
-                document.getElementById('evaluationDate').textContent = utils.formatDate(new Date());
+                    if (!period || !employeeId) {
+                        utils.showAlert('평가 기간과 직원을 선택하세요.', 'warning');
+                        return;
+                    }
 
-                const gradeBadge = document.getElementById('gradeBadge');
-                gradeBadge.className = `badge badge-grade-${gradeInfo.grade.toLowerCase()}`;
-                gradeBadge.textContent = `${gradeInfo.grade}등급 (${gradeInfo.label})`;
+                    // 본인 종합평가 열람 제한 (이중 체크)
+                    const user = auth.getCurrentUser();
+                    if (user.employeeId === employeeId) {
+                        utils.showAlert('본인의 종합평가 결과는 열람할 수 없습니다.', 'warning');
+                        return;
+                    }
 
-                const gradeCard = document.getElementById('gradeCard');
-                gradeCard.className = 'stat-card';
-                gradeCard.style.borderColor = `var(--grade-${gradeInfo.grade.toLowerCase()})`;
+                    try {
+                        utils.showLoading('평가 계산 중...');
 
-                document.getElementById('resultSection').style.display = '';
+                        // 성과평가
+                        const performanceList = await api.findRows(CONFIG.SHEET_NAMES.PERFORMANCE,
+                            row => row.employee_id === employeeId && row.period === period
+                        );
+                        const performanceScore = performanceList.length > 0 ? parseFloat(performanceList[0].total_score || 0) : 0;
 
-                // 데이터 저장
-                evaluationData = {
-                    evaluation_id: api.generateId('COMP_'),
-                    employee_id: employeeId,
-                    period: period,
-                    performance_score: performanceScore,
-                    competency_score: competencyScore,
-                    multifacet_score: multifacetScore,
-                    total_score: totalScore,
-                    grade: gradeInfo.grade,
-                    grade_label: gradeInfo.label,
-                    bonus_coefficient: gradeInfo.coefficient,
-                    created_at: new Date().toISOString()
-                };
+                        // 역량평가
+                        const competencyList = await api.findRows(CONFIG.SHEET_NAMES.COMPETENCY,
+                            row => row.employee_id === employeeId && row.period === period
+                        );
+                        const competencyScore = competencyList.length > 0 ? parseFloat(competencyList[0].total_score || 0) : 0;
 
-                utils.hideLoading();
+                        // 다면평가 (평균)
+                        const multifacetList = await api.findRows(CONFIG.SHEET_NAMES.MULTIFACET,
+                            row => row.employee_id === employeeId && row.period === period
+                        );
+                        const multifacetScore = multifacetList.length > 0 ?
+                            utils.average(multifacetList.map(m => parseFloat(m.total_score || 0))) : 0;
 
-            } catch (error) {
-                utils.hideLoading();
-                utils.showAlert('계산 실패: ' + error.message, 'error');
-                console.error(error);
-            }
-        });
+                        // 총점 계산
+                        const totalScore = performanceScore + competencyScore + multifacetScore;
+                        const gradeInfo = utils.calculateGrade(totalScore);
 
-        document.getElementById('approveBtn').addEventListener('click', async () => {
-            if (!evaluationData) {
-                utils.showAlert('먼저 평가를 계산하세요.', 'warning');
-                return;
-            }
+                        // 결과 표시
+                        document.getElementById('performanceScore').textContent = performanceScore.toFixed(1);
+                        document.getElementById('competencyScore').textContent = competencyScore.toFixed(1);
+                        document.getElementById('multifacetScore').textContent = multifacetScore.toFixed(1);
+                        document.getElementById('totalScore').textContent = totalScore.toFixed(1);
+                        document.getElementById('finalGrade').textContent = gradeInfo.grade;
+                        document.getElementById('gradeLabel').textContent = gradeInfo.label;
+                        document.getElementById('bonusCoefficient').textContent = gradeInfo.coefficient;
+                        document.getElementById('evaluationDate').textContent = utils.formatDate(new Date());
 
-            if (!await utils.confirm('종합평가를 승인하고 저장하시겠습니까?')) return;
+                        const gradeBadge = document.getElementById('gradeBadge');
+                        gradeBadge.className = `badge badge-grade-${gradeInfo.grade.toLowerCase()}`;
+                        gradeBadge.textContent = `${gradeInfo.grade}등급 (${gradeInfo.label})`;
 
-            try {
-                utils.showLoading('저장 중...');
+                        const gradeCard = document.getElementById('gradeCard');
+                        gradeCard.className = 'stat-card';
+                        gradeCard.style.borderColor = `var(--grade-${gradeInfo.grade.toLowerCase()})`;
 
-                const user = auth.getCurrentUser();
-                evaluationData.approved_by = user.employeeId;
-                evaluationData.approved_at = new Date().toISOString();
-                evaluationData.updated_at = new Date().toISOString();
+                        document.getElementById('resultSection').style.display = '';
 
-                await api.appendRow(CONFIG.SHEET_NAMES.COMPREHENSIVE, evaluationData);
+                        // 데이터 저장
+                        evaluationData = {
+                            evaluation_id: api.generateId('COMP_'),
+                            employee_id: employeeId,
+                            period: period,
+                            performance_score: performanceScore,
+                            competency_score: competencyScore,
+                            multifacet_score: multifacetScore,
+                            total_score: totalScore,
+                            grade: gradeInfo.grade,
+                            grade_label: gradeInfo.label,
+                            bonus_coefficient: gradeInfo.coefficient,
+                            created_at: new Date().toISOString()
+                        };
 
-                utils.hideLoading();
-                utils.showAlert('종합평가가 승인 및 저장되었습니다.', 'success');
+                        utils.hideLoading();
 
-                setTimeout(() => {
-                    window.location.href = '../dashboard.html';
-                }, 1500);
+                    } catch (error) {
+                        utils.hideLoading();
+                        utils.showAlert('계산 실패: ' + error.message, 'error');
+                        console.error(error);
+                    }
+                });
 
-            } catch (error) {
-                utils.hideLoading();
-                utils.showAlert('저장 실패: ' + error.message, 'error');
-            }
-        });
-    </script>
-</body>
+                document.getElementById('approveBtn').addEventListener('click', async () => {
+                    if (!evaluationData) {
+                        utils.showAlert('먼저 평가를 계산하세요.', 'warning');
+                        return;
+                    }
 
-</html>
+                    if (!await utils.confirm('종합평가를 승인하고 저장하시겠습니까?')) return;
+
+                    try {
+                        utils.showLoading('저장 중...');
+
+                        const user = auth.getCurrentUser();
+                        evaluationData.approved_by = user.employeeId;
+                        evaluationData.approved_at = new Date().toISOString();
+                        evaluationData.updated_at = new Date().toISOString();
+
+                        await api.appendRow(CONFIG.SHEET_NAMES.COMPREHENSIVE, evaluationData);
+
+                        utils.hideLoading();
+                        utils.showAlert('종합평가가 승인 및 저장되었습니다.', 'success');
+
+                        setTimeout(() => {
+                            window.location.href = '../dashboard.html';
+                        }, 1500);
+
+                    } catch (error) {
+                        utils.hideLoading();
+                        utils.showAlert('저장 실패: ' + error.message, 'error');
+                    }
+                });
+            </script>
+        </body>
+
+        </html>

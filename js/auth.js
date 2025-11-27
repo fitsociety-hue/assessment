@@ -10,17 +10,21 @@ class AuthManager {
 
     /**
      * 로그인
-     * @param {string} name - 이름
+     * @param {string} identifier - 이름 또는 아이디
      * @param {string} password - 비밀번호
+     * @param {string} loginType - 'name' (이름) 또는 'id' (아이디)
      * @returns {Promise<Object>} 사용자 정보
      */
-    async login(name, password) {
+    async login(identifier, password, loginType = 'name') {
         try {
             // Google Sheets에서 직원 정보 조회
+            // loginType에 따라 검색 컬럼 결정
+            const searchColumn = loginType === 'id' ? 'employee_id' : 'name';
+
             const employee = await api.findRow(
                 CONFIG.SHEET_NAMES.EMPLOYEES,
-                'name',
-                name
+                searchColumn,
+                identifier
             );
 
             if (!employee) {
@@ -119,13 +123,14 @@ class AuthManager {
 
     /**
      * 권한 확인
-     * @param {string} requiredRole - 필요한 역할 (admin, manager, staff)
+     * @param {string} requiredRole - 필요한 역할 (admin, director, manager, staff)
      */
     hasRole(requiredRole) {
         if (!this.currentUser) return false;
 
         const roleHierarchy = {
-            'admin': 3,
+            'admin': 4,
+            'director': 3,
             'manager': 2,
             'staff': 1
         };
@@ -137,17 +142,49 @@ class AuthManager {
     }
 
     /**
-     * 관리자 여부
+     * 관리자 여부 (시스템 관리자)
      */
     isAdmin() {
-        return this.hasRole('admin');
+        return this.currentUser && this.currentUser.role === 'admin';
     }
 
     /**
-     * 관리자(팀장급 이상) 여부
+     * 관장/사무국장급 여부 (전체 열람 가능)
+     */
+    isDirector() {
+        return this.hasRole('director');
+    }
+
+    /**
+     * 팀장급 여부 (팀 열람 가능)
      */
     isManager() {
         return this.hasRole('manager');
+    }
+
+    /**
+     * 특정 직원의 평가를 볼 수 있는지 확인
+     * @param {Object} targetUser - 대상 직원 정보 (employee_id, department 등)
+     */
+    canViewEvaluation(targetUser) {
+        if (!this.currentUser) return false;
+
+        // 1. 본인인 경우
+        if (this.currentUser.employeeId === targetUser.employee_id) {
+            return true;
+        }
+
+        // 2. 관리자 또는 관장/사무국장인 경우 (전체 열람)
+        if (this.isAdmin() || this.isDirector()) {
+            return true;
+        }
+
+        // 3. 팀장인 경우 (같은 부서 팀원 열람)
+        if (this.isManager() && this.currentUser.department === targetUser.department) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

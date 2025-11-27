@@ -218,8 +218,8 @@ const CONFIG = {
    */
   MOCK_USERS: [
     {
-      employee_id: 'ADMIN',
-      password_hash: 'YWRtaW4xMjM0YXNzZXNzbWVudF9zYWx0XzIwMjQ=', // admin1234
+      employee_id: 'admin',
+      password_hash: 'Z2RlMTEwNyFhc3Nlc3NtZW50X3NhbHRfMjAyNA==', // gde1107!
       name: '시스템 관리자',
       department: '행정관리팀',
       position: '관장',
