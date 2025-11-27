@@ -66,6 +66,7 @@ I have implemented a comprehensive Admin Dashboard and Role Management system to
 - **Verified Permission Logic**: Confirmed that `js/auth.js` correctly handles role-based access control (Admin, Director, Manager, Staff).
 - **Dynamic Evaluation Period**: The dashboard now correctly loads the current evaluation period from settings.
 - **Fixed Logout Issue**: Resolved an issue where the logout button was not functioning due to initialization errors. Restored the correct event listener and function structure in `dashboard.html`.
+- **Fixed Login Page Script Error**: Resolved a "System initialization error" on `index.html` by adding missing references to `js/config.js` and `js/utils.js`.
     - `hasRole`: Correctly implements the role hierarchy (Admin > Director > Manager > Staff).
 - **Dynamic Configuration**: Confirmed that the "Evaluation Period" setting is dynamically loaded and editable by admins via the dashboard modal.
 
