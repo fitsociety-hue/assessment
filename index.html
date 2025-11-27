@@ -102,28 +102,44 @@
       <!-- 헤더 -->
       <div class="login-header">
         <h1>강동어울림복지관</h1>
+        <p>통합 근무평정 체계</p>
       </div>
 
-      <div class="form-check">
-        <input type="checkbox" id="rememberMe" name="rememberMe" class="form-check-input">
-        <label for="rememberMe" class="form-check-label">
-          로그인 상태 유지
-        </label>
-      </div>
+      <!-- 로그인 폼 -->
+      <div class="login-body">
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label for="name" class="form-label required">이름</label>
+            <input type="text" id="name" name="name" class="form-input login-input" placeholder="이름을 입력하세요" required
+              autocomplete="username">
+          </div>
 
-      <button type="submit" class="btn btn-primary login-button">
-        로그인
-      </button>
-      <div style="margin-top: var(--spacing-md); text-align: center;">
-        <a href="signup.html" class="text-primary" style="text-decoration: none; font-size: var(--font-sm);">계정이
-          없으신가요? 회원가입</a>
+          <div class="form-group">
+            <label for="password" class="form-label required">비밀번호</label>
+            <input type="password" id="password" name="password" class="form-input login-input"
+              placeholder="비밀번호를 입력하세요" required autocomplete="current-password">
+          </div>
+
+          <div class="form-check">
+            <input type="checkbox" id="rememberMe" name="rememberMe" class="form-check-input">
+            <label for="rememberMe" class="form-check-label">
+              로그인 상태 유지
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary login-button">
+            로그인
+          </button>
+          <div style="margin-top: var(--spacing-md); text-align: center;">
+            <a href="signup.html" class="text-primary" style="text-decoration: none; font-size: var(--font-sm);">계정이
+              없으신가요? 회원가입</a>
+          </div>
+        </form>
       </div>
-      </form>
+      <div class="login-footer">
+        &copy; 2024 강동어울림복지관. All rights reserved.
+      </div>
     </div>
-    <div class="login-footer">
-      &copy; 2024 강동어울림복지관. All rights reserved.
-    </div>
-  </div>
   </div>
 
   <script src="js/config.js?v=3"></script>
@@ -150,18 +166,53 @@
       // 3. Google Sheets API 초기화
       try {
         await api.initialize();
-        window.location.href = 'dashboard.html';
-      }, 500);
+        console.log('✅ API 초기화 완료 (v' + (CONFIG.VERSION || 'unknown') + ')');
+      } catch (error) {
+        console.error('❌ API 초기화 실패:', error);
+        utils.showAlert(
+          'Google Sheets 연결에 실패했습니다. 설정을 확인해주세요. (docs/SETUP_GUIDE.md 참조)',
+          'error'
+        );
+      }
 
-    } catch (error) {
-      utils.hideLoading();
-      utils.showAlert(error.message || '로그인에 실패했습니다.', 'error');
-      console.error('로그인 에러:', error);
-    }
+      // 4. 로그인 폼 이벤트 리스너 등록 (DOM이 준비된 후 실행)
+      const loginForm = document.getElementById('loginForm');
+      if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+          e.preventDefault(); // 폼 기본 제출 방지 (GET 요청 방지)
+
+          const name = document.getElementById('name').value.trim();
+          const password = document.getElementById('password').value;
+
+          // 유효성 검사
+          if (!name || !password) {
+            utils.showAlert('이름과 비밀번호를 입력해주세요.', 'warning');
+            return;
+          }
+
+          try {
+            utils.showLoading('로그인 중...');
+
+            // 로그인 시도
+            await auth.login(name, password);
+
+            utils.hideLoading();
+            utils.showAlert(`환영합니다, ${auth.getCurrentUser().name}님!`, 'success');
+
+            // 대시보드로 이동
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 500);
+
+          } catch (error) {
+            utils.hideLoading();
+            utils.showAlert(error.message || '로그인에 실패했습니다.', 'error');
+            console.error('로그인 에러:', error);
+          }
         });
       } else {
-      console.error('로그인 폼 요소를 찾을 수 없습니다.');
-    }
+        console.error('로그인 폼 요소를 찾을 수 없습니다.');
+      }
     });
 
     // Enter 키로 로그인
