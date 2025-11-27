@@ -2,34 +2,20 @@
 <html lang="ko">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대시보드 - 강동어울림복지관 평가 시스템</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- 사이드바 -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>강동어울림복지관</h2>
-            <div class="user-info" id="sidebarUserInfo"></div>
-        </div>
-        <nav>
-            <ul class="sidebar-nav">
-                <li><a href="dashboard.html" class="active">📊 대시보드</a></li>
-                <li><a href="evaluation/self.html">✍️ 자기평가</a></li>
-                <li><a href="evaluation/performance.html">📈 성과평가</a></li>
-                <li><a href="evaluation/competency.html">🎯 역량평가</a></li>
-                <li><a href="evaluation/multifacet.html">👥 다면평가</a></li>
-                <li><a href="evaluation/comprehensive.html">📋 종합평가</a></li>
-                <li class="admin-only"><a href="admin/employees.html">👤 직원 관리</a></li>
-                <li class="admin-only"><a href="admin/reports.html">📊 리포트</a></li>
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <button class="btn" onclick="auth.logout()">🚪 로그아웃</button>
-        </div>
+    <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="active">📊 대시보드</a></li>
+        <li><a href="evaluation/self.html">✍️ 자기평가</a></li>
+        <li><a href="evaluation/performance.html">📈 성과평가</a></li>
+        <li><a href="evaluation/competency.html">🎯 역량평가</a></li>
+        <li><a href="evaluation/multifacet.html">👥 다면평가</a></li>
+        <li><a href="evaluation/comprehensive.html">📋 종합평가</a></li>
+        <li class="admin-only"><a href="admin/employees.html">👤 직원 관리</a></li>
+        <li class="admin-only"><a href="admin/reports.html">📊 리포트</a></li>
+    </ul>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="btn" onclick="auth.logout()">🚪 로그아웃</button>
+    </div>
     </aside>
 
     <!-- 메인 컨텐츠 -->
