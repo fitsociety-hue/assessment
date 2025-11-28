@@ -561,14 +561,43 @@ class SheetsAPI {
     async setSetting(key, value) {
         try {
             const settings = await this.readSheet(CONFIG.SHEET_NAMES.SETTINGS);
-            const rowIndex = settings.findIndex(r => r[0] === key);
+
+            // If sheet is empty or has no data
+            if (!settings || settings.length === 0) {
+                // Try to append with default headers if empty
+                await this.appendRow(CONFIG.SHEET_NAMES.SETTINGS, { Key: key, Value: value });
+                return;
+            }
+
+            const headers = settings[0];
+            // Assume first column is Key, second is Value if not explicitly named 'Key'/'Value'
+            let keyCol = 'Key';
+            let valCol = 'Value';
+
+            // Try to find case-insensitive matches
+            const foundKey = headers.find(h => h.toLowerCase() === 'key');
+            if (foundKey) keyCol = foundKey;
+            else if (headers.length > 0) keyCol = headers[0]; // Fallback to first column
+
+            const foundVal = headers.find(h => h.toLowerCase() === 'value');
+            if (foundVal) valCol = foundVal;
+            else if (headers.length > 1) valCol = headers[1]; // Fallback to second column
+
+            // Find row index by key
+            const keyColIndex = headers.indexOf(keyCol);
+            const rowIndex = settings.findIndex(r => r[keyColIndex] === key);
 
             if (rowIndex >= 0) {
-                // 기존 값 업데이트 (1-based index 고려)
-                await this.updateRow(CONFIG.SHEET_NAMES.SETTINGS, 'Key', key, { Value: value });
+                // Update
+                const updateData = {};
+                updateData[valCol] = value;
+                await this.updateRow(CONFIG.SHEET_NAMES.SETTINGS, keyCol, key, updateData);
             } else {
-                // 새로운 값 추가
-                await this.appendRow(CONFIG.SHEET_NAMES.SETTINGS, { Key: key, Value: value });
+                // Append
+                const appendData = {};
+                appendData[keyCol] = key;
+                appendData[valCol] = value;
+                await this.appendRow(CONFIG.SHEET_NAMES.SETTINGS, appendData);
             }
         } catch (error) {
             console.error(`설정(${key}) 저장 실패:`, error);
