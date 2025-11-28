@@ -184,6 +184,8 @@ const CONFIG = {
   ORGANIZATION: {
     NAME: '강동어울림복지관',
     DEPARTMENTS: [
+      '관장',
+      '사무국장',
       '지역연계팀',
       '맞춤지원팀',
       '건강문화팀',
