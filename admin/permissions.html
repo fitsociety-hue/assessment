@@ -336,9 +336,12 @@
             const roleFilter = document.getElementById('roleFilter').value;
 
             filteredEmployees = allEmployees.filter(emp => {
+                const empId = String(emp.employee_id || '').toLowerCase();
+                const empName = String(emp.name || '').toLowerCase();
+
                 const matchSearch = !searchTerm ||
-                    (emp.name && emp.name.toLowerCase().includes(searchTerm)) ||
-                    (emp.employee_id && emp.employee_id.toLowerCase().includes(searchTerm));
+                    empName.includes(searchTerm) ||
+                    empId.includes(searchTerm);
 
                 const matchDept = !deptFilter || emp.department === deptFilter;
                 const matchRole = !roleFilter || emp.role === roleFilter;
@@ -359,19 +362,20 @@
             }
 
             filteredEmployees.forEach(emp => {
-                const isAdmin = emp.employee_id && emp.employee_id.toLowerCase() === 'admin';
+                const empId = String(emp.employee_id || '');
+                const isAdmin = empId.toLowerCase() === 'admin';
                 const department = isAdmin ? '' : (emp.department || '-');
                 const position = isAdmin ? '' : (emp.position || '-');
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${emp.employee_id || '-'}</td>
+                    <td>${empId}</td>
                     <td>${emp.name || '-'}</td>
                     <td>${department}</td>
                     <td>${position}</td>
                     <td>${getRoleBadge(emp.role)}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="openRoleModal('${emp.employee_id}', '${emp.name}', '${emp.role || 'staff'}', '${emp.department}', '${emp.position}')">
+                        <button class="btn btn-sm btn-primary" onclick="openRoleModal('${empId}', '${emp.name}', '${emp.role || 'staff'}', '${emp.department}', '${emp.position}')">
                             <i class="fas fa-edit"></i> 권한 변경
                         </button>
                     </td>
@@ -404,11 +408,11 @@
             modal.classList.add('active');
         };
 
-        function closeRoleModal() {
+        window.closeRoleModal = function () {
             document.getElementById('roleModal').classList.remove('active');
-        }
+        };
 
-        async function saveRole() {
+        window.saveRole = async function () {
             const employeeId = document.getElementById('editEmployeeId').value;
             const newRole = document.getElementById('editRole').value;
 
@@ -435,7 +439,7 @@
                 utils.hideLoading();
                 utils.showAlert('권한 변경 실패: ' + error.message, 'error');
             }
-        }
+        };
     </script>
 </body>
 
