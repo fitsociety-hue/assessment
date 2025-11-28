@@ -444,7 +444,32 @@ class SheetsAPI {
     async deleteRow(sheetName, idColumn, idValue) {
         try {
             if (CONFIG.USE_APPS_SCRIPT) {
-                await this._callAppsScript('delete', { sheetName, idColumn, idValue });
+                // 1. 먼저 로컬에서 해당 행을 찾아 실제 ID 값(타입 포함)을 확인
+                const rows = await this.readSheet(sheetName);
+                if (rows.length === 0) throw new Error(`시트가 비어있습니다: ${sheetName}`);
+
+                const headers = rows[0];
+                const idColumnIndex = headers.indexOf(idColumn);
+                if (idColumnIndex === -1) throw new Error(`ID 컬럼을 찾을 수 없습니다: ${idColumn}`);
+
+                let actualIdValue = idValue;
+                let found = false;
+
+                for (let i = 1; i < rows.length; i++) {
+                    // Loose equality check
+                    if (rows[i][idColumnIndex] == idValue) {
+                        actualIdValue = rows[i][idColumnIndex]; // 시트에 저장된 실제 값(타입) 사용
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    throw new Error(`삭제할 행을 찾을 수 없습니다: ${idColumn}=${idValue}`);
+                }
+
+                // 2. 실제 값으로 삭제 요청
+                await this._callAppsScript('delete', { sheetName, idColumn, idValue: actualIdValue });
             } else {
                 // 직접 API로는 삭제가 복잡하므로 Apps Script 사용 권장
                 throw new Error('행 삭제는 Apps Script 방식에서만 지원됩니다.');
