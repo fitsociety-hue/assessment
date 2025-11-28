@@ -196,16 +196,16 @@ class AuthManager {
     }
 
     /**
-     * 특정 직원의 평가를 볼 수 있는지 확인
-     * @param {Object} targetUser - 대상 직원 정보 (employee_id, department 등)
-     * @param {string} evaluationType - 평가 유형 ('comprehensive', 'performance', 'competency', etc.)
+     * 특정 직원의 평가를 볼 수 있는지 확인 (평가 입력/수정용)
+     * @param {Object} targetUser - 대상 직원 정보
+     * @param {string} evaluationType - 평가 유형
      */
     canViewEvaluation(targetUser, evaluationType = null) {
         if (!this.currentUser) return false;
 
-        // 1. 본인인 경우
+        // 1. 본인인 경우 (자기평가 등 입력 가능)
         if (this.currentUser.employeeId === targetUser.employee_id) {
-            // 종합평가는 본인도 볼 수 없음
+            // 종합평가 결과는 본인도 볼 수 없음 (별도 메소드로 관리하지만 안전장치)
             if (evaluationType === 'comprehensive') {
                 return false;
             }
@@ -226,28 +226,43 @@ class AuthManager {
     }
 
     /**
-     * 종합평가 조회 권한 확인
+     * 평가 결과/리포트 조회 권한 확인 (종합평가 등)
      * @param {Object} targetUser - 대상 직원 정보
      */
-    canViewComprehensiveEvaluation(targetUser) {
+    canViewEvaluationResults(targetUser) {
         if (!this.currentUser) return false;
 
-        // 본인의 종합평가는 절대 볼 수 없음
-        if (this.currentUser.employeeId === targetUser.employee_id) {
-            return false;
-        }
+        const isSelf = this.currentUser.employeeId === targetUser.employee_id;
+        const myPosition = this.currentUser.position;
+        const myRole = this.currentUser.role;
 
-        // 관리자, 관장, 사무국장만 타인의 종합평가 조회 가능
-        if (this.isAdmin() || this.isDirector()) {
+        // 1. 관장 (Director) & 시스템 관리자: 전체 열람 가능
+        // 관장은 평가 대상이 아니므로 본인 평가가 없지만, 로직상 허용해도 무방 (데이터가 없을 것임)
+        if (myPosition === '관장' || myRole === 'admin') {
             return true;
         }
 
-        // 팀장은 본인 팀원의 종합평가 조회 가능
-        if (this.isManager() && this.currentUser.department === targetUser.department) {
-            return true;
+        // 2. 사무국장 (Secretary General): 전체 열람 가능, 단 본인 평가 내용은 볼 수 없음
+        if (myPosition === '사무국장') {
+            return !isSelf;
         }
 
+        // 3. 팀장 (Manager): 같은 팀 팀원 열람 가능, 단 본인 평가 내용은 볼 수 없음
+        if (this.isManager()) {
+            if (this.currentUser.department === targetUser.department) {
+                return !isSelf;
+            }
+        }
+
+        // 4. 팀원 (Staff): 타인의 평가 결과 열람 불가, 본인 평가 결과도 열람 불가
         return false;
+    }
+
+    /**
+     * 종합평가 조회 권한 확인 (canViewEvaluationResults 별칭)
+     */
+    canViewComprehensiveEvaluation(targetUser) {
+        return this.canViewEvaluationResults(targetUser);
     }
 
     /**

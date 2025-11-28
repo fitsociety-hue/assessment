@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>평가 결과 리포트 - 강동어울림복지관</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../css/main.css">
+</head>
+
+<body>
+    <div id="global-loader" class="loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p class="loader-message">처리 중...</p>
+        </div>
+    </div>
+    <div id="alert-container"></div>
+
+    <div class="container" style="padding: var(--spacing-xl) var(--spacing-lg);">
+        <div style="margin-bottom: var(--spacing-xl);">
+            <a href="../dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">평가 결과 리포트</h1>
+                <p class="card-subtitle">평가 결과 조회 및 분석</p>
+            </div>
+
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="period" class="form-label">평가 기간</label>
+                    <select id="period" class="form-select"></select>
+                </div>
+
+                <button type="button" id="generateBtn" class="btn btn-primary"
+                    style="margin-bottom: var(--spacing-xl);">📊 조회하기</button>
+
+                <div id="reportSection" style="display:none;">
+                    <!-- 통계 카드 -->
+                    <div class="stats-grid" style="margin-bottom: var(--spacing-xl);">
+                        <div class="stat-card primary">
+                            <div class="stat-label">조회 대상 인원</div>
+                            <div class="stat-value" id="totalEmployees">0</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-label">평가 완료</div>
+                            <div class="stat-value" id="completedCount">0</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-label">평가 미완료</div>
+                            <div class="stat-value" id="pendingCount">0</div>
+                        </div>
+                        <div class="stat-card info">
+                            <div class="stat-label">평균 점수</div>
+                            <div class="stat-value" id="avgScore">0</div>
+                        </div>
+                    </div>
+
+                    <!-- 상세 평가 결과 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">상세 평가 결과</h3>
+                            <button type="button" id="downloadBtn" class="btn btn-sm btn-success">📥 CSV 다운로드</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="data-table" id="detailTable">
+                                    <thead>
+                                        <tr>
+                                            <th>부서</th>
+                                            <th>직급</th>
+                                            <th>이름</th>
+                                            <th>성과</th>
+                                            <th>역량</th>
+                                            <th>다면</th>
+                                            <th>총점</th>
+                                            <th>등급</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detailTableBody">
+                                        <tr>
+                                            <td colspan="8" class="text-center">데이터 없음</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        let reportData = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 페이지 초기화 (로그인 확인)
+            if (!auth.checkPageAccess()) return;
+
+            // 권한 확인: 관리자, 관장, 사무국장, 팀장만 접근 가능
+            if (!auth.isAdmin() && !auth.isDirector() && !auth.isManager()) {
+                alert('접근 권한이 없습니다.');
+                window.location.href = '../dashboard.html';
+                return;
+            }
+
+            loadPeriods();
+        });
+
+        function loadPeriods() {
+            const select = document.getElementById('period');
+            CONFIG.EVALUATION_PERIODS.forEach(period => {
+                select.add(new Option(period, period));
+            });
+            // 기본값: 현재 설정된 기간 또는 가장 최근 기간
+            api.getSetting('current_period').then(currentPeriod => {
+                if (currentPeriod) {
+                    select.value = currentPeriod;
+                } else {
+                    select.value = CONFIG.EVALUATION_PERIODS[0];
+                }
+            });
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const period = document.getElementById('period').value;
+            const currentUser = auth.getCurrentUser();
+
+            try {
+                utils.showLoading('데이터 조회 중...');
+
+                // 1. 전체 직원 및 종합평가 데이터 로드
+                const [employeesRaw, comprehensiveRaw] = await Promise.all([
+                    api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES),
+                    api.readSheet(CONFIG.SHEET_NAMES.COMPREHENSIVE)
+                ]);
+
+                // 헤더 제거 및 객체 변환
+                const employees = employeesRaw.slice(1).map(row => ({
+                    employee_id: row[0],
+                    name: row[1],
+                    department: row[2],
+                    position: row[3],
+                    role: row[5]
+                }));
+
+                const comprehensive = comprehensiveRaw.slice(1).map(row => ({
+                    evaluation_id: row[0],
+                    employee_id: row[1],
+                    period: row[2],
+                    performance_score: parseFloat(row[3] || 0),
+                    competency_score: parseFloat(row[4] || 0),
+                    multifacet_score: parseFloat(row[5] || 0),
+                    total_score: parseFloat(row[6] || 0),
+                    grade: row[7]
+                }));
+
+                // 2. 권한에 따른 필터링
+                let targetEmployees = [];
+
+                if (auth.isAdmin() || auth.isDirector()) {
+                    // 전체 조회 (관장/관리자)
+                    targetEmployees = employees;
+                } else if (currentUser.position === '사무국장') {
+                    // 전체 조회하되 본인은 제외 (사무국장)
+                    targetEmployees = employees.filter(emp => emp.employee_id !== currentUser.employeeId);
+                } else if (auth.isManager()) {
+                    // 같은 부서 팀원만 조회 (팀장), 본인 제외
+                    targetEmployees = employees.filter(emp =>
+                        emp.department === currentUser.department &&
+                        emp.employee_id !== currentUser.employeeId
+                    );
+                }
+
+                // 3. 데이터 결합
+                const reportRows = [];
+                let completedCount = 0;
+                let totalScoreSum = 0;
+
+                targetEmployees.forEach(emp => {
+                    // 관장은 평가 대상에서 제외
+                    if (emp.position === '관장') return;
+
+                    const evalData = comprehensive.find(c => c.employee_id === emp.employee_id && c.period === period);
+
+                    if (evalData) {
+                        completedCount++;
+                        totalScoreSum += evalData.total_score;
+                        reportRows.push({
+                            ...emp,
+                            ...evalData,
+                            status: '완료'
+                        });
+                    } else {
+                        reportRows.push({
+                            ...emp,
+                            performance_score: 0,
+                            competency_score: 0,
+                            multifacet_score: 0,
+                            total_score: 0,
+                            grade: '-',
+                            status: '미완료'
+                        });
+                    }
+                });
+
+                // 4. 통계 계산
+                const validEmployees = targetEmployees.filter(emp => emp.position !== '관장');
+                const validTotalCount = validEmployees.length;
+                const validPendingCount = validTotalCount - completedCount;
+                const validAvgScore = completedCount > 0 ? (totalScoreSum / completedCount) : 0;
+
+                // 5. UI 업데이트
+                document.getElementById('totalEmployees').textContent = validTotalCount;
+                document.getElementById('completedCount').textContent = completedCount;
+                document.getElementById('pendingCount').textContent = validPendingCount;
+                document.getElementById('avgScore').textContent = validAvgScore.toFixed(1);
+
+                // 테이블 렌더링
+                let tableHtml = '';
+                reportData = []; // CSV 다운로드용 데이터 초기화
+
+                if (reportRows.length === 0) {
+                    tableHtml = '<tr><td colspan="8" class="text-center">조회된 데이터가 없습니다.</td></tr>';
+                } else {
+                    reportRows.forEach(row => {
+                        const gradeBadge = row.grade !== '-' ? `<span class="badge badge-grade-${row.grade.toLowerCase()}">${row.grade}등급</span>` : '-';
+
+                        tableHtml += `
+                            <tr>
+                                <td>${row.department}</td>
+                                <td>${row.position}</td>
+                                <td><strong>${row.name}</strong></td>
+                                <td>${row.performance_score.toFixed(1)}</td>
+                                <td>${row.competency_score.toFixed(1)}</td>
+                                <td>${row.multifacet_score.toFixed(1)}</td>
+                                <td><strong>${row.total_score.toFixed(1)}</strong></td>
+                                <td>${gradeBadge}</td>
+                            </tr>
+                        `;
+
+                        reportData.push([
+                            row.department,
+                            row.position,
+                            row.name,
+                            row.performance_score,
+                            row.competency_score,
+                            row.multifacet_score,
+                            row.total_score,
+                            row.grade
+                        ]);
+                    });
+                }
+
+                document.getElementById('detailTableBody').innerHTML = tableHtml;
+                document.getElementById('reportSection').style.display = '';
+
+                utils.hideLoading();
+
+            } catch (error) {
+                utils.hideLoading();
+                utils.showAlert('조회 실패: ' + error.message, 'error');
+                console.error(error);
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (reportData.length === 0) {
+                utils.showAlert('다운로드할 데이터가 없습니다.', 'warning');
+                return;
+            }
+
+            const csvData = [
+                ['부서', '직급', '이름', '성과점수', '역량점수', '다면점수', '총점', '등급'],
+                ...reportData
+            ];
+
+            const period = document.getElementById('period').value;
+            utils.downloadCSV(csvData, `평가결과_${period}.csv`);
+        });
+    </script>
+</body>
+
+</html>
