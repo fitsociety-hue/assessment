@@ -418,6 +418,7 @@
 
             if (!confirm('정말 이 직원의 권한을 변경하시겠습니까?')) {
                 return;
+
             }
 
             try {
@@ -426,7 +427,7 @@
                 await api.updateRow(
                     CONFIG.SHEET_NAMES.EMPLOYEES,
                     'employee_id',
-                    employeeId,
+                    String(employeeId),
                     { role: newRole }
                 );
 

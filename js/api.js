@@ -382,7 +382,8 @@ class SheetsAPI {
             // 업데이트할 행 찾기
             let rowIndex = -1;
             for (let i = 1; i < rows.length; i++) {
-                if (rows[i][idColumnIndex] === idValue) {
+                // Loose equality check to handle string/number differences
+                if (rows[i][idColumnIndex] == idValue) {
                     rowIndex = i;
                     break;
                 }

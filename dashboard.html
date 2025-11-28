@@ -26,6 +26,13 @@
                     <li><a href="evaluation/performance.html"><i class="fas fa-chart-line"></i> 성과평가</a></li>
                     <li><a href="evaluation/competency.html"><i class="fas fa-bullseye"></i> 역량평가</a></li>
                     <li><a href="evaluation/multifacet.html"><i class="fas fa-users"></i> 다면평가</a></li>
+
+                    <!-- Role-based links will be injected here -->
+                    <li id="teamEvaluationLink" style="display: none;"><a href="evaluation/team.html"><i
+                                class="fas fa-users-cog"></i> 팀 평가</a></li>
+                    <li id="allEvaluationLink" style="display: none;"><a href="evaluation/report.html"><i
+                                class="fas fa-list-alt"></i> 전체 평가 조회</a></li>
+
                     <li><a href="#" onclick="openPasswordModal()"><i class="fas fa-key"></i> 비밀번호 변경</a></li>
                     <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
                 </ul>
@@ -93,515 +100,251 @@
                         <h3 class="card-title">최근 활동</h3>
                     </div>
                     <div class="card-body" id="recentActivities">
+                        <!-- 관리자용 전체 현황 (관리자만 표시) -->
+                        <div id="adminOverview" class="mt-md"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 
-                        <!-- 비밀번호 변경 모달 -->
-                        <div id="passwordModal" class="modal" style="display: none;">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h3 class="modal-title">비밀번호 변경</h3>
-                                    <button type="button" class="close-btn" id="closePasswordModalBtn">&times;</button>
-                                </div>
-                                <form id="passwordForm">
-                                    <div class="form-group">
-                                        <label for="currentPassword" class="form-label">현재 비밀번호</label>
-                                        <input type="password" id="currentPassword" class="form-input" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="newPassword" class="form-label">새 비밀번호</label>
-                                        <input type="password" id="newPassword" class="form-input" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="confirmPassword" class="form-label">새 비밀번호 확인</label>
-                                        <input type="password" id="confirmPassword" class="form-input" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <button type="submit" class="btn btn-primary w-100">변경</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+    <!-- 비밀번호 변경 모달 -->
+    <div id="passwordModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">비밀번호 변경</h3>
+                <button type="button" class="close-btn" id="closePasswordModalBtn">&times;</button>
+            </div>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="currentPassword" class="form-label">현재 비밀번호</label>
+                    <input type="password" id="currentPassword" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword" class="form-label">새 비밀번호</label>
+                    <input type="password" id="newPassword" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">새 비밀번호 확인</label>
+                    <input type="password" id="confirmPassword" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary w-100">변경</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                        <!-- 평가 기간 설정 모달 -->
-                        <div id="periodModal" class="modal" style="display: none;">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h3 class="modal-title">평가 기간 설정</h3>
-                                    <button type="button" class="close-btn" id="closePeriodModalBtn">&times;</button>
-                                </div>
-                                <form id="periodForm">
-                                    <div class="form-group">
-                                        <label class="form-label">연도</label>
-                                        <select id="periodYear" class="form-select">
-                                            <option value="2024">2024년</option>
-                                            <!DOCTYPE html>
-                                            <html lang="ko">
+    <!-- 평가 기간 설정 모달 -->
+    <div id="periodModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">평가 기간 설정</h3>
+                <button type="button" class="close-btn" id="closePeriodModalBtn">&times;</button>
+            </div>
+            <form id="periodForm">
+                <div class="form-group">
+                    <label class="form-label">연도</label>
+                    <input type="number" id="periodYear" class="form-input" placeholder="예: 2025" min="2020" max="2099"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">반기</label>
+                    <input type="text" id="periodHalf" class="form-input" placeholder="예: 상반기" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary w-100">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                                            <head>
-                                                <meta charset="UTF-8">
-                                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                                <title>대시보드 - 강동어울림복지관</title>
-                                                <link rel="stylesheet" href="css/main.css">
-                                                <link rel="stylesheet"
-                                                    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                                                <link
-                                                    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
-                                                    rel="stylesheet">
-                                            </head>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. 페이지 접근 권한 확인
+            if (!auth.checkPageAccess()) {
+                return;
+            }
 
-                                            <body>
-                                                <div class="dashboard-layout">
-                                                    <!-- 사이드바 -->
-                                                    <aside class="sidebar">
-                                                        <div class="sidebar-header">
-                                                            <h2>강동어울림복지관</h2>
-                                                            <div class="user-info" id="sidebarUserInfo"></div>
-                                                        </div>
-                                                        <nav>
-                                                            <ul class="sidebar-nav">
-                                                                <li><a href="dashboard.html" class="active"><i
-                                                                            class="fas fa-chart-pie"></i> 대시보드</a></li>
-                                                                <li><a href="evaluation/self.html"><i
-                                                                            class="fas fa-edit"></i> 자기평가</a></li>
-                                                                <li><a href="evaluation/performance.html"><i
-                                                                            class="fas fa-chart-line"></i> 성과평가</a></li>
-                                                                <li><a href="evaluation/competency.html"><i
-                                                                            class="fas fa-bullseye"></i> 역량평가</a></li>
-                                                                <li><a href="evaluation/multifacet.html"><i
-                                                                            class="fas fa-users"></i> 다면평가</a></li>
-                                                                <li><a href="#" onclick="openPasswordModal()"><i
-                                                                            class="fas fa-key"></i> 비밀번호 변경</a></li>
-                                                                <li><a href="#" id="logoutBtn"><i
-                                                                            class="fas fa-sign-out-alt"></i> 로그아웃</a>
-                                                                </li>
-                                                            </ul>
-                                                        </nav>
-                                                    </aside>
+            // 2. UI 초기화
+            const userInfo = auth.getCurrentUser();
+            if (userInfo) {
+                // 관리자인 경우 부서 숨기기
+                const deptHtml = userInfo.role === 'admin' ? '' : `<div class="user-dept text-sm text-secondary">${userInfo.department}</div>`;
 
-                                                    <!-- 메인 콘텐츠 -->
-                                                    <main class="main-content">
-                                                        <!-- 상단 바 -->
-                                                        <header class="top-bar">
-                                                            <h1 class="page-title">대시보드</h1>
-                                                            <div class="top-bar-actions">
-                                                                <div class="current-period">
-                                                                    <span id="currentPeriod">Loading...</span>
-                                                                    <button class="btn btn-sm btn-secondary ml-sm"
-                                                                        <!DOCTYPE html>
-                                                                        <html lang="ko">
-
-                                                                        <head>
-                                                                            <meta charset="UTF-8">
-                                                                            <meta name="viewport"
-                                                                                content="width=device-width, initial-scale=1.0">
-                                                                            <title>대시보드 - 강동어울림복지관</title>
-                                                                            <link rel="stylesheet" href="css/main.css">
-                                                                            <link rel="stylesheet"
-                                                                                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                                                                            <link
-                                                                                href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
-                                                                                rel="stylesheet">
-                                                                        </head>
-
-                                                                        <body>
-                                                                            <div class="dashboard-layout">
-                                                                                <!-- 사이드바 -->
-                                                                                <aside class="sidebar">
-                                                                                    <div class="sidebar-header">
-                                                                                        <h2>강동어울림복지관</h2>
-                                                                                        <div class="user-info"
-                                                                                            id="sidebarUserInfo"></div>
-                                                                                    </div>
-                                                                                    <nav>
-                                                                                        <ul class="sidebar-nav">
-                                                                                            <li><a href="dashboard.html"
-                                                                                                    class="active"><i
-                                                                                                        class="fas fa-chart-pie"></i>
-                                                                                                    대시보드</a></li>
-                                                                                            <li><a
-                                                                                                    href="evaluation/self.html"><i
-                                                                                                        class="fas fa-edit"></i>
-                                                                                                    자기평가</a></li>
-                                                                                            <li><a
-                                                                                                    href="evaluation/performance.html"><i
-                                                                                                        class="fas fa-chart-line"></i>
-                                                                                                    성과평가</a></li>
-                                                                                            <li><a
-                                                                                                    href="evaluation/competency.html"><i
-                                                                                                        class="fas fa-bullseye"></i>
-                                                                                                    역량평가</a></li>
-                                                                                            <li><a
-                                                                                                    href="evaluation/multifacet.html"><i
-                                                                                                        class="fas fa-users"></i>
-                                                                                                    다면평가</a></li>
-                                                                                            <li><a href="#"
-                                                                                                    onclick="openPasswordModal()"><i
-                                                                                                        class="fas fa-key"></i>
-                                                                                                    비밀번호 변경</a></li>
-                                                                                            <li><a href="#"
-                                                                                                    id="logoutBtn"><i
-                                                                                                        class="fas fa-sign-out-alt"></i>
-                                                                                                    로그아웃</a></li>
-                                                                                        </ul>
-                                                                                    </nav>
-                                                                                </aside>
-
-                                                                                <!-- 메인 콘텐츠 -->
-                                                                                <main class="main-content">
-                                                                                    <!-- 상단 바 -->
-                                                                                    <header class="top-bar">
-                                                                                        <h1 class="page-title">대시보드</h1>
-                                                                                        <div class="top-bar-actions">
-                                                                                            <div class="current-period">
-                                                                                                <span
-                                                                                                    id="currentPeriod">Loading...</span>
-                                                                                                <button
-                                                                                                    class="btn btn-sm btn-secondary ml-sm"
-                                                                                                    id="editPeriodBtn"
-                                                                                                    style="display: none;">
-                                                                                                    <i
-                                                                                                        class="fas fa-pencil-alt"></i>
-                                                                                                </button>
-                                                                                            </div>
-                                                                                            <div class="user-menu">
-                                                                                                <div class="user-info"
-                                                                                                    id="topbarUserInfo">
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </header>
-
-                                                                                    <!-- 대시보드 통계 -->
-                                                                                    <div class="stats-grid">
-                                                                                        <div class="stat-card primary">
-                                                                                            <div class="stat-label">현재
-                                                                                                평가 기간</div>
-                                                                                            <div class="stat-value"
-                                                                                                id="currentPeriodDisplay">
-                                                                                                -</div>
-                                                                                        </div>
-                                                                                        <div class="stat-card success">
-                                                                                            <div class="stat-label">완료한
-                                                                                                평가</div>
-                                                                                            <div class="stat-value"
-                                                                                                id="completedEvals">0
-                                                                                            </div>
-                                                                                            <div class="stat-change">/ 총
-                                                                                                5개</div>
-                                                                                        </div>
-                                                                                        <div class="stat-card warning">
-                                                                                            <div class="stat-label">진행
-                                                                                                중인 평가</div>
-                                                                                            <div class="stat-value"
-                                                                                                id="pendingEvals">0
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div class="stat-card info">
-                                                                                            <div class="stat-label">최종
-                                                                                                등급</div>
-                                                                                            <div class="stat-value"
-                                                                                                id="finalGrade">-</div>
-                                                                                        </div>
-                                                                                    </div>
-
-                                                                                    <!-- 평가 목록 -->
-                                                                                    <div class="grid grid-2">
-                                                                                        <!-- 내 평가 현황 -->
-                                                                                        <div class="card">
-                                                                                            <div class="card-header">
-                                                                                                <h3 class="card-title">내
-                                                                                                    평가 현황</h3>
-                                                                                            </div>
-                                                                                            <div class="card-body"
-                                                                                                id="myEvaluations">
-                                                                                                <!-- 동적으로 채워질 내용 -->
-                                                                                                <div
-                                                                                                    class="text-center p-md">
-                                                                                                    <div
-                                                                                                        class="spinner">
-                                                                                                    </div>
-                                                                                                    <p>데이터를 불러오는 중...
-                                                                                                    </p>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        <!-- 최근 활동 -->
-                                                                                        <div class="card">
-                                                                                            <div class="card-header">
-                                                                                                <h3 class="card-title">
-                                                                                                    최근 활동</h3>
-                                                                                            </div>
-                                                                                            <div class="card-body"
-                                                                                                id="recentActivities">
-                                                                                                <!-- 관리자용 전체 현황 (관리자만 표시) -->
-                                                                                                <div id="adminOverview"
-                                                                                                    class="mt-md"></div>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </main>
-                                                                            </div>
-
-                                                                            <!-- 비밀번호 변경 모달 -->
-                                                                            <div id="passwordModal" class="modal"
-                                                                                style="display: none;">
-                                                                                <div class="modal-content">
-                                                                                    <div class="modal-header">
-                                                                                        <h3 class="modal-title">비밀번호 변경
-                                                                                        </h3>
-                                                                                        <button type="button"
-                                                                                            class="close-btn"
-                                                                                            id="closePasswordModalBtn">&times;</button>
-                                                                                    </div>
-                                                                                    <form id="passwordForm">
-                                                                                        <div class="form-group">
-                                                                                            <label for="currentPassword"
-                                                                                                class="form-label">현재
-                                                                                                비밀번호</label>
-                                                                                            <input type="password"
-                                                                                                id="currentPassword"
-                                                                                                class="form-input"
-                                                                                                required>
-                                                                                        </div>
-                                                                                        <div class="form-group">
-                                                                                            <label for="newPassword"
-                                                                                                class="form-label">새
-                                                                                                비밀번호</label>
-                                                                                            <input type="password"
-                                                                                                id="newPassword"
-                                                                                                class="form-input"
-                                                                                                required>
-                                                                                        </div>
-                                                                                        <div class="form-group">
-                                                                                            <label for="confirmPassword"
-                                                                                                class="form-label">새
-                                                                                                비밀번호 확인</label>
-                                                                                            <input type="password"
-                                                                                                id="confirmPassword"
-                                                                                                class="form-input"
-                                                                                                required>
-                                                                                        </div>
-                                                                                        <div class="form-group">
-                                                                                            <button type="submit"
-                                                                                                class="btn btn-primary w-100">변경</button>
-                                                                                        </div>
-                                                                                    </form>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <!-- 평가 기간 설정 모달 -->
-                                                                            <div id="periodModal" class="modal"
-                                                                                style="display: none;">
-                                                                                <div class="modal-content">
-                                                                                    <div class="modal-header">
-                                                                                        <h3 class="modal-title">평가 기간 설정
-                                                                                        </h3>
-                                                                                        <button type="button"
-                                                                                            class="close-btn"
-                                                                                            id="closePeriodModalBtn">&times;</button>
-                                                                                    </div>
-                                                                                    <form id="periodForm">
-                                                                                        <div class="form-group">
-                                                                                            <label
-                                                                                                class="form-label">연도</label>
-                                                                                            <select id="periodYear"
-                                                                                                class="form-select">
-                                                                                                <option value="2024">
-                                                                                                    2024년</option>
-                                                                                                <option value="2025">
-                                                                                                    2025년</option>
-                                                                                                <option value="2026">
-                                                                                                    2026년</option>
-                                                                                            </select>
-                                                                                        </div>
-                                                                                        <div class="form-group">
-                                                                                            <label
-                                                                                                class="form-label">반기</label>
-                                                                                            <select id="periodHalf"
-                                                                                                class="form-select">
-                                                                                                <option value="상반기">상반기
-                                                                                                </option>
-                                                                                                <option value="하반기">하반기
-                                                                                                </option>
-                                                                                            </select>
-                                                                                        </div>
-                                                                                        <div class="form-group">
-                                                                                            <button type="submit"
-                                                                                                class="btn btn-primary w-100">저장</button>
-                                                                                        </div>
-                                                                                    </form>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <script src="js/config.js"></script>
-                                                                            <script src="js/utils.js"></script>
-                                                                            <script src="js/api.js"></script>
-                                                                            <script src="js/auth.js"></script>
-                                                                            <script>
-                                                                                document.addEventListener('DOMContentLoaded', async () => {
-                                                                                    // 1. 페이지 접근 권한 확인
-                                                                                    if (!auth.checkPageAccess()) {
-                                                                                        return;
-                                                                                    }
-
-                                                                                    // 2. UI 초기화
-                                                                                    const userInfo = auth.getCurrentUser();
-                                                                                    if (userInfo) {
-                                                                                        // 관리자인 경우 부서 숨기기
-                                                                                        const deptHtml = userInfo.role === 'admin' ? '' : `<div class="user-dept text-sm text-secondary">${userInfo.department}</div>`;
-
-                                                                                        // 사이드바 및 상단 바 사용자 정보 표시
-                                                                                        const userInfoHtml = `
+                // 사이드바 및 상단 바 사용자 정보 표시
+                const userInfoHtml = `
                     <div class="user-profile">
                         <div class="user-name font-bold">${userInfo.name} ${userInfo.position}</div>
                         ${deptHtml}
                     </div>
                 `;
 
-                                                                                        const sidebarUserInfo = document.getElementById('sidebarUserInfo');
-                                                                                        if (sidebarUserInfo) sidebarUserInfo.innerHTML = userInfoHtml;
+                const sidebarUserInfo = document.getElementById('sidebarUserInfo');
+                if (sidebarUserInfo) sidebarUserInfo.innerHTML = userInfoHtml;
 
-                                                                                        const topbarUserInfo = document.getElementById('topbarUserInfo');
-                                                                                        if (topbarUserInfo) topbarUserInfo.innerHTML = userInfoHtml;
+                const topbarUserInfo = document.getElementById('topbarUserInfo');
+                if (topbarUserInfo) topbarUserInfo.innerHTML = userInfoHtml;
 
-                                                                                        const logoutBtn = document.getElementById('logoutBtn');
-                                                                                        if (logoutBtn) {
-                                                                                            logoutBtn.addEventListener('click', (e) => {
-                                                                                                e.preventDefault();
-                                                                                                auth.logout();
-                                                                                            });
-                                                                                        }
-                                                                                    }
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        auth.logout();
+                    });
+                }
 
-                                                                                    // 3. 데이터 로드
-                                                                                    await loadDashboardData();
+                // 권한별 메뉴 표시
+                if (['manager', 'director', 'admin'].includes(userInfo.role)) {
+                    // 팀장 이상은 팀 평가 메뉴 표시 (추후 구현)
+                    // document.getElementById('teamEvaluationLink').style.display = 'block';
+                }
 
-                                                                                    // 비밀번호 변경 모달 관련
-                                                                                    window.openPasswordModal = () => {
-                                                                                        document.getElementById('passwordForm').reset();
-                                                                                        document.getElementById('passwordModal').style.display = 'flex';
-                                                                                    };
+                if (['director', 'admin'].includes(userInfo.role)) {
+                    // 관장/사무국장/관리자는 전체 평가 조회 메뉴 표시
+                    document.getElementById('allEvaluationLink').style.display = 'block';
+                }
+            }
 
-                                                                                    const closePasswordModalBtn = document.getElementById('closePasswordModalBtn');
-                                                                                    if (closePasswordModalBtn) {
-                                                                                        closePasswordModalBtn.addEventListener('click', () => {
-                                                                                            document.getElementById('passwordModal').style.display = 'none';
-                                                                                        });
-                                                                                    }
+            // 3. 데이터 로드
+            await loadDashboardData();
 
-                                                                                    const passwordForm = document.getElementById('passwordForm');
-                                                                                    if (passwordForm) {
-                                                                                        passwordForm.addEventListener('submit', async (e) => {
-                                                                                            e.preventDefault();
-                                                                                            const currentPassword = document.getElementById('currentPassword').value;
-                                                                                            const newPassword = document.getElementById('newPassword').value;
-                                                                                            const confirmPassword = document.getElementById('confirmPassword').value;
+            // 비밀번호 변경 모달 관련
+            window.openPasswordModal = () => {
+                document.getElementById('passwordForm').reset();
+                document.getElementById('passwordModal').style.display = 'flex';
+            };
 
-                                                                                            if (newPassword !== confirmPassword) {
-                                                                                                utils.showAlert('새 비밀번호가 일치하지 않습니다.', 'warning');
-                                                                                                return;
-                                                                                            }
+            const closePasswordModalBtn = document.getElementById('closePasswordModalBtn');
+            if (closePasswordModalBtn) {
+                closePasswordModalBtn.addEventListener('click', () => {
+                    document.getElementById('passwordModal').style.display = 'none';
+                });
+            }
 
-                                                                                            try {
-                                                                                                utils.showLoading('비밀번호 변경 중...');
-                                                                                                await auth.changePassword(currentPassword, newPassword);
-                                                                                                utils.hideLoading();
-                                                                                                utils.showAlert('비밀번호가 변경되었습니다.', 'success');
-                                                                                                document.getElementById('passwordModal').style.display = 'none';
-                                                                                            } catch (error) {
-                                                                                                utils.hideLoading();
-                                                                                                utils.showAlert('변경 실패: ' + error.message, 'error');
-                                                                                            }
-                                                                                        });
-                                                                                    }
+            const passwordForm = document.getElementById('passwordForm');
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const currentPassword = document.getElementById('currentPassword').value;
+                    const newPassword = document.getElementById('newPassword').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
 
-                                                                                    // 평가 기간 설정 모달 관련
-                                                                                    const editPeriodBtn = document.getElementById('editPeriodBtn');
-                                                                                    if (editPeriodBtn) {
-                                                                                        editPeriodBtn.addEventListener('click', () => {
-                                                                                            const currentText = document.getElementById('currentPeriod').textContent;
-                                                                                            const [year, half] = currentText.split('-');
+                    if (newPassword !== confirmPassword) {
+                        utils.showAlert('새 비밀번호가 일치하지 않습니다.', 'warning');
+                        return;
+                    }
 
-                                                                                            document.getElementById('periodYear').value = year || '2024';
-                                                                                            document.getElementById('periodHalf').value = half || '상반기';
+                    try {
+                        utils.showLoading('비밀번호 변경 중...');
+                        await auth.changePassword(currentPassword, newPassword);
+                        utils.hideLoading();
+                        utils.showAlert('비밀번호가 변경되었습니다.', 'success');
+                        document.getElementById('passwordModal').style.display = 'none';
+                    } catch (error) {
+                        utils.hideLoading();
+                        utils.showAlert('변경 실패: ' + error.message, 'error');
+                    }
+                });
+            }
 
-                                                                                            document.getElementById('periodModal').style.display = 'flex';
-                                                                                        });
-                                                                                    }
+            // 평가 기간 설정 모달 관련
+            const editPeriodBtn = document.getElementById('editPeriodBtn');
+            if (editPeriodBtn) {
+                editPeriodBtn.addEventListener('click', () => {
+                    const currentText = document.getElementById('currentPeriod').textContent;
+                    // Try to split by hyphen, but handle if format is different
+                    let year = '2025';
+                    let half = '상반기';
 
-                                                                                    const closePeriodModalBtn = document.getElementById('closePeriodModalBtn');
-                                                                                    if (closePeriodModalBtn) {
-                                                                                        closePeriodModalBtn.addEventListener('click', () => {
-                                                                                            document.getElementById('periodModal').style.display = 'none';
-                                                                                        });
-                                                                                    }
+                    if (currentText && currentText.includes('-')) {
+                        [year, half] = currentText.split('-');
+                    }
 
-                                                                                    const periodForm = document.getElementById('periodForm');
-                                                                                    if (periodForm) {
-                                                                                        periodForm.addEventListener('submit', async (e) => {
-                                                                                            e.preventDefault();
+                    document.getElementById('periodYear').value = year;
+                    document.getElementById('periodHalf').value = half;
 
-                                                                                            const year = document.getElementById('periodYear').value;
-                                                                                            const half = document.getElementById('periodHalf').value;
-                                                                                            const newPeriod = `${year}-${half}`;
+                    document.getElementById('periodModal').style.display = 'flex';
+                });
+            }
 
-                                                                                            try {
-                                                                                                utils.showLoading('평가 기간 저장 중...');
-                                                                                                await api.setSetting('current_period', newPeriod);
-                                                                                                utils.hideLoading();
-                                                                                                utils.showAlert('평가 기간이 변경되었습니다.', 'success');
-                                                                                                document.getElementById('periodModal').style.display = 'none';
+            const closePeriodModalBtn = document.getElementById('closePeriodModalBtn');
+            if (closePeriodModalBtn) {
+                closePeriodModalBtn.addEventListener('click', () => {
+                    document.getElementById('periodModal').style.display = 'none';
+                });
+            }
 
-                                                                                                // 화면 갱신
-                                                                                                await loadDashboardData();
-                                                                                            } catch (error) {
-                                                                                                utils.hideLoading();
-                                                                                                utils.showAlert('저장 실패: ' + error.message, 'error');
-                                                                                            }
-                                                                                        });
-                                                                                    }
-                                                                                });
+            const periodForm = document.getElementById('periodForm');
+            if (periodForm) {
+                periodForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
 
-                                                                                async function loadDashboardData() {
-                                                                                    const userInfo = auth.getCurrentUser();
-                                                                                    const employeeId = userInfo ? userInfo.employeeId : null;
+                    const year = document.getElementById('periodYear').value;
+                    const half = document.getElementById('periodHalf').value;
+                    const newPeriod = `${year}-${half}`;
 
-                                                                                    // 설정에서 현재 평가 기간 로드
-                                                                                    let currentPeriod = await api.getSetting('current_period');
-                                                                                    if (!currentPeriod) {
-                                                                                        currentPeriod = CONFIG.EVALUATION_PERIODS[0] || '2024-상반기';
-                                                                                    }
+                    try {
+                        utils.showLoading('평가 기간 저장 중...');
+                        await api.setSetting('current_period', newPeriod);
+                        utils.hideLoading();
+                        utils.showAlert('평가 기간이 변경되었습니다.', 'success');
+                        document.getElementById('periodModal').style.display = 'none';
 
-                                                                                    const currentPeriodElem = document.getElementById('currentPeriod');
-                                                                                    if (currentPeriodElem) currentPeriodElem.textContent = currentPeriod;
+                        // 화면 갱신
+                        await loadDashboardData();
+                    } catch (error) {
+                        utils.hideLoading();
+                        utils.showAlert('저장 실패: ' + error.message, 'error');
+                    }
+                });
+            }
+        });
 
-                                                                                    const currentPeriodDisplay = document.getElementById('currentPeriodDisplay');
-                                                                                    if (currentPeriodDisplay) currentPeriodDisplay.textContent = currentPeriod;
+        async function loadDashboardData() {
+            const userInfo = auth.getCurrentUser();
+            const employeeId = userInfo ? userInfo.employeeId : null;
 
-                                                                                    // 관리자에게만 수정 버튼 표시
-                                                                                    if (auth.isAdmin()) {
-                                                                                        const editBtn = document.getElementById('editPeriodBtn');
-                                                                                        if (editBtn) editBtn.style.display = 'inline-block';
-                                                                                    }
+            // 설정에서 현재 평가 기간 로드
+            let currentPeriod = await api.getSetting('current_period');
+            if (!currentPeriod) {
+                currentPeriod = CONFIG.EVALUATION_PERIODS[0] || '2024-상반기';
+            }
 
-                                                                                    try {
-                                                                                        // 1. 내 평가 현황 로드 (자기평가 여부 확인)
-                                                                                        let selfEvals = [];
-                                                                                        try {
-                                                                                            selfEvals = await api.findRows(CONFIG.SHEET_NAMES.SELF_EVALUATION, (row) =>
-                                                                                                row.employee_id === employeeId && row.period === currentPeriod
-                                                                                            );
-                                                                                        } catch (e) {
-                                                                                            console.warn('자기평가 데이터 로드 실패:', e);
-                                                                                        }
+            const currentPeriodElem = document.getElementById('currentPeriod');
+            if (currentPeriodElem) currentPeriodElem.textContent = currentPeriod;
 
-                                                                                        const isSelfDone = selfEvals.length > 0;
+            const currentPeriodDisplay = document.getElementById('currentPeriodDisplay');
+            if (currentPeriodDisplay) currentPeriodDisplay.textContent = currentPeriod;
 
-                                                                                        // 2. 평가 현황 표시
-                                                                                        const myEvaluationsDiv = document.getElementById('myEvaluations');
-                                                                                        let evalHtml = '<ul class="evaluation-list" style="list-style: none; padding: 0;">';
+            // 관리자에게만 수정 버튼 표시
+            if (auth.isAdmin()) {
+                const editBtn = document.getElementById('editPeriodBtn');
+                if (editBtn) editBtn.style.display = 'inline-block';
+            }
 
-                                                                                        evalHtml += `
+            try {
+                // 1. 내 평가 현황 로드 (자기평가 여부 확인)
+                let selfEvals = [];
+                try {
+                    selfEvals = await api.findRows(CONFIG.SHEET_NAMES.SELF_EVALUATION, (row) =>
+                        row.employee_id === employeeId && row.period === currentPeriod
+                    );
+                } catch (e) {
+                    console.warn('자기평가 데이터 로드 실패:', e);
+                }
+
+                const isSelfDone = selfEvals.length > 0;
+
+                // 2. 평가 현황 표시
+                const myEvaluationsDiv = document.getElementById('myEvaluations');
+                let evalHtml = '<ul class="evaluation-list" style="list-style: none; padding: 0;">';
+
+                evalHtml += `
                     <li class="evaluation-item">
                         <div class="evaluation-info">
                             <h4>자기평가</h4>
@@ -614,46 +357,46 @@
                         </div>
                     </li>
                 `;
-                                                                                        evalHtml += '</ul>';
-                                                                                        myEvaluationsDiv.innerHTML = evalHtml;
+                evalHtml += '</ul>';
+                myEvaluationsDiv.innerHTML = evalHtml;
 
-                                                                                        // 3. 통계 업데이트
-                                                                                        const completedEvals = document.getElementById('completedEvals');
-                                                                                        if (completedEvals) completedEvals.textContent = isSelfDone ? 1 : 0;
+                // 3. 통계 업데이트
+                const completedEvals = document.getElementById('completedEvals');
+                if (completedEvals) completedEvals.textContent = isSelfDone ? 1 : 0;
 
-                                                                                        const pendingEvals = document.getElementById('pendingEvals');
-                                                                                        if (pendingEvals) pendingEvals.textContent = isSelfDone ? 0 : 1;
+                const pendingEvals = document.getElementById('pendingEvals');
+                if (pendingEvals) pendingEvals.textContent = isSelfDone ? 0 : 1;
 
-                                                                                        // 4. 종합 평가 결과 (본인은 볼 수 없음)
-                                                                                        const finalGradeContainer = document.getElementById('finalGrade');
-                                                                                        if (finalGradeContainer) {
-                                                                                            finalGradeContainer.innerHTML = '<span class="text-secondary">본인의 종합 평가 결과는 열람할 수 없습니다.</span>';
-                                                                                        }
+                // 4. 종합 평가 결과 (본인은 볼 수 없음)
+                const finalGradeContainer = document.getElementById('finalGrade');
+                if (finalGradeContainer) {
+                    finalGradeContainer.innerHTML = '<span class="text-secondary">본인의 종합 평가 결과는 열람할 수 없습니다.</span>';
+                }
 
-                                                                                    } catch (error) {
-                                                                                        console.error('데이터 로드 중 오류:', error);
-                                                                                        const myEvaluationsDiv = document.getElementById('myEvaluations');
-                                                                                        if (myEvaluationsDiv) myEvaluationsDiv.innerHTML = '<p class="text-error p-md text-center">데이터를 불러오는데 실패했습니다.</p>';
-                                                                                    }
+            } catch (error) {
+                console.error('데이터 로드 중 오류:', error);
+                const myEvaluationsDiv = document.getElementById('myEvaluations');
+                if (myEvaluationsDiv) myEvaluationsDiv.innerHTML = '<p class="text-error p-md text-center">데이터를 불러오는데 실패했습니다.</p>';
+            }
 
-                                                                                    // 관리자라면 전체 현황 로드
-                                                                                    if (auth.isAdmin()) {
-                                                                                        await loadAdminOverview(currentPeriod);
-                                                                                    }
-                                                                                }
+            // 관리자라면 전체 현황 로드
+            if (auth.isAdmin()) {
+                await loadAdminOverview(currentPeriod);
+            }
+        }
 
-                                                                                // 관리자 전체 현황 로드
-                                                                                async function loadAdminOverview(period) {
-                                                                                    try {
-                                                                                        const [employees, comprehensive] = await Promise.all([
-                                                                                            api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES),
-                                                                                            api.readSheet(CONFIG.SHEET_NAMES.COMPREHENSIVE).catch(() => [])
-                                                                                        ]);
+        // 관리자 전체 현황 로드
+        async function loadAdminOverview(period) {
+            try {
+                const [employees, comprehensive] = await Promise.all([
+                    api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES),
+                    api.readSheet(CONFIG.SHEET_NAMES.COMPREHENSIVE).catch(() => [])
+                ]);
 
-                                                                                        const totalEmployees = Math.max(0, employees.length - 1);
-                                                                                        const completedCount = comprehensive.filter(row => row.period === period).length;
+                const totalEmployees = Math.max(0, employees.length - 1);
+                const completedCount = comprehensive.filter(row => row.period === period).length;
 
-                                                                                        const html = `
+                const html = `
                     <div class="stats-grid">
                         <div class="stat-card primary">
                             <div class="stat-label">총 직원 수</div>
@@ -677,16 +420,16 @@
                     </div>
                 `;
 
-                                                                                        const adminOverview = document.getElementById('adminOverview');
-                                                                                        if (adminOverview) adminOverview.innerHTML = html;
+                const adminOverview = document.getElementById('adminOverview');
+                if (adminOverview) adminOverview.innerHTML = html;
 
-                                                                                    } catch (error) {
-                                                                                        console.error('관리자 현황 로드 실패:', error);
-                                                                                        const adminOverview = document.getElementById('adminOverview');
-                                                                                        if (adminOverview) adminOverview.innerHTML = '<p class="text-error p-md text-center">관리자 데이터를 불러오는데 실패했습니다.</p>';
-                                                                                    }
-                                                                                }
-                                                                            </script>
-                                                                        </body>
+            } catch (error) {
+                console.error('관리자 현황 로드 실패:', error);
+                const adminOverview = document.getElementById('adminOverview');
+                if (adminOverview) adminOverview.innerHTML = '<p class="text-error p-md text-center">관리자 데이터를 불러오는데 실패했습니다.</p>';
+            }
+        }
+    </script>
+</body>
 
-                                                                        </html>
+</html>
