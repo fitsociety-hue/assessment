@@ -18,19 +18,23 @@ class AuthManager {
             if (CONFIG.DEBUG) console.log(`🔐 로그인 시도: ${identifier} (${loginType})`);
 
             // 1. 관리자 하드코딩 로그인 (비상용/초기설정용)
-            if (identifier === 'admin' && password === 'gde1107!') {
-                this.currentUser = {
-                    employeeId: 'admin',
-                    name: '시스템 관리자',
-                    department: '행정관리팀',
-                    position: '관장',
-                    role: 'admin',
-                    email: 'admin@dongul.or.kr',
-                    loginTime: new Date().toISOString()
-                };
-                this._saveSession();
-                if (CONFIG.DEBUG) console.log('✅ 관리자 로그인 성공 (Fallback)');
-                return this.currentUser;
+            if (identifier === 'admin') {
+                if (password === 'gde1107!') {
+                    this.currentUser = {
+                        employeeId: 'admin',
+                        name: '시스템 관리자',
+                        department: '행정관리팀',
+                        position: '관장',
+                        role: 'admin',
+                        email: 'admin@dongul.or.kr',
+                        loginTime: new Date().toISOString()
+                    };
+                    this._saveSession();
+                    if (CONFIG.DEBUG) console.log('✅ 관리자 로그인 성공 (Fallback)');
+                    return this.currentUser;
+                } else {
+                    throw new Error('비밀번호가 일치하지 않습니다.');
+                }
             }
 
             // Google Sheets에서 직원 정보 조회
