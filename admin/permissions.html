@@ -342,12 +342,16 @@
             }
 
             filteredEmployees.forEach(emp => {
+                const isAdmin = emp.employee_id && emp.employee_id.toLowerCase() === 'admin';
+                const department = isAdmin ? '' : (emp.department || '-');
+                const position = isAdmin ? '' : (emp.position || '-');
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${emp.employee_id || '-'}</td>
                     <td>${emp.name || '-'}</td>
-                    <td>${emp.department || '-'}</td>
-                    <td>${emp.position || '-'}</td>
+                    <td>${department}</td>
+                    <td>${position}</td>
                     <td>${getRoleBadge(emp.role)}</td>
                     <td>
                         <button class="btn btn-sm btn-primary" onclick="openRoleModal('${emp.employee_id}', '${emp.name}', '${emp.role || 'staff'}', '${emp.department}', '${emp.position}')">
