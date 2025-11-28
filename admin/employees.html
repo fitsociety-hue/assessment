@@ -24,7 +24,6 @@
         <div style="margin-bottom: var(--spacing-xl);">
             <a href="../dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
         </div>
-
         <div class="card">
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -35,7 +34,6 @@
                     <button id="refreshBtn" class="btn btn-secondary"><i class="fas fa-sync-alt"></i> 새로고침</button>
                 </div>
             </div>
-
             <div class="card-body">
                 <div class="table-container">
                     <table class="table" id="employeeTable">
@@ -67,6 +65,32 @@
             </div>
             <div class="card-body">
                 <input type="hidden" id="editEmployeeId">
+                <input type="text" id="editName" placeholder="이름" class="form-input" style="margin-bottom:8px;">
+                <select id="editRole" class="form-input">
+                    <option value="admin">admin</option>
+                    <option value="director">director</option>
+                    <option value="manager">manager</option>
+                    <option value="staff">staff</option>
+                </select>
+                <button id="saveRoleBtn" class="btn btn-primary" style="margin-top:8px;">저장</button>
+                <button id="closeRoleModalBtn" class="btn btn-secondary" style="margin-top:8px;">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 직원 삭제 확인 모달 -->
+    <div id="deleteModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; justify-content: center; align-items: center;">
+        <div class="card" style="width: 350px; max-width: 90%;">
+            <div class="card-header">
+                <h3 class="card-title">직원 삭제 확인</h3>
+            </div>
+            <div class="card-body">
+                <p id="deleteInfo"></p>
+                <input type="password" id="deletePassword" placeholder="비밀번호 (1107)" class="form-input"
+                    style="margin-bottom:8px;">
+                <button id="confirmDeleteBtn" class="btn btn-danger">삭제</button>
+                <button id="cancelDeleteBtn" class="btn btn-secondary">취소</button>
             </div>
         </div>
     </div>
@@ -77,34 +101,44 @@
     <script src="../js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // 관리자 권한 확인
-            if (!auth.checkPageAccess('admin')) {
-                return;
-            }
-
+            if (!auth.checkPageAccess('admin')) return;
             await loadEmployees();
-
-            // 이벤트 리스너
             document.getElementById('refreshBtn').addEventListener('click', loadEmployees);
             document.getElementById('closeRoleModalBtn').addEventListener('click', closeRoleModal);
             document.getElementById('saveRoleBtn').addEventListener('click', saveRole);
+            document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+                document.getElementById('deleteModal').style.display = 'none';
+            });
+            document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+                const pwd = document.getElementById('deletePassword').value;
+                if (pwd !== '1107') {
+                    utils.showAlert('비밀번호가 일치하지 않습니다.', 'error');
+                    return;
+                }
+                try {
+                    utils.showLoading('삭제 중...');
+                    await api.deleteRow(CONFIG.SHEET_NAMES.EMPLOYEES, 'employee_id', deleteTargetId);
+                    utils.hideLoading();
+                    utils.showAlert('직원이 삭제되었습니다.', 'success');
+                    document.getElementById('deleteModal').style.display = 'none';
+                    await loadEmployees();
+                } catch (error) {
+                    utils.hideLoading();
+                    utils.showAlert('삭제 실패: ' + error.message, 'error');
+                }
+            });
         });
 
         async function loadEmployees() {
             try {
                 utils.showLoading('직원 목록 로딩 중...');
                 const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
-
-                // 헤더 제외하고 데이터만 추출
                 const headers = employees[0];
                 const data = employees.slice(1).map(row => {
                     const obj = {};
-                    headers.forEach((header, index) => {
-                        obj[header] = row[index];
-                    });
+                    headers.forEach((header, idx) => { obj[header] = row[idx]; });
                     return obj;
                 });
-
                 renderTable(data);
                 utils.hideLoading();
             } catch (error) {
@@ -114,20 +148,29 @@
         }
 
         function renderTable(employees) {
-            if (role === 'admin') return 'primary';
-            if (role === 'director') return 'success';
-            if (role === 'manager') return 'info';
-            return 'secondary';
+            const tbody = document.querySelector('#employeeTable tbody');
+            tbody.innerHTML = '';
+            employees.forEach(emp => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${emp.employee_id || ''}</td>
+                    <td>${emp.name || ''}</td>
+                    <td>${emp.department || ''}</td>
+                    <td>${emp.position || ''}</td>
+                    <td>${emp.role || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="openRoleModal('${emp.employee_id}', '${emp.name}', '${emp.role}')">수정</button>
+                        <button class="btn btn-sm btn-danger" style="margin-left:4px;" onclick="promptDelete('${emp.employee_id}', '${emp.name}')">삭제</button>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
         }
 
-        // 권한 수정 모달
         window.openRoleModal = (id, name, role) => {
             document.getElementById('editEmployeeId').value = id;
             document.getElementById('editName').value = name;
             document.getElementById('editRole').value = role || 'staff';
-
-            const modal = document.getElementById('roleModal');
-            modal.style.display = 'flex';
+            document.getElementById('roleModal').style.display = 'flex';
         };
 
         function closeRoleModal() {
@@ -137,7 +180,6 @@
         async function saveRole() {
             const id = document.getElementById('editEmployeeId').value;
             const newRole = document.getElementById('editRole').value;
-
             try {
                 utils.showLoading('저장 중...');
                 await api.updateRow(CONFIG.SHEET_NAMES.EMPLOYEES, 'employee_id', id, { role: newRole });
@@ -151,19 +193,21 @@
             }
         }
 
-        // 비밀번호 초기화
+        let deleteTargetId = null;
+        function promptDelete(id, name) {
+            deleteTargetId = id;
+            document.getElementById('deleteInfo').innerText = `${name} (ID: ${id}) 를 삭제하시겠습니까?`;
+            document.getElementById('deletePassword').value = '';
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        // 비밀번호 초기화 (unchanged)
         window.resetPassword = async (id, name) => {
             if (!await utils.confirm(`${name} 님의 비밀번호를 '1234'로 초기화하시겠습니까?`)) return;
-
             try {
                 utils.showLoading('초기화 중...');
-
-                // '1234'의 해시값 (salt: assessment_salt_2024)
-                // 1234 + assessment_salt_2024 -> Base64
                 const defaultHash = btoa('1234assessment_salt_2024');
-
                 await api.updateRow(CONFIG.SHEET_NAMES.EMPLOYEES, 'employee_id', id, { password_hash: defaultHash });
-
                 utils.hideLoading();
                 utils.showAlert('비밀번호가 초기화되었습니다.', 'success');
             } catch (error) {
@@ -172,6 +216,62 @@
             }
         };
     </script>
+</body>
+
+</html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>직원 관리 - 강동어울림복지관</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div id="global-loader" class="loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p class="loader-message">처리 중...</p>
+        </div>
+    </div>
+    <div id="alert-container"></div>
+    <div class="table-container">
+        <table class="table" id="employeeTable">
+            <thead>
+                <tr>
+                    <th>사번</th>
+                    <th>이름</th>
+                    <th>부서</th>
+                    <th>직급</th>
+                    <th>권한</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 데이터가 여기에 로드됩니다 -->
+            </tbody>
+        </table>
+        utils.showLoading('초기화 중...');
+
+        // '1234'의 해시값 (salt: assessment_salt_2024)
+        // 1234 + assessment_salt_2024 -> Base64
+        const defaultHash = btoa('1234assessment_salt_2024');
+
+        await api.updateRow(CONFIG.SHEET_NAMES.EMPLOYEES, 'employee_id', id, { password_hash: defaultHash
+        });
+
+        utils.hideLoading();
+        utils.showAlert('비밀번호가 초기화되었습니다.', 'success');
+        } catch (error) {
+        utils.hideLoading();
+        utils.showAlert('초기화 실패: ' + error.message, 'error');
+        }
+        };
+        </script>
 </body>
 
 </html>
