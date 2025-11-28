@@ -443,117 +443,99 @@
                 <button class="action-btn info" onclick="openPeriodModal()"><i class="fas fa-calendar-alt"></i>평가 기간 설정
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- 평가 기간 설정 모달 -->
-    <div id="periodModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">평가 기간 설정</h3>
-                <button type="button" class="close-btn" onclick="closePeriodModal()">&times;
-
-                </button>
-            </div>
-        </div>
-        <script src="../js/config.js"></script>
-        <script src="../js/utils.js"></script>
-        <script src="../js/api.js"></script>
-        <script src="../js/auth.js"></script>
-        <script>
             // 전역 함수로 정의하여 HTML onclick에서 접근 가능하게 함
             window.logout = function () {
-                if (confirm('로그아웃 하시겠습니까?')) {
-                    auth.logout();
-                }
+            if (confirm('로그아웃 하시겠습니까?')) {
+            auth.logout();
+            }
             };
 
             window.openPeriodModal = function () {
-                document.getElementById('periodYear').value = '2025';
-                document.getElementById('periodHalf').value = '상반기';
-                document.getElementById('periodModal').style.display = 'flex';
+            document.getElementById('periodYear').value = '2025';
+            document.getElementById('periodHalf').value = '상반기';
+            document.getElementById('periodModal').style.display = 'flex';
             };
 
             window.closePeriodModal = function () {
-                document.getElementById('periodModal').style.display = 'none';
+            document.getElementById('periodModal').style.display = 'none';
             };
 
             window.loadStatistics = async function () {
-                try {
-                    utils.showLoading('통계 로딩 중...');
+            try {
+            utils.showLoading('통계 로딩 중...');
 
-                    // 직원 정보 조회
-                    const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
+            // 직원 정보 조회
+            const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
 
-                    if (employees && employees.length > 1) {
-                        // 헤더 제외
-                        const headers = employees[0];
-                        const data = employees.slice(1);
+            if (employees && employees.length > 1) {
+            // 헤더 제외
+            const headers = employees[0];
+            const data = employees.slice(1);
 
-                        // 총 직원 수
-                        document.getElementById('totalEmployees').textContent = data.length;
+            // 총 직원 수
+            document.getElementById('totalEmployees').textContent = data.length;
 
-                        // 관리자 수 계산 (role 컬럼 찾기)
-                        const roleIndex = headers.indexOf('role');
+            // 관리자 수 계산 (role 컬럼 찾기)
+            const roleIndex = headers.indexOf('role');
 
-                        if (roleIndex !== -1) {
-                            const adminCount = data.filter(row => {
-                                const role = row[roleIndex];
-                                return role === 'admin' || role === 'director' || role === 'manager';
-                            }).length;
-                            document.getElementById('totalAdmins').textContent = adminCount;
-                        }
-                    }
+            if (roleIndex !== -1) {
+            const adminCount = data.filter(row => {
+            const role = row[roleIndex];
+            return role === 'admin' || role === 'director' || role === 'manager';
+            }).length;
+            document.getElementById('totalAdmins').textContent = adminCount;
+            }
+            }
 
-                    utils.hideLoading();
-                } catch (error) {
-                    utils.hideLoading();
-                    console.error('통계 로드 실패:', error);
-                    utils.showAlert('통계를 불러오는데 실패했습니다.', 'error');
-                }
+            utils.hideLoading();
+            } catch (error) {
+            utils.hideLoading();
+            console.error('통계 로드 실패:', error);
+            utils.showAlert('통계를 불러오는데 실패했습니다.', 'error');
+            }
             };
 
             document.addEventListener('DOMContentLoaded', async () => {
-                // 관리자 권한 확인
-                if (!auth.checkPageAccess('admin')) {
-                    return;
-                }
+            // 관리자 권한 확인
+            if (!auth.checkPageAccess('admin')) {
+            return;
+            }
 
-                const currentUser = auth.getCurrentUser();
-                if (currentUser) {
-                    // 관리자인 경우 부서명 숨기기
-                    const displayName = currentUser.role === 'admin' ?
-                        `${currentUser.name} ${currentUser.position}` :
-                        `${currentUser.name} ${currentUser.position} (${currentUser.department})`;
-                    document.getElementById('adminName').textContent = displayName;
-                }
+            const currentUser = auth.getCurrentUser();
+            if (currentUser) {
+            // 관리자인 경우 부서명 숨기기
+            const displayName = currentUser.role === 'admin' ?
+            `${currentUser.name} ${currentUser.position}` :
+            `${currentUser.name} ${currentUser.position} (${currentUser.department})`;
+            document.getElementById('adminName').textContent = displayName;
+            }
 
-                // 통계 로드
-                await loadStatistics();
+            // 통계 로드
+            await loadStatistics();
 
-                // 평가 기간 설정 폼 이벤트 리스너
-                const periodForm = document.getElementById('periodForm');
-                if (periodForm) {
-                    periodForm.addEventListener('submit', async (e) => {
-                        e.preventDefault();
-                        const year = document.getElementById('periodYear').value;
-                        const half = document.getElementById('periodHalf').value;
-                        const newPeriod = `${year}-${half}`;
+            // 평가 기간 설정 폼 이벤트 리스너
+            const periodForm = document.getElementById('periodForm');
+            if (periodForm) {
+            periodForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const year = document.getElementById('periodYear').value;
+            const half = document.getElementById('periodHalf').value;
+            const newPeriod = `${year}-${half}`;
 
-                        try {
-                            utils.showLoading('평가 기간 저장 중...');
-                            await api.setSetting('current_period', newPeriod);
-                            utils.hideLoading();
-                            utils.showAlert('평가 기간이 변경되었습니다.', 'success');
-                            closePeriodModal();
-                        } catch (error) {
-                            utils.hideLoading();
-                            utils.showAlert('저장 실패: ' + error.message, 'error');
-                        }
-                    });
-                }
+            try {
+            utils.showLoading('평가 기간 저장 중...');
+            await api.setSetting('current_period', newPeriod);
+            utils.hideLoading();
+            utils.showAlert('평가 기간이 변경되었습니다.', 'success');
+            closePeriodModal();
+            } catch (error) {
+            utils.hideLoading();
+            utils.showAlert('저장 실패: ' + error.message, 'error');
+            }
             });
-        </script>
+            }
+            });
+            </script>
 </body>
 
 </html>

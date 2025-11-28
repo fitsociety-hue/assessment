@@ -501,22 +501,6 @@ class SheetsAPI {
             obj[header] = row[index] || '';
         });
         return obj;
-    }
-
-    /**
-     * 캐시 무효화
-     */
-    _invalidateCache(sheetName) {
-        const cacheKey = `sheet_${sheetName}`;
-        this.cache.delete(cacheKey);
-        if (CONFIG.DEBUG) console.log(`🗑️ 캐시 무효화: ${sheetName}`);
-    }
-
-    /**
-     * 전체 캐시 지우기
-     */
-    clearCache() {
-        this.cache.clear();
         if (CONFIG.DEBUG) console.log('🗑️ 전체 캐시 삭제');
     }
 
