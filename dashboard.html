@@ -154,24 +154,6 @@
                                         const deptHtml = userInfo.role === 'admin' ? '' : `<div
                                             class="user-dept text-sm text-secondary">${userInfo.department}</div>`;
 
-                                        // 사이드바 및 상단 바 사용자 정보 표시
-                                        const userInfoHtml = `
-                                        <div class="user-profile">
-                                            <div class="user-name font-bold">${userInfo.name} ${userInfo.position}</div>
-                                            ${deptHtml}
-                                        </div>
-                                        `;
-
-                                        const sidebarUserInfo = document.getElementById('sidebarUserInfo');
-                                        logoutBtn.addEventListener('click', (e) => {
-                                        e.preventDefault();
-                                        auth.logout();
-                                        });
-                                        }
-
-                                        // 4. 데이터 로드
-                                        await loadDashboardData();
-                                        });
 
                                         async function loadDashboardData() {
                                         const userInfo = auth.getCurrentUser();
