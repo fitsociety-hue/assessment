@@ -22,7 +22,7 @@
 
     <div class="container" style="padding: var(--spacing-xl) var(--spacing-lg); max-width: 1200px;">
         <div style="margin-bottom: var(--spacing-xl);">
-            <a href="../dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
+            <a href="dashboard.html" class="btn btn-secondary">← 대시보드로 돌아가기</a>
         </div>
         <div class="card">
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -216,62 +216,6 @@
             }
         };
     </script>
-</body>
-
-</html>
-<html lang="ko">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>직원 관리 - 강동어울림복지관</title>
-    <link rel="stylesheet" href="../css/main.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
-        rel="stylesheet">
-</head>
-
-<body>
-    <div id="global-loader" class="loader">
-        <div class="loader-content">
-            <div class="spinner"></div>
-            <p class="loader-message">처리 중...</p>
-        </div>
-    </div>
-    <div id="alert-container"></div>
-    <div class="table-container">
-        <table class="table" id="employeeTable">
-            <thead>
-                <tr>
-                    <th>사번</th>
-                    <th>이름</th>
-                    <th>부서</th>
-                    <th>직급</th>
-                    <th>권한</th>
-                    <th>관리</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 데이터가 여기에 로드됩니다 -->
-            </tbody>
-        </table>
-        utils.showLoading('초기화 중...');
-
-        // '1234'의 해시값 (salt: assessment_salt_2024)
-        // 1234 + assessment_salt_2024 -> Base64
-        const defaultHash = btoa('1234assessment_salt_2024');
-
-        await api.updateRow(CONFIG.SHEET_NAMES.EMPLOYEES, 'employee_id', id, { password_hash: defaultHash
-        });
-
-        utils.hideLoading();
-        utils.showAlert('비밀번호가 초기화되었습니다.', 'success');
-        } catch (error) {
-        utils.hideLoading();
-        utils.showAlert('초기화 실패: ' + error.message, 'error');
-        }
-        };
-        </script>
 </body>
 
 </html>
