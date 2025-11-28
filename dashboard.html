@@ -139,247 +139,247 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">반기</label>
-                                        <select id="periodHalf" class="form-select">
-                                            <option value="상반기">상반기</option>
-                                            <option value="하반기">하반기</option>
-                                        </select>
-                                    </div>
+                                        return;
+                                        }
 
-                                    <script>
-                                        document.addEventListener('DOMContentLoaded', async () => {
-                                            // 1. 필수 라이브러리 로드 확인
-                                            if (typeof CONFIG === 'undefined' || typeof utils === 'undefined' || typeof api === 'undefined' || typeof auth === 'undefined') {
-                                                console.error('필수 스크립트가 로드되지 않았습니다.');
-                                                alert('시스템 초기화 오류: 필수 스크립트를 불러오지 못했습니다. 새로고침 해주세요.');
-                                                return;
-                                            }
+                                        // 2. 페이지 접근 권한 확인
+                                        if (!auth.checkPageAccess()) {
+                                        return;
+                                        }
 
-                                            // 2. 페이지 접근 권한 확인
-                                            if (!auth.checkPageAccess()) {
-                                                return;
-                                            }
+                                        // 3. UI 초기화
+                                        const userInfo = auth.getCurrentUser();
+                                        if (userInfo) {
+                                        // 관리자인 경우 부서 숨기기
+                                        const deptHtml = userInfo.role === 'admin' ? '' : `<div
+                                            class="user-dept text-sm text-secondary">${userInfo.department}</div>`;
 
-                                            // 3. UI 초기화
-                                            const userInfo = auth.getCurrentUser();
-                                            if (userInfo) {
-                                                // 관리자인 경우 부서 숨기기
-                                                const deptHtml = userInfo.role === 'admin' ? '' : `<div class="user-dept text-sm text-secondary">${userInfo.department}</div>`;
+                                        // 사이드바 및 상단 바 사용자 정보 표시
+                                        const userInfoHtml = `
+                                        <div class="user-profile">
+                                            <div class="user-name font-bold">${userInfo.name} ${userInfo.position}</div>
+                                            ${deptHtml}
+                                        </div>
+                                        `;
 
-                                                // 사이드바 및 상단 바 사용자 정보 표시
-                                                const userInfoHtml = `
-                    <div class="user-profile">
-                        <div class="user-name font-bold">${userInfo.name} ${userInfo.position}</div>
-                        ${deptHtml}
-                    </div>
-                `;
+                                        const sidebarUserInfo = document.getElementById('sidebarUserInfo');
+                                        logoutBtn.addEventListener('click', (e) => {
+                                        e.preventDefault();
+                                        auth.logout();
+                                        });
+                                        }
 
-                                                const sidebarUserInfo = document.getElementById('sidebarUserInfo');
-                                                logoutBtn.addEventListener('click', (e) => {
-                                                    e.preventDefault();
-                                                    auth.logout();
-                                                });
-                                            }
-
-                                            // 4. 데이터 로드
-                                            await loadDashboardData();
+                                        // 4. 데이터 로드
+                                        await loadDashboardData();
                                         });
 
                                         async function loadDashboardData() {
-                                            const userInfo = auth.getCurrentUser();
-                                            const employeeId = userInfo ? userInfo.employeeId : null;
+                                        const userInfo = auth.getCurrentUser();
+                                        const employeeId = userInfo ? userInfo.employeeId : null;
 
-                                            // 설정에서 현재 평가 기간 로드
-                                            let currentPeriod = await api.getSetting('current_period');
-                                            if (!currentPeriod) {
-                                                currentPeriod = CONFIG.EVALUATION_PERIODS[0] || '2024-상반기';
-                                            }
+                                        // 설정에서 현재 평가 기간 로드
+                                        let currentPeriod = await api.getSetting('current_period');
+                                        if (!currentPeriod) {
+                                        currentPeriod = CONFIG.EVALUATION_PERIODS[0] || '2024-상반기';
+                                        }
 
-                                            const currentPeriodElem = document.getElementById('currentPeriod');
-                                            if (currentPeriodElem) currentPeriodElem.textContent = currentPeriod;
+                                        const currentPeriodElem = document.getElementById('currentPeriod');
+                                        if (currentPeriodElem) currentPeriodElem.textContent = currentPeriod;
 
-                                            const currentPeriodDisplay = document.getElementById('currentPeriodDisplay');
-                                            if (currentPeriodDisplay) currentPeriodDisplay.textContent = currentPeriod;
+                                        const currentPeriodDisplay = document.getElementById('currentPeriodDisplay');
+                                        if (currentPeriodDisplay) currentPeriodDisplay.textContent = currentPeriod;
 
-                                            // 관리자에게만 수정 버튼 표시
-                                            if (auth.isAdmin()) {
-                                                const editBtn = document.getElementById('editPeriodBtn');
-                                                if (editBtn) editBtn.style.display = 'inline-block';
-                                            }
+                                        // 관리자에게만 수정 버튼 표시
+                                        if (auth.isAdmin()) {
+                                        const editBtn = document.getElementById('editPeriodBtn');
+                                        if (editBtn) editBtn.style.display = 'inline-block';
+                                        }
 
-                                            try {
-                                                // 1. 내 평가 현황 로드 (자기평가 여부 확인)
-                                                let selfEvals = [];
-                                                try {
-                                                    selfEvals = await api.findRows(CONFIG.SHEET_NAMES.SELF_EVALUATION, (row) =>
-                                                        row.employee_id === employeeId && row.period === currentPeriod
-                                                    );
-                                                } catch (e) {
-                                                    console.warn('자기평가 데이터 로드 실패:', e);
-                                                }
+                                        try {
+                                        // 1. 내 평가 현황 로드 (자기평가 여부 확인)
+                                        let selfEvals = [];
+                                        try {
+                                        selfEvals = await api.findRows(CONFIG.SHEET_NAMES.SELF_EVALUATION, (row) =>
+                                        row.employee_id === employeeId && row.period === currentPeriod
+                                        );
+                                        } catch (e) {
+                                        console.warn('자기평가 데이터 로드 실패:', e);
+                                        }
 
-                                                const isSelfDone = selfEvals.length > 0;
+                                        const isSelfDone = selfEvals.length > 0;
 
-                                                // 2. 평가 현황 표시
-                                                const myEvaluationsDiv = document.getElementById('myEvaluations');
-                                                let evalHtml = '<ul class="evaluation-list" style="list-style: none; padding: 0;">';
+                                        // 2. 평가 현황 표시
+                                        const myEvaluationsDiv = document.getElementById('myEvaluations');
+                                        let evalHtml = '<ul class="evaluation-list"
+                                            style="list-style: none; padding: 0;">';
 
-                                                evalHtml += `
-                    <li class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>자기평가</h4>
-                            <div class="evaluation-meta">${isSelfDone ? '제출 완료' : '미제출'}</div>
-                        </div>
-                        <div class="evaluation-status">
-                            <span class="badge ${isSelfDone ? 'badge-success' : 'badge-warning'}">
-                                ${isSelfDone ? '완료' : '진행중'}
-                            </span>
-                        </div>
-                    </li>
-                `;
-                                                evalHtml += '</ul>';
-                                                myEvaluationsDiv.innerHTML = evalHtml;
+                                            evalHtml += `
+                                            <li class="evaluation-item">
+                                                <div class="evaluation-info">
+                                                    <h4>자기평가</h4>
+                                                    <div class="evaluation-meta">${isSelfDone ? '제출 완료' : '미제출'}</div>
+                                                </div>
+                                                <div class="evaluation-status">
+                                                    <span
+                                                        class="badge ${isSelfDone ? 'badge-success' : 'badge-warning'}">
+                                                        ${isSelfDone ? '완료' : '진행중'}
+                                                    </span>
+                                                </div>
+                                            </li>
+                                            `;
+                                            evalHtml += '
+                                        </ul>';
+                                        myEvaluationsDiv.innerHTML = evalHtml;
 
-                                                // 3. 통계 업데이트
-                                                const completedEvals = document.getElementById('completedEvals');
-                                                if (completedEvals) completedEvals.textContent = isSelfDone ? 1 : 0;
+                                        // 3. 통계 업데이트
+                                        const completedEvals = document.getElementById('completedEvals');
+                                        if (completedEvals) completedEvals.textContent = isSelfDone ? 1 : 0;
 
-                                                const pendingEvals = document.getElementById('pendingEvals');
-                                                if (pendingEvals) pendingEvals.textContent = isSelfDone ? 0 : 1;
+                                        const pendingEvals = document.getElementById('pendingEvals');
+                                        if (pendingEvals) pendingEvals.textContent = isSelfDone ? 0 : 1;
 
-                                                // 4. 종합 평가 결과 (본인은 볼 수 없음)
-                                                const finalGradeContainer = document.getElementById('finalGrade');
-                                                if (finalGradeContainer) {
-                                                    finalGradeContainer.innerHTML = '<span class="text-secondary">본인의 종합 평가 결과는 열람할 수 없습니다.</span>';
-                                                }
+                                        // 4. 종합 평가 결과 (본인은 볼 수 없음)
+                                        const finalGradeContainer = document.getElementById('finalGrade');
+                                        if (finalGradeContainer) {
+                                        finalGradeContainer.innerHTML = '<span class="text-secondary">본인의 종합 평가 결과는 열람할
+                                            수 없습니다.</span>';
+                                        }
 
-                                            } catch (error) {
-                                                console.error('데이터 로드 중 오류:', error);
-                                                const myEvaluationsDiv = document.getElementById('myEvaluations');
-                                                if (myEvaluationsDiv) myEvaluationsDiv.innerHTML = '<p class="text-error p-md text-center">데이터를 불러오는데 실패했습니다.</p>';
-                                            }
+                                        } catch (error) {
+                                        console.error('데이터 로드 중 오류:', error);
+                                        const myEvaluationsDiv = document.getElementById('myEvaluations');
+                                        if (myEvaluationsDiv) myEvaluationsDiv.innerHTML = '<p
+                                            class="text-error p-md text-center">데이터를 불러오는데 실패했습니다.</p>';
+                                        }
 
-                                            // 관리자라면 전체 현황 로드
-                                            if (auth.isAdmin()) {
-                                                await loadAdminOverview(currentPeriod);
-                                            }
+                                        // 관리자라면 전체 현황 로드
+                                        if (auth.isAdmin()) {
+                                        await loadAdminOverview(currentPeriod);
+                                        }
                                         }
 
                                         // 관리자 전체 현황 로드
                                         async function loadAdminOverview(period) {
-                                            try {
-                                                const [employees, comprehensive] = await Promise.all([
-                                                    api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES),
-                                                    api.readSheet(CONFIG.SHEET_NAMES.COMPREHENSIVE).catch(() => [])
-                                                ]);
+                                        try {
+                                        const [employees, comprehensive] = await Promise.all([
+                                        api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES),
+                                        api.readSheet(CONFIG.SHEET_NAMES.COMPREHENSIVE).catch(() => [])
+                                        ]);
 
-                                                const totalEmployees = Math.max(0, employees.length - 1);
-                                                const completedCount = comprehensive.filter(row => row.period === period).length;
+                                        const totalEmployees = Math.max(0, employees.length - 1);
+                                        const completedCount = comprehensive.filter(row => row.period ===
+                                        period).length;
 
-                                                const html = `
-                    <div class="stats-grid">
-                        <div class="stat-card primary">
-                            <div class="stat-label">총 직원 수</div>
-                            <div class="stat-value">${totalEmployees}</div>
-                        </div>
-                        <div class="stat-card success">
-                            <div class="stat-label">평가 완료</div>
-                            <div class="stat-value">${completedCount}</div>
-                        </div>
-                        <div class="stat-card warning">
-                            <div class="stat-label">미완료</div>
-                            <div class="stat-value">${Math.max(0, totalEmployees - completedCount)}</div>
-                        </div>
-                        <div class="stat-card info">
-                            <div class="stat-label">완료율</div>
-                            <div class="stat-value">${totalEmployees > 0 ? Math.round((completedCount / totalEmployees) * 100) : 0}%</div>
-                        </div>
-                    </div>
-                    <div class="mt-lg text-right">
-                        <a href="admin/reports.html" class="btn btn-primary">상세 리포트 보기</a>
-                    </div>
-                `;
+                                        const html = `
+                                        <div class="stats-grid">
+                                            <div class="stat-card primary">
+                                                <div class="stat-label">총 직원 수</div>
+                                                <div class="stat-value">${totalEmployees}</div>
+                                            </div>
+                                            <div class="stat-card success">
+                                                <div class="stat-label">평가 완료</div>
+                                                <div class="stat-value">${completedCount}</div>
+                                            </div>
+                                            <div class="stat-card warning">
+                                                <div class="stat-label">미완료</div>
+                                                <div class="stat-value">${Math.max(0, totalEmployees - completedCount)}
+                                                </div>
+                                            </div>
+                                            <div class="stat-card info">
+                                                <div class="stat-label">완료율</div>
+                                                <div class="stat-value">${totalEmployees > 0 ?
+                                                    Math.round((completedCount / totalEmployees) * 100) : 0}%</div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-lg text-right">
+                                            <a href="admin/reports.html" class="btn btn-primary">상세 리포트 보기</a>
+                                        </div>
+                                        `;
 
-                                                document.getElementById('adminOverview').innerHTML = html;
+                                        document.getElementById('adminOverview').innerHTML = html;
 
-                                            } catch (error) {
-                                                console.error('관리자 현황 로드 실패:', error);
-                                                document.getElementById('adminOverview').innerHTML = '<p class="text-error p-md text-center">관리자 데이터를 불러오는데 실패했습니다.</p>';
-                                            }
+                                        } catch (error) {
+                                        console.error('관리자 현황 로드 실패:', error);
+                                        document.getElementById('adminOverview').innerHTML = '<p
+                                            class="text-error p-md text-center">관리자 데이터를 불러오는데 실패했습니다.</p>';
+                                        }
                                         }
 
                                         // 비밀번호 변경 모달 관련
                                         window.openPasswordModal = () => {
-                                            document.getElementById('passwordForm').reset();
-                                            document.getElementById('passwordModal').style.display = 'flex';
+                                        document.getElementById('passwordForm').reset();
+                                        document.getElementById('passwordModal').style.display = 'flex';
                                         };
 
-                                        document.getElementById('closePasswordModalBtn').addEventListener('click', () => {
-                                            document.getElementById('passwordModal').style.display = 'none';
+                                        document.getElementById('closePasswordModalBtn').addEventListener('click', () =>
+                                        {
+                                        document.getElementById('passwordModal').style.display = 'none';
                                         });
 
-                                        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
-                                            e.preventDefault();
-                                            const currentPassword = document.getElementById('currentPassword').value;
-                                            const newPassword = document.getElementById('newPassword').value;
-                                            const confirmPassword = document.getElementById('confirmPassword').value;
+                                        document.getElementById('passwordForm').addEventListener('submit', async (e) =>
+                                        {
+                                        e.preventDefault();
+                                        const currentPassword = document.getElementById('currentPassword').value;
+                                        const newPassword = document.getElementById('newPassword').value;
+                                        const confirmPassword = document.getElementById('confirmPassword').value;
 
-                                            if (newPassword !== confirmPassword) {
-                                                utils.showAlert('새 비밀번호가 일치하지 않습니다.', 'warning');
-                                                return;
-                                            }
+                                        if (newPassword !== confirmPassword) {
+                                        utils.showAlert('새 비밀번호가 일치하지 않습니다.', 'warning');
+                                        return;
+                                        }
 
-                                            try {
-                                                utils.showLoading('비밀번호 변경 중...');
-                                                await auth.changePassword(currentPassword, newPassword);
-                                                utils.hideLoading();
-                                                utils.showAlert('비밀번호가 변경되었습니다.', 'success');
-                                                document.getElementById('passwordModal').style.display = 'none';
-                                            } catch (error) {
-                                                utils.hideLoading();
-                                                utils.showAlert('변경 실패: ' + error.message, 'error');
-                                            }
+                                        try {
+                                        utils.showLoading('비밀번호 변경 중...');
+                                        await auth.changePassword(currentPassword, newPassword);
+                                        utils.hideLoading();
+                                        utils.showAlert('비밀번호가 변경되었습니다.', 'success');
+                                        document.getElementById('passwordModal').style.display = 'none';
+                                        } catch (error) {
+                                        utils.hideLoading();
+                                        utils.showAlert('변경 실패: ' + error.message, 'error');
+                                        }
                                         });
 
                                         // 평가 기간 설정 모달 관련
                                         const editPeriodBtn = document.getElementById('editPeriodBtn');
                                         if (editPeriodBtn) {
-                                            editPeriodBtn.addEventListener('click', () => {
-                                                const currentText = document.getElementById('currentPeriod').textContent;
-                                                const [year, half] = currentText.split('-');
+                                        editPeriodBtn.addEventListener('click', () => {
+                                        const currentText = document.getElementById('currentPeriod').textContent;
+                                        const [year, half] = currentText.split('-');
 
-                                                document.getElementById('periodYear').value = year || '2024';
-                                                document.getElementById('periodHalf').value = half || '상반기';
+                                        document.getElementById('periodYear').value = year || '2024';
+                                        document.getElementById('periodHalf').value = half || '상반기';
 
-                                                document.getElementById('periodModal').style.display = 'flex';
-                                            });
+                                        document.getElementById('periodModal').style.display = 'flex';
+                                        });
                                         }
 
                                         document.getElementById('closePeriodModalBtn').addEventListener('click', () => {
-                                            document.getElementById('periodModal').style.display = 'none';
+                                        document.getElementById('periodModal').style.display = 'none';
                                         });
 
                                         document.getElementById('periodForm').addEventListener('submit', async (e) => {
-                                            e.preventDefault();
+                                        e.preventDefault();
 
-                                            const year = document.getElementById('periodYear').value;
-                                            const half = document.getElementById('periodHalf').value;
-                                            const newPeriod = `${year}-${half}`;
+                                        const year = document.getElementById('periodYear').value;
+                                        const half = document.getElementById('periodHalf').value;
+                                        const newPeriod = `${year}-${half}`;
 
-                                            try {
-                                                utils.showLoading('평가 기간 저장 중...');
-                                                await api.setSetting('current_period', newPeriod);
-                                                utils.hideLoading();
-                                                utils.showAlert('평가 기간이 변경되었습니다.', 'success');
-                                                document.getElementById('periodModal').style.display = 'none';
+                                        try {
+                                        utils.showLoading('평가 기간 저장 중...');
+                                        await api.setSetting('current_period', newPeriod);
+                                        utils.hideLoading();
+                                        utils.showAlert('평가 기간이 변경되었습니다.', 'success');
+                                        document.getElementById('periodModal').style.display = 'none';
 
-                                                // 화면 갱신
-                                                await loadDashboardData();
-                                            } catch (error) {
-                                                utils.hideLoading();
-                                                utils.showAlert('저장 실패: ' + error.message, 'error');
-                                            }
+                                        // 화면 갱신
+                                        await loadDashboardData();
+                                        } catch (error) {
+                                        utils.hideLoading();
+                                        utils.showAlert('저장 실패: ' + error.message, 'error');
+                                        }
                                         });
-                                    </script>
+                                        </script>
 </body>
 
 </html>
