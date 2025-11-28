@@ -269,154 +269,420 @@
     <div class="admin-container">
         <!-- Header -->
         <div class="admin-header">
-            <h1>
-                <i class="fas fa-shield-alt"></i>
-                관리자 대시보드
-            </h1>
-            <div class="admin-info">
-                <div class="user-badge">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="adminName">관리자</span>
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            color: var(--admin-text-main);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-weight: 500;
+            }
+
+            .user-badge i {
+            color: var(--admin-secondary);
+            }
+
+            .nav-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            }
+
+            .nav-card {
+            background: var(--admin-card-bg);
+            border: 1px solid var(--admin-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            text-decoration: none;
+            color: var(--admin-text-main);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            }
+
+            .nav-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: var(--admin-primary);
+            }
+
+            .nav-card i {
+            font-size: 2rem;
+            color: var(--admin-primary);
+            background: #e0e7ff;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 4px;
+            }
+
+            .nav-card h3 {
+            margin: 0;
+            font-size: var(--font-lg);
+            font-weight: 600;
+            color: var(--admin-text-main);
+            }
+
+            .nav-card p {
+            margin: 0;
+            font-size: var(--font-sm);
+            color: var(--admin-text-sub);
+            line-height: 1.5;
+            }
+
+            .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            }
+
+            .stat-card {
+            background: var(--admin-card-bg);
+            border: 1px solid var(--admin-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            }
+
+            .stat-card h3 {
+            margin: 0 0 var(--spacing-md) 0;
+            font-size: var(--font-sm);
+            color: var(--admin-text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            }
+
+            .stat-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            color: var(--admin-text-main);
+            letter-spacing: -1px;
+            }
+
+            .stat-detail {
+            font-size: var(--font-sm);
+            color: var(--admin-text-sub);
+            }
+
+            .quick-actions {
+            background: var(--admin-card-bg);
+            border: 1px solid var(--admin-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            }
+
+            .quick-actions h2 {
+            margin: 0 0 var(--spacing-lg) 0;
+            font-size: var(--font-xl);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            color: var(--admin-text-main);
+            }
+
+            .quick-actions h2 i {
+            color: var(--admin-warning);
+            }
+
+            .action-buttons {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            }
+
+            .action-btn {
+            background: white;
+            border: 1px solid var(--admin-border);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            color: var(--admin-text-main);
+            font-size: var(--font-md);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            }
+
+            .action-btn:hover {
+            background: #f8fafc;
+            border-color: var(--admin-primary);
+            color: var(--admin-primary);
+            }
+
+            .action-btn i {
+            color: var(--admin-secondary);
+            }
+
+            .action-btn:hover i {
+            color: var(--admin-primary);
+            }
+
+            @media (max-width: 768px) {
+            .admin-header {
+            flex-direction: column;
+            text-align: center;
+            gap: var(--spacing-md);
+            }
+
+            .nav-menu {
+            grid-template-columns: 1fr;
+            }
+
+            .dashboard-grid {
+            grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+            flex-direction: column;
+            }
+
+            .action-btn {
+            justify-content: center;
+            }
+            }
+            </style>
+            </head>
+
+            <body>
+                <div id="global-loader" class="loader">
+                    <div class="loader-content">
+                        <div class="spinner"></div>
+                        <p class="loader-message">처리 중...</p>
+                    </div>
                 </div>
-                <button class="btn btn-danger" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> 로그아웃
-                </button>
-            </div>
-        </div>
+                <div id="alert-container"></div>
 
-        <!-- Statistics -->
-        <div class="dashboard-grid">
-            <div class="stat-card">
-                <h3>총 직원 수</h3>
-                <div class="stat-value" id="totalEmployees">0</div>
-                <div class="stat-detail">등록된 전체 직원</div>
-            </div>
-            <div class="stat-card">
-                <h3>부서 수</h3>
-                <div class="stat-value" id="totalDepartments">6</div>
-                <div class="stat-detail">운영 중인 부서</div>
-            </div>
-            <div class="stat-card">
-                <h3>관리자 수</h3>
-                <div class="stat-value" id="totalAdmins">0</div>
-                <div class="stat-detail">관장 + 사무국장 + 팀장</div>
-            </div>
-        </div>
+                <div class="admin-container">
+                    <!-- Header -->
+                    <div class="admin-header">
+                        <h1>
+                            <i class="fas fa-shield-alt"></i>
+                            관리자 대시보드
+                        </h1>
+                        <div class="admin-info">
+                            <div class="user-badge">
+                                <i class="fas fa-user-circle"></i>
+                                <span id="adminName">관리자</span>
+                            </div>
+                            <button class="btn btn-danger" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> 로그아웃
+                            </button>
+                        </div>
+                    </div>
 
-        <!-- Navigation Menu -->
-        <div class="nav-menu">
-            <a href="permissions.html" class="nav-card">
-                <i class="fas fa-user-shield"></i>
-                <h3>직원 권한 관리</h3>
-                <p>직원의 권한을 설정하고 관리합니다</p>
-            </a>
-            <a href="password-change.html" class="nav-card">
-                <i class="fas fa-key"></i>
-                <h3>내 비밀번호 변경</h3>
-                <p>관리자 본인의 비밀번호를 변경합니다</p>
-            </a>
-            <a href="password-reset.html" class="nav-card">
-                <i class="fas fa-unlock-alt"></i>
-                <h3>직원 비밀번호 재설정</h3>
-                <p>직원의 비밀번호를 초기화합니다</p>
-            </a>
-            <a href="employees.html" class="nav-card">
-                <i class="fas fa-users"></i>
-                <h3>직원 관리</h3>
-                <p>직원 정보를 조회하고 관리합니다</p>
-            </a>
-            <a href="../dashboard.html" class="nav-card">
-                <i class="fas fa-chart-line"></i>
-                <h3>일반 대시보드</h3>
-                <p>직원 대시보드로 이동합니다</p>
-            </a>
-            <a href="reports.html" class="nav-card">
-                <i class="fas fa-file-alt"></i>
-                <h3>평가 리포트</h3>
-                <p>전체 평가 현황을 확인합니다</p>
-            </a>
-        </div>
+                    <!-- Statistics -->
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <h3>총 직원 수</h3>
+                            <div class="stat-value" id="totalEmployees">0</div>
+                            <div class="stat-detail">등록된 전체 직원</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>부서 수</h3>
+                            <div class="stat-value" id="totalDepartments">6</div>
+                            <div class="stat-detail">운영 중인 부서</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>관리자 수</h3>
+                            <div class="stat-value" id="totalAdmins">0</div>
+                            <div class="stat-detail">관장 + 사무국장 + 팀장</div>
+                        </div>
+                    </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <h2>
-                <i class="fas fa-bolt"></i>
-                빠른 작업
-            </h2>
-            <div class="action-buttons">
-                <button class="action-btn" onclick="location.href='permissions.html'">
-                    <i class="fas fa-user-cog"></i> 권한 설정
-                </button>
-                <button class="action-btn secondary" onclick="location.href='password-reset.html'">
-                    <i class="fas fa-redo"></i> 비밀번호 초기화
-                </button>
-                <button class="action-btn warning" onclick="loadStatistics()">
-                    <i class="fas fa-sync"></i> 통계 새로고침
-                </button>
-            </div>
-        </div>
-    </div>
+                    <!-- Navigation Menu -->
+                    <div class="nav-menu">
+                        <a href="permissions.html" class="nav-card">
+                            <i class="fas fa-user-shield"></i>
+                            <h3>직원 권한 관리</h3>
+                            <p>직원의 권한을 설정하고 관리합니다</p>
+                        </a>
+                        <a href="password-change.html" class="nav-card">
+                            <i class="fas fa-key"></i>
+                            <h3>내 비밀번호 변경</h3>
+                            <p>관리자 본인의 비밀번호를 변경합니다</p>
+                        </a>
+                        <a href="password-reset.html" class="nav-card">
+                            <i class="fas fa-unlock-alt"></i>
+                            <h3>직원 비밀번호 재설정</h3>
+                            <p>직원의 비밀번호를 초기화합니다</p>
+                        </a>
+                        <a href="employees.html" class="nav-card">
+                            <i class="fas fa-users"></i>
+                            <h3>직원 관리</h3>
+                            <p>직원 정보를 조회하고 관리합니다</p>
+                        </a>
+                        <a href="../dashboard.html" class="nav-card">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>일반 대시보드</h3>
+                            <p>직원 대시보드로 이동합니다</p>
+                        </a>
+                        <a href="reports.html" class="nav-card">
+                            <i class="fas fa-file-alt"></i>
+                            <h3>평가 리포트</h3>
+                            <p>전체 평가 현황을 확인합니다</p>
+                        </a>
+                    </div>
 
-    <script src="../js/config.js"></script>
-    <script src="../js/utils.js"></script>
-    <script src="../js/api.js"></script>
-    <script src="../js/auth.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            // 관리자 권한 확인
-            if (!auth.checkPageAccess('admin')) {
-                return;
-            }
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <h2>
+                            <i class="fas fa-bolt"></i>
+                            빠른 작업
+                        </h2>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="location.href='permissions.html'">
+                                <i class="fas fa-user-cog"></i> 권한 설정
+                            </button>
+                            <button class="action-btn secondary" onclick="location.href='password-reset.html'">
+                                <i class="fas fa-redo"></i> 비밀번호 초기화
+                            </button>
+                            <button class="action-btn warning" onclick="loadStatistics()">
+                                <i class="fas fa-sync"></i> 통계 새로고침
+                            </button>
+                            <button class="action-btn info" onclick="openPeriodModal()">
+                                <i class="fas fa-calendar-alt"></i> 평가 기간 설정
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-            const currentUser = auth.getCurrentUser();
-            if (currentUser) {
-                document.getElementById('adminName').textContent = currentUser.name;
-            }
+                <!-- 평가 기간 설정 모달 -->
+                <div id="periodModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">평가 기간 설정</h3>
+                            <button type="button" class="close-btn" onclick="closePeriodModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="periodForm">
+                                <div class="form-group">
+                                    <label class="form-label">연도</label>
+                                    <select id="periodYear" class="form-select">
+                                        <option value="2024">2024년</option>
+                                        <option value="2025">2025년</option>
+                                        <option value="2026">2026년</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">반기</label>
+                                    <select id="periodHalf" class="form-select">
+                                        <option value="상반기">상반기</option>
+                                        <option value="하반기">하반기</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-top: var(--spacing-lg);">
+                                    <button type="submit" class="btn btn-primary w-100">저장</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
-            // 통계 로드
-            await loadStatistics();
-        });
+                <script src="../js/config.js"></script>
+                <script src="../js/utils.js"></script>
+                <script src="../js/api.js"></script>
+                <script src="../js/auth.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', async () => {
+                        // 관리자 권한 확인
+                        if (!auth.checkPageAccess('admin')) {
+                            return;
+                        }
 
-        async function loadStatistics() {
-            try {
-                utils.showLoading('통계 로딩 중...');
+                        const currentUser = auth.getCurrentUser();
+                        if (currentUser) {
+                            // 관리자인 경우 부서명 숨기기
+                            const displayName = currentUser.role === 'admin' ?
+                                `${currentUser.name} ${currentUser.position}` :
+                                `${currentUser.name} ${currentUser.position} (${currentUser.department})`;
+                            document.getElementById('adminName').textContent = displayName;
+                        }
 
-                // 직원 정보 조회
-                const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
+                        // 통계 로드
+                        await loadStatistics();
+                    });
 
-                if (employees && employees.length > 1) {
-                    // 헤더 제외
-                    const headers = employees[0];
-                    const data = employees.slice(1);
+                    async function loadStatistics() {
+                        try {
+                            utils.showLoading('통계 로딩 중...');
 
-                    // 총 직원 수
-                    document.getElementById('totalEmployees').textContent = data.length;
+                            // 직원 정보 조회
+                            const employees = await api.readSheet(CONFIG.SHEET_NAMES.EMPLOYEES);
 
-                    // 관리자 수 계산 (role 컬럼 찾기)
-                    const roleIndex = headers.indexOf('role');
-                    if (roleIndex !== -1) {
-                        const adminCount = data.filter(row => {
-                            const role = row[roleIndex];
-                            return role === 'admin' || role === 'director' || role === 'manager';
-                        }).length;
-                        document.getElementById('totalAdmins').textContent = adminCount;
+                            if (employees && employees.length > 1) {
+                                // 헤더 제외
+                                const headers = employees[0];
+                                const data = employees.slice(1);
+
+                                // 총 직원 수
+                                document.getElementById('totalEmployees').textContent = data.length;
+
+                                // 관리자 수 계산 (role 컬럼 찾기)
+                                const roleIndex = headers.indexOf('role');
+                                if (roleIndex !== -1) {
+                                    const adminCount = data.filter(row => {
+                                        const role = row[roleIndex];
+                                        return role === 'admin' || role === 'director' || role === 'manager';
+                                    }).length;
+                                    document.getElementById('totalAdmins').textContent = adminCount;
+                                }
+                            }
+
+                            utils.hideLoading();
+                        } catch (error) {
+                            utils.hideLoading();
+                            console.error('통계 로드 실패:', error);
+                            utils.showAlert('통계를 불러오는데 실패했습니다.', 'error');
+                        }
                     }
-                }
 
-                utils.hideLoading();
-            } catch (error) {
-                utils.hideLoading();
-                console.error('통계 로드 실패:', error);
-                utils.showAlert('통계를 불러오는데 실패했습니다.', 'error');
-            }
-        }
+                    function logout() {
+                        if (confirm('로그아웃 하시겠습니까?')) {
+                            auth.logout();
+                        }
+                    }
 
-        function logout() {
-            if (confirm('로그아웃 하시겠습니까?')) {
-                auth.logout();
-            }
-        }
-    </script>
-</body>
+                    // 평가 기간 설정 모달 관련
+                    function openPeriodModal() {
+                        // 현재 설정된 기간 불러오기 (임시로 하드코딩된 값 사용, 실제로는 API로 불러와야 함)
+                        // 여기서는 기본값으로 설정
+                        document.getElementById('periodYear').value = '2025';
+                        document.getElementById('periodHalf').value = '하반기';
+                        document.getElementById('periodModal').style.display = 'flex';
+                    }
+
+                    function closePeriodModal() {
+                        document.getElementById('periodModal').style.display = 'none';
+                    }
+
+                    document.getElementById('periodForm').addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const year = document.getElementById('periodYear').value;
+                        const half = document.getElementById('periodHalf').value;
+                        const newPeriod = `${year}-${half}`;
+
+                        try {
+                            utils.showLoading('평가 기간 저장 중...');
+                            await api.setSetting('current_period', newPeriod);
+                            utils.hideLoading();
+                            utils.showAlert('평가 기간이 변경되었습니다.', 'success');
+                            closePeriodModal();
+                            // 필요하다면 페이지 리로드 또는 UI 업데이트
+                        } catch (error) {
+                            utils.hideLoading();
+                            utils.showAlert('저장 실패: ' + error.message, 'error');
+                        }
+                    });
+                </script>
+            </body>
 
 </html>
