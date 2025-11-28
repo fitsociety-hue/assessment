@@ -90,7 +90,20 @@ class AuthManager {
         this.currentUser = null;
         localStorage.removeItem(this.SESSION_KEY);
         if (CONFIG.DEBUG) console.log('👋 로그아웃');
-        window.location.href = 'index.html';
+        this._redirectToLogin();
+    }
+
+    /**
+     * 로그인 페이지로 리다이렉트
+     */
+    _redirectToLogin() {
+        const path = window.location.pathname;
+        // admin이나 evaluation 등 하위 디렉토리에 있는 경우 상위 경로로 이동
+        if (path.includes('/admin/') || path.includes('/evaluation/')) {
+            window.location.href = '../index.html';
+        } else {
+            window.location.href = 'index.html';
+        }
     }
 
     /**
@@ -261,7 +274,7 @@ class AuthManager {
             // 현재 페이지가 index.html이 아니면 리다이렉트
             if (!window.location.pathname.endsWith('index.html') &&
                 !window.location.pathname.endsWith('/')) {
-                window.location.href = 'index.html';
+                this._redirectToLogin();
                 return false;
             }
         }
