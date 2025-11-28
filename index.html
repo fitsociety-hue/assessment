@@ -85,16 +85,8 @@
         return;
       }
 
-      // 2. 이미 로그인되어 있는지 확인
-      if (auth.restoreSession()) {
-        const currentUser = auth.getCurrentUser();
-        if (currentUser && currentUser.role === 'admin') {
-          window.location.href = 'admin/dashboard.html';
-        } else {
-          window.location.href = 'dashboard.html';
-        }
-        return;
-      }
+      // 2. 세션 복원 (자동 리다이렉트 제거됨)
+      // auth.restoreSession(); 
 
       // 3. Google Sheets API 초기화
       try {
