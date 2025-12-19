@@ -43,6 +43,25 @@ export const API = {
     },
 
     /**
+     * Sync Evaluation Results (CSV Analysis)
+     * @param {Array} results - Array of analyzed result objects
+     */
+    syncResults: async (results) => {
+        try {
+            await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'syncResults', data: results })
+            });
+            return { success: true };
+        } catch (error) {
+            console.error("API Error (syncResults):", error);
+            return { success: false, error };
+        }
+    },
+
+    /**
      * Save a completed evaluation
      * @param {Object} evaluationData 
      */

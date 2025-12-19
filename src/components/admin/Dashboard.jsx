@@ -64,8 +64,15 @@ export default function Dashboard() {
         } else {
             // Analyze Results locally
             analyzeResults(previewData);
-            setShowPreview(false);
-            alert('평가 결과 분석이 완료되었습니다.');
+
+            // Sync Results to DB
+            const res = await API.syncResults(previewData);
+            if (res.success) {
+                setShowPreview(false);
+                alert('평가 결과 및 분석 내용이 동기화되었습니다.');
+            } else {
+                alert('결과 동기화 실패: ' + res.error);
+            }
         }
     };
 
