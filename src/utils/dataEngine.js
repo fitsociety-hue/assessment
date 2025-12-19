@@ -25,7 +25,7 @@ export const DataEngine = {
   // 2. Export Data to CSV
   exportCSV: (data, filename) => {
     const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
@@ -43,7 +43,7 @@ export const DataEngine = {
   // Output: Map of { targetId: { peer: [], manager: [], staff: [] } }
   autoMapEvaluators: (employees) => {
     const mapping = {};
-    
+
     employees.forEach(target => {
       mapping[target.id] = {
         peers: [],
@@ -58,7 +58,7 @@ export const DataEngine = {
         if (target.department === rater.department && target.position === rater.position) {
           mapping[target.id].peers.push(rater.id);
         }
-        
+
         // Manager: Same Dept, Higher Position (simplified)
         // In real app, would need strict hierarchy definitions
       });
