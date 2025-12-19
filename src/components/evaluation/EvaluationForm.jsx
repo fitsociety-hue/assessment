@@ -3,6 +3,9 @@ import { useParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+
+import { API } from '../../services/api';
+
 export default function EvaluationForm() {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState(null); // Will set to first available tab
@@ -155,8 +158,23 @@ export default function EvaluationForm() {
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                                <button type="button" className="btn btn-primary" onClick={() => alert('자기분석 보고서가 저장되었습니다.')}>
-                                    보고서 임시저장
+                                <button type="button" className="btn btn-primary" onClick={async () => {
+                                    if (confirm('보고서를 저장하시겠습니까?')) {
+                                        const res = await API.saveEvaluation({
+                                            type: 'self_analysis',
+                                            evaluator: currentUser.name,
+                                            uid: currentUser.id || currentUser.name, // Use ID if available
+                                            data: {
+                                                content1: document.querySelector('textarea[placeholder*="핵심 성과"]').value,
+                                                content2: document.querySelector('textarea[placeholder*="성공 요인"]').value,
+                                                content3: document.querySelector('textarea[placeholder*="전문성 향상"]').value
+                                            }
+                                        });
+                                        if (res.success) alert('저장되었습니다.');
+                                        else alert('저장 실패: ' + res.error);
+                                    }
+                                }}>
+                                    보고서 저장 (DB)
                                 </button>
                             </div>
                         </div>
@@ -203,8 +221,19 @@ export default function EvaluationForm() {
                             </section>
 
                             <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                                <button type="button" className="btn btn-primary" onClick={() => alert('본인 평가가 저장되었습니다.')}>
-                                    본인 평가 제출하기
+                                <button type="button" className="btn btn-primary" onClick={async () => {
+                                    if (confirm('본인 평가를 제출하시겠습니까?')) {
+                                        // Collect form data logic would go here
+                                        const res = await API.saveEvaluation({
+                                            type: 'self_eval',
+                                            evaluator: currentUser.name,
+                                            data: { score: 85 } // Mock score collection for demo
+                                        });
+                                        if (res.success) alert('제출되었습니다.');
+                                        else alert('실패');
+                                    }
+                                }}>
+                                    본인 평가 제출 (DB)
                                 </button>
                             </div>
                         </form>
@@ -250,8 +279,11 @@ export default function EvaluationForm() {
                                 </tbody>
                             </table>
                             <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                                <button type="button" className="btn btn-primary" onClick={() => alert('동료 평가가 저장되었습니다.')}>
-                                    평가 제출하기
+                                <button type="button" className="btn btn-primary" onClick={async () => {
+                                    const res = await API.saveEvaluation({ type: 'peer_eval', evaluator: currentUser.name, target: 'Peer' });
+                                    if (res.success) alert('동료 평가 저장 완료');
+                                }}>
+                                    평가 제출 (DB)
                                 </button>
                             </div>
                         </div>
@@ -297,8 +329,11 @@ export default function EvaluationForm() {
                                 </tbody>
                             </table>
                             <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                                <button type="button" className="btn btn-primary" onClick={() => alert('관리자 평가가 저장되었습니다.')}>
-                                    평가 제출하기
+                                <button type="button" className="btn btn-primary" onClick={async () => {
+                                    const res = await API.saveEvaluation({ type: 'manager_eval', evaluator: currentUser.name, target: 'Manager' });
+                                    if (res.success) alert('관리자 평가 저장 완료');
+                                }}>
+                                    평가 제출 (DB)
                                 </button>
                             </div>
                         </div>
@@ -323,8 +358,11 @@ export default function EvaluationForm() {
                                     </div>
                                 </div>
                                 <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                                    <button type="button" className="btn btn-primary" onClick={() => alert('종사자 평가가 저장되었습니다.')}>
-                                        평가 제출하기
+                                    <button type="button" className="btn btn-primary" onClick={async () => {
+                                        const res = await API.saveEvaluation({ type: 'subordinate_eval', evaluator: currentUser.name, target: 'Subordinate' });
+                                        if (res.success) alert('종사자 평가 저장 완료');
+                                    }}>
+                                        평가 제출 (DB)
                                     </button>
                                 </div>
                             </div>

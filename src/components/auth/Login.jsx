@@ -1,9 +1,27 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Users } from 'lucide-react';
+import { Users, Lock, ChevronRight, UserCircle, Building2, Briefcase } from 'lucide-react';
+import { API } from '../../services/api';
 
 export default function Login({ onLogin }) {
     const [loginType, setLoginType] = useState('staff'); // 'staff' or 'admin'
+    const [dbEmployees, setDbEmployees] = useState([]); // Store fetched employees
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Load employees from DB on mount
+    React.useEffect(() => {
+        const loadData = async () => {
+            setIsLoading(true);
+            const data = await API.fetchEmployees();
+            if (data && Array.isArray(data)) {
+                setDbEmployees(data);
+                console.log("DB Loaded:", data.length, "employees");
+            }
+            setIsLoading(false);
+        };
+        loadData();
+    }, []);
 
     // Staff State
     const [staffInfo, setStaffInfo] = useState({
@@ -25,7 +43,7 @@ export default function Login({ onLogin }) {
     const [showChangePw, setShowChangePw] = useState(false);
     const [newPw, setNewPw] = useState('');
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => { // Changed to async to await API calls if needed in future
         e.preventDefault();
         setError('');
 
@@ -34,9 +52,36 @@ export default function Login({ onLogin }) {
                 setError('이름과 부서를 입력해주세요.');
                 return;
             }
-            // Pass full staff info as the user object
-            onLogin({ ...staffInfo, role: mapPositionToRole(staffInfo.position) });
+
+            // Validation against DB
+            if (dbEmployees.length > 0) {
+                const found = dbEmployees.find(emp =>
+                    emp.name === staffInfo.name &&
+                    emp.team === staffInfo.team
+                );
+
+                if (!found) {
+                    const confirmLogin = window.confirm(
+                        `데이터베이스에서 '${staffInfo.name}'(${staffInfo.team}) 직원을 찾을 수 없습니다.\n\n` +
+                        `그래도 계속하시겠습니까 ? (DB 미등록 사용자로 진행)`
+                    );
+                    if (!confirmLogin) {
+                        return;
+                    }
+                } else {
+                    // Optionally update staffInfo with data from DB if found
+                    // For example, if DB has a more accurate position or jobGroup
+                    // setStaffInfo(prev => ({ ...prev, position: found.position, jobGroup: found.jobGroup }));
+                }
+            }
+
+            const role = mapPositionToRole(staffInfo.position);
+            onLogin({
+                ...staffInfo,
+                role: role
+            });
             navigate('/eval/dashboard'); // Redirect to personal evaluation dashboard (New Route)
+
         } else {
             // Admin/HR Logic
             if (adminRole === 'admin') {
@@ -135,10 +180,10 @@ export default function Login({ onLogin }) {
                     {loginType === 'admin' && (
                         <>
                             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
-                                <button type="button" className={`btn ${adminRole === 'admin' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setAdminRole('admin')} style={{ flex: 1 }}>
+                                <button type="button" className={`btn ${adminRole === 'admin' ? 'btn-primary' : 'btn-outline'} `} onClick={() => setAdminRole('admin')} style={{ flex: 1 }}>
                                     <User size={18} style={{ marginRight: '0.5rem' }} /> 관리자
                                 </button>
-                                <button type="button" className={`btn ${adminRole === 'hr' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setAdminRole('hr')} style={{ flex: 1 }}>
+                                <button type="button" className={`btn ${adminRole === 'hr' ? 'btn-primary' : 'btn-outline'} `} onClick={() => setAdminRole('hr')} style={{ flex: 1 }}>
                                     <Users size={18} style={{ marginRight: '0.5rem' }} /> 인사팀
                                 </button>
                             </div>

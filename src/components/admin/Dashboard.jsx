@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, Users, BarChart3, AlertCircle, FileText } from 'lucide-react';
+import { Upload, Users, BarChart3, AlertCircle, FileText, Settings } from 'lucide-react';
 import { DataEngine } from '../../utils/dataEngine';
+import { API } from '../../services/api';
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
@@ -12,20 +13,23 @@ export default function Dashboard() {
     const [showPreview, setShowPreview] = useState(false);
     const [previewData, setPreviewData] = useState([]);
 
-    // Load Stats from LocalStorage on Mount
+    // Load Stats from DB on Mount
     React.useEffect(() => {
-        const storedStats = localStorage.getItem('dashboardStats');
-        if (storedStats) {
-            try {
-                const parsed = JSON.parse(storedStats);
-                // Map stored keys back to component state keys if needed
+        const loadStats = async () => {
+            const employees = await API.fetchEmployees();
+            if (employees && Array.isArray(employees)) {
+                // Calculate real stats from DB data
+                const total = employees.length;
+                // Mocking completed count as we don't have a separate API for stats yet, or we can fetch evaluations too.
+                // For now, let's assume 'total' is the main stat we can get from the employee list.
                 setStats({
-                    total: parsed.totalUsers || 0,
-                    completed: parsed.completedCount || 0,
-                    progress: parsed.completedRatio || 0
+                    total: total,
+                    completed: 0, // Need API to fetch evaluation status
+                    progress: 0
                 });
-            } catch (e) { }
-        }
+            }
+        };
+        loadStats();
     }, []);
 
     const handleFileUpload = async (e) => {
@@ -42,27 +46,21 @@ export default function Dashboard() {
         }
     };
 
-    // Confirm Upload & Calculate Stats
-    const handleConfirmUpload = () => {
-        // Calculate Stats from verifiedData
-        const total = previewData.length;
-        const newStats = {
-            totalUsers: total,
-            completedCount: 0,
-            completedRatio: 0
-        };
+    // Confirm Upload & Sync to DB
+    const handleConfirmUpload = async () => {
+        alert('데이터베이스에 동기화 중입니다... 잠시만 기다려주세요.');
 
-        setStats({
-            total: total,
-            completed: 0,
-            progress: 0
-        });
+        // Sync to Google Sheet
+        const res = await API.syncEmployees(previewData);
 
-        localStorage.setItem('dashboardStats', JSON.stringify(newStats));
-        localStorage.setItem('employeeData', JSON.stringify(previewData)); // Store the detailed list
-
-        setShowPreview(false);
-        alert(`${total}명의 직원 데이터가 성공적으로 등록되었습니다.`);
+        if (res.success) {
+            // Update Local State
+            setStats(prev => ({ ...prev, total: previewData.length }));
+            setShowPreview(false);
+            alert(`${previewData.length}명의 직원 데이터가 성공적으로 동기화되었습니다.`);
+        } else {
+            alert('동기화 실패: ' + res.error);
+        }
     };
 
     const handleDataChange = (idx, field, val) => {
