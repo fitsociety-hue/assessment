@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Users, BarChart3, AlertCircle } from 'lucide-react';
+import { Upload, Users, BarChart3, AlertCircle, FileText } from 'lucide-react';
 import { DataEngine } from '../../utils/dataEngine';
 
 export default function Dashboard() {
