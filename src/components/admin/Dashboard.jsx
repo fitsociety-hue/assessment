@@ -62,11 +62,12 @@ export default function Dashboard() {
                 alert('동기화 실패: ' + res.error);
             }
         } else {
-            // Analyze Results locally
-            analyzeResults(previewData);
+            // Analyze Results
+            const analyzedData = analyzeResults(previewData);
+            setAnalysisResults(analyzedData);
 
             // Sync Results to DB
-            const res = await API.syncResults(previewData);
+            const res = await API.syncResults(analyzedData);
             if (res.success) {
                 setShowPreview(false);
                 alert('평가 결과 및 분석 내용이 동기화되었습니다.');
@@ -81,7 +82,7 @@ export default function Dashboard() {
         // Mock weights (should fetch from Config or use default)
         const weights = { self: 0.2, peer: 0.2, manager: 0.4, sub: 0.2 };
 
-        const analyzed = data.map(row => {
+        return data.map(row => {
             const self = parseFloat(row.SelfScore) || 0;
             const peer = parseFloat(row.PeerScore) || 0;
             const mgr = parseFloat(row.ManagerScore) || 0;
@@ -89,7 +90,6 @@ export default function Dashboard() {
             const total = (self * weights.self) + (peer * weights.peer) + (mgr * weights.manager) + (sub * weights.sub);
             return { ...row, totalScore: total.toFixed(1) };
         });
-        setAnalysisResults(analyzed);
     };
 
     const handleDataChange = (idx, field, val) => {
