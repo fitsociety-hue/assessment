@@ -3,11 +3,26 @@ import { Users, BarChart3, FileText, Download } from 'lucide-react';
 
 export default function HRDashboard() {
     // Mock Data for HR View (Read Only)
-    const stats = {
-        total: 120,
-        completed: 45,
-        progress: 37
-    };
+    // Load Stats from LocalStorage (Shared with Admin Dashboard)
+    const [stats, setStats] = useState({
+        total: 0,
+        completed: 0,
+        progress: 0
+    });
+
+    React.useEffect(() => {
+        const storedStats = localStorage.getItem('dashboardStats');
+        if (storedStats) {
+            try {
+                const parsed = JSON.parse(storedStats);
+                setStats({
+                    total: parsed.totalUsers || 0,
+                    completed: parsed.completedCount || 0,
+                    progress: parsed.completedRatio || 0
+                });
+            } catch (e) { }
+        }
+    }, []);
 
     return (
         <div className="dashboard-grid animate-fade-in">

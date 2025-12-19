@@ -4,13 +4,29 @@ import { DataEngine } from '../../utils/dataEngine';
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
-        total: 152, // Mock initial data
-        completed: 89,
-        progress: 58
+        total: 0,
+        completed: 0,
+        progress: 0
     });
 
     const [showPreview, setShowPreview] = useState(false);
     const [previewData, setPreviewData] = useState([]);
+
+    // Load Stats from LocalStorage on Mount
+    React.useEffect(() => {
+        const storedStats = localStorage.getItem('dashboardStats');
+        if (storedStats) {
+            try {
+                const parsed = JSON.parse(storedStats);
+                // Map stored keys back to component state keys if needed
+                setStats({
+                    total: parsed.totalUsers || 0,
+                    completed: parsed.completedCount || 0,
+                    progress: parsed.completedRatio || 0
+                });
+            } catch (e) { }
+        }
+    }, []);
 
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
@@ -26,14 +42,27 @@ export default function Dashboard() {
         }
     };
 
+    // Confirm Upload & Calculate Stats
     const handleConfirmUpload = () => {
-        setShowPreview(false);
+        // Calculate Stats from verifiedData
+        const total = previewData.length;
+        const newStats = {
+            totalUsers: total,
+            completedCount: 0,
+            completedRatio: 0
+        };
+
         setStats({
-            total: previewData.length,
+            total: total,
             completed: 0,
             progress: 0
         });
-        alert(`${previewData.length}명의 데이터가 최종 등록되었습니다.`);
+
+        localStorage.setItem('dashboardStats', JSON.stringify(newStats));
+        localStorage.setItem('employeeData', JSON.stringify(previewData)); // Store the detailed list
+
+        setShowPreview(false);
+        alert(`${total}명의 직원 데이터가 성공적으로 등록되었습니다.`);
     };
 
     const handleDataChange = (idx, field, val) => {
