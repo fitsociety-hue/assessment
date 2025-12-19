@@ -260,22 +260,60 @@ export default function EvaluationForm() {
             const data = await DataEngine.parseCSV(file);
             if (data && data.length > 0) {
                 const newScores = {};
+                const newBonus = [...selfEvalBonus];
+
                 data.forEach(row => {
+                    // Try to detect columns
+                    const type = row['구분'] || (parseInt(row['번호']) > 20 ? '가산점' : '일반'); // Fallback logic
                     const id = parseInt(row['번호']);
                     const score = parseInt(row['점수']);
-                    if (id && score) newScores[id] = score;
+                    const content = row['내용'] || '';
+
+                    if (type === '일반' && id && score) {
+                        newScores[id] = score;
+                    } else if (type === '가산점' && id) {
+                        // Bonus items 1-5
+                        const idx = newBonus.findIndex(b => b.id === id);
+                        if (idx !== -1) {
+                            if (!isNaN(score)) newBonus[idx].score = score;
+                            if (content) newBonus[idx].content = content;
+                        }
+                    } else if (id && score) {
+                        // Simple fallback: 1-20 is standard
+                        if (id <= 20) newScores[id] = score;
+                    }
                 });
-                setSelfEvalScores(newScores);
-                alert('본인 평가 점수가 로드되었습니다.');
+
+                if (Object.keys(newScores).length > 0) setSelfEvalScores(prev => ({ ...prev, ...newScores }));
+                setSelfEvalBonus(newBonus);
+                alert('본인 평가 데이터(점수 및 가산점)가 로드되었습니다.');
             }
         } catch (err) {
+            console.error(err);
             alert('CSV 파싱 오류');
         }
     };
 
     const downloadSelfEvalTemplate = () => {
-        const data = SELF_EVAL_ITEMS.map(i => ({ '번호': i.id, '평가항목': i.q, '점수': '' }));
-        DataEngine.exportCSV(data, '본인평가_템플릿.csv');
+        // Standard Items
+        const mainData = SELF_EVAL_ITEMS.map(i => ({
+            '구분': '일반',
+            '번호': i.id,
+            '평가항목': i.q.split(':')[0], // Short name or full Q
+            '내용': '', // No content for standard
+            '점수': ''
+        }));
+
+        // Bonus Items
+        const bonusData = selfEvalBonus.map(i => ({
+            '구분': '가산점',
+            '번호': i.id,
+            '평가항목': i.item,
+            '내용': '', // User fills this
+            '점수': ''
+        }));
+
+        DataEngine.exportCSV([...mainData, ...bonusData], '본인평가_템플릿.csv');
     };
 
     // Initial Load & Role Check
@@ -415,7 +453,7 @@ export default function EvaluationForm() {
 
                             <div style={{ marginBottom: '2rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <h4 style={{ margin: 0 }}>중요업무 추진내용 및 실적</h4>
+                                    <h4 style={{ margin: 0 }}>주요업무 추진내용 및 실적</h4>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                                         <button className="btn btn-outline" onClick={downloadSelfAnalysisTemplate} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                                             <Download size={14} /> 템플릿
