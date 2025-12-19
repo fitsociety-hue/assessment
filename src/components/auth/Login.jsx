@@ -38,7 +38,7 @@ export default function Login({ onLogin }) {
     const navigate = useNavigate();
 
     // Mock Database for Password (In a real app, this would be a backend)
-    const [storedPassword, setStoredPassword] = useState('0741');
+    const [storedPassword, setStoredPassword] = useState(() => localStorage.getItem('adminPassword') || '0741');
     const [isPasswordChanged, setIsPasswordChanged] = useState(false);
     const [showChangePw, setShowChangePw] = useState(false);
     const [newPw, setNewPw] = useState('');
@@ -92,8 +92,13 @@ export default function Login({ onLogin }) {
                     setError('비밀번호가 올바르지 않습니다.');
                 }
             } else if (adminRole === 'hr') {
-                onLogin({ role: 'hr', name: '인사담당자' });
-                navigate('/hr');
+                // Shared password for now, as usually requested in simple systems
+                if (password === storedPassword) {
+                    onLogin({ role: 'hr', name: '인사담당자' });
+                    navigate('/hr');
+                } else {
+                    setError('비밀번호가 올바르지 않습니다.');
+                }
             }
         }
     };
@@ -111,6 +116,7 @@ export default function Login({ onLogin }) {
             return;
         }
         setStoredPassword(newPw);
+        localStorage.setItem('adminPassword', newPw);
         setIsPasswordChanged(true);
         setShowChangePw(false);
         setNewPw('');
@@ -188,16 +194,17 @@ export default function Login({ onLogin }) {
                                 </button>
                             </div>
 
-                            {adminRole === 'admin' && (
-                                <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
-                                    <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
-                                    <input
-                                        type="password" className="input-field" placeholder="비밀번호 입력"
-                                        style={{ paddingLeft: '2.8rem' }}
-                                        value={password} onChange={(e) => setPassword(e.target.value)}
-                                    />
-                                </div>
-                            )}
+                            {/* Password Field for both Admin and HR */}
+                            <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+                                <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
+                                <input
+                                    type="password" className="input-field" placeholder="비밀번호 입력"
+                                    style={{ paddingLeft: '2.8rem' }}
+                                    value={password} onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Change Password Link only for Admin (optional, but requested for 'Admin/HR' logic usually implies Admin manages it) */}
                             {adminRole === 'admin' && (
                                 <div style={{ textAlign: 'center', marginTop: '0.5rem', marginBottom: '1rem' }}>
                                     <button

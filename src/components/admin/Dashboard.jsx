@@ -66,6 +66,22 @@ export default function Dashboard() {
             const analyzedData = analyzeResults(previewData);
             setAnalysisResults(analyzedData);
 
+            // Save to LocalStorage for HR Dashboard to view (Read-Only)
+            localStorage.setItem('evaluationResults', JSON.stringify(analyzedData));
+
+            // Update Stats for HR Dashboard
+            const newStats = {
+                total: stats.total,
+                completed: analyzedData.length,
+                completedRatio: Math.round((analyzedData.length / (stats.total || 1)) * 100)
+            };
+            setStats(newStats); // Update local state
+            localStorage.setItem('dashboardStats', JSON.stringify({
+                totalUsers: newStats.total,
+                completedCount: newStats.completed,
+                completedRatio: newStats.completedRatio
+            }));
+
             // Sync Results to DB
             const res = await API.syncResults(analyzedData);
             if (res.success) {

@@ -25,8 +25,33 @@ export default function EvaluationForm() {
     const [managerEvalOpinion, setManagerEvalOpinion] = useState({ strength: '', weakness: '', support: '', thanks: '' });
     const [workerEvalScores, setWorkerEvalScores] = useState({});
     const [workerEvalOpinion, setWorkerEvalOpinion] = useState({ strength: '', weakness: '', training: '', placement: '' });
+    const [peerEvalScores, setPeerEvalScores] = useState({});
+    const [peerEvalOpinion, setPeerEvalOpinion] = useState({ strength: '', improvement: '', message: '' });
 
     // Constants for Questions
+    const PEER_EVAL_ITEMS = [
+        { id: 1, cat: '직무수행태도', q: '미션비전 이해: 복지관의 미션과 비전을 이해하고 실천하려 노력한다.' },
+        { id: 2, cat: '직무수행태도', q: '이용자 존중: 복지관 이용 장애인 및 지역주민을 존중하고 친절하게 응대하는가?' },
+        { id: 3, cat: '직무수행태도', q: '동료 신뢰: 원만한 대인관계로 신뢰할 수 있는 동료이며, 자신의 업무 외에도 적극 협조하는가?' },
+        { id: 4, cat: '직무수행태도', q: '근무 태도: 규율을 준수하고 공사 구별이 분명하며 긍정적 자세로 업무에 임하는가?' },
+        { id: 5, cat: '직무수행태도', q: '피드백 수용: 동료나 상사의 조언(피드백)을 감정적으로 받아들이지 않고, 자신의 성장을 위한 기회로 긍정적으로 수용하는가?' },
+        { id: 6, cat: '직무수행능력', q: '도전 의식: 새롭고 어려운 업무도 두려워하지 않고 도전의식을 갖고 수행하는가?' },
+        { id: 7, cat: '직무수행능력', q: '역활 수용: 자신이 원하는 업무에 제한하지 않고 맡은 직무를 성실히 수행하는가?' },
+        { id: 8, cat: '직무수행능력', q: '지식 공유: 자신이 습득한 정보, 전문지식, 경험을 동료 및 팀에게 적극 공유하는가?' },
+        { id: 9, cat: '직무수행능력', q: '책임 완수: 어려운 일에도 스스로 나서며 맡은 업무를 끝까지 완수하는가?' },
+        { id: 10, cat: '직무수행능력', q: '전문성: 업무 수행에 필요한 전문지식 수준이 우수한가?' },
+        { id: 11, cat: '직무수행능력', q: '창의성: 독창적 기획능력과 새로운 사고로 변화와 개선을 추구하는가?' },
+        { id: 12, cat: '직무수행능력', q: '위기 대처: 돌발 상황이나 위기 상황 발생 시 당황하지 않고 지혜롭고 침착하게 대처하여 문제를 해결하는가?' },
+        { id: 13, cat: '직무수행능력', q: '소통 역량: 동료의 의견을 경청하며, 갈등 상황에서 유연하게 소통하여 합리적인 결과를 도출하는가?' },
+        { id: 14, cat: '직무수행능력', q: '인권 감수성: 장애인 당사자의 관점에서 생각하고, 업무 수행 과정에서 인권 침해 요소를 예방하며 존중의 가치를 실현하는가?' },
+        { id: 15, cat: '직무수행능력', q: '안전 관리: 시설 안전 및 이용자 안전 수칙을 명확히 숙지하고 준수하여, 안전한 복지관 환경 조성에 기여하는가?' },
+        { id: 16, cat: '직무수행능력', q: '행정 역량: 문서 작성, 시스템 입력 등 수반되는 행정 업무를 기한 내에 정확하고 꼼꼼하게 처리하는가?' },
+        { id: 17, cat: '근무실적', q: '업무 성과: 효과적인 업무운영으로 목표를 달성하고 부서에 긍정적으로 기여하는가?' },
+        { id: 18, cat: '근무실적', q: '품질향상: 담당 사업의 서비스 질과 이용자 만족도 향상을 위해 노력하는가?' },
+        { id: 19, cat: '근무실적', q: '협업 기여: 팀 프로젝트나 협업 과제 수행 시 적극적으로 기여하는가?' },
+        { id: 20, cat: '근무실적', q: '내부지원 및 외부연계: 기관 운영에 필요한 인적·물적 자원을 효율적으로 관리하거나, 업무 개선을 위한 새로운 정보 및 외부 자원을 적극적으로 도입하는가?' }
+    ];
+
     const MANAGER_EVAL_ITEMS = [
         { id: 1, cat: '직무수행태도', q: '근태관리: 출퇴근 시간을 준수하고 근무시간에 업무에 집중하는가?' },
         { id: 2, cat: '직무수행태도', q: '조직가치: 기관의 미션, 비전, 인재상을 이해하고 실천하기 위해 노력하는가?' },
@@ -119,6 +144,30 @@ export default function EvaluationForm() {
     const downloadWorkerTemplate = () => {
         const data = WORKER_EVAL_ITEMS.map(i => ({ '번호': i.id, '평가항목': i.q, '점수': '' }));
         DataEngine.exportCSV(data, '종사자평가_템플릿.csv');
+    };
+
+    // CSV for Peer Eval
+    const handlePeerEvalCSV = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const data = await DataEngine.parseCSV(file);
+            if (data && data.length > 0) {
+                const newScores = {};
+                data.forEach(row => {
+                    const id = parseInt(row['번호'] || row['No']);
+                    const score = parseInt(row['점수'] || row['Score']);
+                    if (id && score) newScores[id] = score;
+                });
+                setPeerEvalScores(newScores);
+                alert('동료 평가 점수가 로드되었습니다.');
+            }
+        } catch (err) { alert('CSV 파싱 오류'); }
+    };
+
+    const downloadPeerTemplate = () => {
+        const data = PEER_EVAL_ITEMS.map(i => ({ '번호': i.id, '평가항목': i.q, '점수': '' }));
+        DataEngine.exportCSV(data, '동료평가_템플릿.csv');
     };
 
     // CSV Handlers
@@ -474,31 +523,43 @@ export default function EvaluationForm() {
                             <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>동료 평가</h3>
                             <p className="text-sub" style={{ marginBottom: '2rem' }}>협업하는 동료의 직무 수행 태도와 능력을 객관적으로 평가해 주세요.</p>
 
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-outline" onClick={downloadPeerTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Download size={16} /> 템플릿
+                                </button>
+                                <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <Upload size={16} /> CSV 업로드
+                                    <input type="file" hidden accept=".csv" onChange={handlePeerEvalCSV} />
+                                </label>
+                            </div>
+
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--bg-input)' }}>
-                                        <th style={{ padding: '1rem', textAlign: 'left' }}>평가 항목</th>
-                                        <th style={{ padding: '1rem', textAlign: 'center', width: '300px' }}>척도 (5점 만점)</th>
+                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '50px' }}>No</th>
+                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>구분</th>
+                                        <th style={{ padding: '0.8rem', textAlign: 'left' }}>평가 내용</th>
+                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '250px' }}>평가 (5점)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {[
-                                        { cat: '직무태도', q: '조직가치: 기관의 미션과 비전을 이해하고 실천하려 노력한다.' },
-                                        { cat: '직무태도', q: '협조성: 타 팀과의 업무협조가 원활하고 적극 협력한다.' },
-                                        { cat: '직무능력', q: '전문성: 업무 수행에 필요한 전문 지식과 기술을 보유하고 있다.' },
-                                        { cat: '직무능력', q: '소통역량: 동료의 의견을 경청하며 합리적인 결과를 도출한다.' },
-                                        { cat: '근무실적', q: '협업기여: 팀 프로젝트나 협업 과제 수행 시 적극적으로 기여하는가?' }
-                                    ].map((item, i) => (
-                                        <tr key={i} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                            <td style={{ padding: '1rem' }}>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--primary-600)', marginBottom: '0.3rem' }}>{item.cat}</div>
-                                                <div>{item.q}</div>
-                                            </td>
-                                            <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                    {PEER_EVAL_ITEMS.map((item) => (
+                                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>{item.id}</td>
+                                            <td style={{ padding: '0.8rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary-600)' }}>{item.cat}</td>
+                                            <td style={{ padding: '0.8rem' }}>{item.q.split(':')[1]}</td>
+                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
                                                     {[5, 4, 3, 2, 1].map(score => (
-                                                        <label key={score} style={{ background: 'white', border: '1px solid var(--border-light)', padding: '0.5rem 0.8rem', borderRadius: '4px', cursor: 'pointer' }}>
-                                                            <input type="radio" name={`peer_q${i}`} value={score} /> {score}
+                                                        <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: peerEvalScores[item.id] === score ? 'var(--primary-600)' : 'white', color: peerEvalScores[item.id] === score ? 'white' : 'black' }}>
+                                                            <input
+                                                                type="radio"
+                                                                name={`peer_${item.id}`}
+                                                                checked={peerEvalScores[item.id] === score}
+                                                                onChange={() => setPeerEvalScores({ ...peerEvalScores, [item.id]: score })}
+                                                                style={{ display: 'none' }}
+                                                            />
+                                                            {score}
                                                         </label>
                                                     ))}
                                                 </div>
@@ -507,9 +568,33 @@ export default function EvaluationForm() {
                                     ))}
                                 </tbody>
                             </table>
+
+                            <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px' }}>
+                                <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>동료로서 평가대상자의 가장 큰 강점</label>
+                                        <textarea className="input-field" rows="3" value={peerEvalOpinion.strength} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, strength: e.target.value })}></textarea>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>함께 일하며 개선되면 좋겠다고 생각하는 부분</label>
+                                        <textarea className="input-field" rows="3" value={peerEvalOpinion.improvement} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, improvement: e.target.value })}></textarea>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>동료에게 전하고 싶은 격려나 응원의 메시지</label>
+                                        <textarea className="input-field" rows="3" value={peerEvalOpinion.message} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, message: e.target.value })}></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div style={{ textAlign: 'right', marginTop: '2rem' }}>
                                 <button type="button" className="btn btn-primary" onClick={async () => {
-                                    const res = await API.saveEvaluation({ type: 'peer_eval', evaluator: currentUser.name, target: 'Peer' });
+                                    const res = await API.saveEvaluation({
+                                        type: 'peer_eval',
+                                        evaluator: currentUser.name,
+                                        target: 'Peer',
+                                        data: { scores: peerEvalScores, opinion: peerEvalOpinion } // Send structured data
+                                    });
                                     if (res.success) alert('동료 평가 저장 완료');
                                 }}>
                                     평가 제출 (DB)
