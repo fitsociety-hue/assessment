@@ -67,7 +67,23 @@ export default function Dashboard() {
             setAnalysisResults(analyzedData);
 
             // Save to LocalStorage for HR Dashboard to view (Read-Only)
-            localStorage.setItem('evaluationResults', JSON.stringify(analyzedData));
+            // Explicitly sanitize to ensure privacy (only Name, Team, Score, Grade)
+            const sanitizedForHR = analyzedData.map(item => {
+                const s = parseFloat(item.totalScore) || 0;
+                let g = 'D';
+                if (s >= 95) g = 'S';
+                else if (s >= 85) g = 'A';
+                else if (s >= 75) g = 'B';
+                else if (s >= 65) g = 'C';
+
+                return {
+                    name: item.Name || item.name || item.이름,
+                    team: item.Team || item.team || item.부서,
+                    totalScore: item.totalScore,
+                    grade: g
+                };
+            });
+            localStorage.setItem('evaluationResults', JSON.stringify(sanitizedForHR));
 
             // Update Stats for HR Dashboard
             const newStats = {

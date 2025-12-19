@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Lock, ChevronRight, UserCircle, Building2, Briefcase } from 'lucide-react';
+import { Users, Lock, ChevronRight, UserCircle, Building2, Briefcase, User } from 'lucide-react';
 import { API } from '../../services/api';
 
 export default function Login({ onLogin }) {
