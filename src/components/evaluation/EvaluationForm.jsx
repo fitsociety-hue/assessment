@@ -15,12 +15,50 @@ export default function EvaluationForm() {
     const [currentUser, setCurrentUser] = useState(null);
 
     // Form States
-    const [selfAnalysis, setSelfAnalysis] = useState({ content1: '', content2: '', content3: '' });
-    const [selfEvalRows, setSelfEvalRows] = useState([
-        { id: 1, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5' },
-        { id: 2, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5' },
-        { id: 3, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5' }
+    const [selfAnalysis, setSelfAnalysis] = useState({
+        rows: [
+            { id: 1, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5', remarks: '' },
+            { id: 2, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5', remarks: '' },
+            { id: 3, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5', remarks: '' }
+        ],
+        q1: '', q2: '', q3: '', q4: '',
+        q5: '', q5_reason: '',
+        q6: '', q6_reason: '',
+        q7_dept: '', q7_job: '', q7_reason: ''
+    });
+
+    const [selfEvalScores, setSelfEvalScores] = useState({});
+    const [selfEvalBonus, setSelfEvalBonus] = useState([
+        { id: 1, item: '외부지원사업(프로포절 선정 등)', content: '', score: '' },
+        { id: 2, item: '신규기획사업(시범사업 등 수행)', content: '', score: '' },
+        { id: 3, item: '위원회 등 네트워크 활동', content: '', score: '' },
+        { id: 4, item: '연구실적(논문, 사례집, 발표 등)', content: '', score: '' },
+        { id: 5, item: '자원개발(후원, 자원봉사 등)', content: '', score: '' }
     ]);
+
+    // Constants for Self Eval
+    const SELF_EVAL_ITEMS = [
+        { id: 1, cat: '직무수행태도', q: '조직이해: 기관의 미션, 비전, 인재상을 충분히 이해하고 실천하기 위해 노력한다.' },
+        { id: 2, cat: '직무수행태도', q: '성실성: 출퇴근 등 복무규정을 준수하고 업무에 성실히 임한다.' },
+        { id: 3, cat: '직무수행태도', q: '협조성: 동료 및 타 팀과 협력하며 공동목표 달성을 위해 적극 협조한다.' },
+        { id: 4, cat: '직무수행태도', q: '책임감: 맡은 업무를 회피하지 않고 끝까지 완수한다.' },
+        { id: 5, cat: '직무수행태도', q: '보안의식: 개인정보보호 등 보안관리를 철저히 이행한다.' },
+        { id: 6, cat: '직무수행능력', q: '전문성: 업무수행에 필요한 전문지식과 기술을 보유하고 활용한다.' },
+        { id: 7, cat: '직무수행능력', q: '업무숙련도: 업무관련 지침, 예산, 법규, 매뉴얼 등을 충분히 숙지하고 있다.' },
+        { id: 8, cat: '직무수행능력', q: '문제해결력: 문제의 핵심을 정확히 이해하고 적절한 해결방안을 제시한다.' },
+        { id: 9, cat: '직무수행능력', q: '정보활용력: 필요한 정보를 효과적으로 수집하고 체계적으로 기록·활용한다.' },
+        { id: 10, cat: '직무수행능력', q: '의사소통: 상사, 동료, 이용자와 효과적으로 소통한다.' },
+        { id: 11, cat: '업무적합도', q: '자기개발: 업무의 질적 향상을 위해 교육, 슈퍼비전 등 자기개발에 노력한다.' },
+        { id: 12, cat: '업무적합도', q: '업무량: 본인의 직급과 역량에 적합한 업무량을 수행한다.' },
+        { id: 13, cat: '업무적합도', q: '업무수준: 본인의 직급과 경력에 상응하는 수준의 업무를 수행한다.' },
+        { id: 14, cat: '업무적합도', q: '업무적합도: 본인의 능력을 발휘할 수 있는 적합한 업무를 수행한다.' },
+        { id: 15, cat: '근무실적', q: '업무실적: 담당 사업/업무의 목표를 달성했다. (평균 %)' },
+        { id: 16, cat: '근무실적', q: '예산집행: 계획된 예산을 효율적으로 집행했다. (평균 %)' },
+        { id: 17, cat: '근무실적', q: '자원관리: 업무 수행에 필요한 내·외부 자원을 확보하거나 효율적으로 활용하는 데 기여했다.' },
+        { id: 18, cat: '근무실적', q: '품질관리: 서비스 품질 향상을 위해 이용자 만족도 향상을 위해 노력했다.' },
+        { id: 19, cat: '근무실적', q: '기록관리: 업무 관련 기록과 문서를 체계적이고 정확하게 관리했다.' },
+        { id: 20, cat: '근무실적', q: '기한준수: 업무 보고 및 제출 기한을 철저히 준수했다.' }
+    ];
     const [managerEvalScores, setManagerEvalScores] = useState({});
     const [managerEvalOpinion, setManagerEvalOpinion] = useState({ strength: '', weakness: '', support: '', thanks: '' });
     const [workerEvalScores, setWorkerEvalScores] = useState({});
@@ -177,14 +215,31 @@ export default function EvaluationForm() {
         try {
             const data = await DataEngine.parseCSV(file);
             if (data && data.length > 0) {
-                // Expecting CSV with headers: Question, Answer OR just mapping rows
-                // Let's assume a simple format or mapping by index
-                setSelfAnalysis({
-                    content1: data[0]?.Answer || data[0]?.content1 || '',
-                    content2: data[1]?.Answer || data[1]?.content2 || '',
-                    content3: data[2]?.Answer || data[2]?.content3 || ''
+                // Determine if it's the rows part or questions part (simplified: assume merged or multiple CSVs, but for now just load rows if columns match)
+                // Actually, let's just support 'Rows' via CSV for the table part. Questions usually typed.
+
+                const newRows = [];
+                data.forEach((row, idx) => {
+                    if (row['사업명'] || row['사업내용']) {
+                        newRows.push({
+                            id: idx + 1,
+                            name: row['사업명'] || '',
+                            content: row['사업내용'] || '',
+                            goal: row['목표'] || '',
+                            achievement: row['달성도'] || '',
+                            period: row['사업기간'] || '',
+                            satisfaction: row['자기만족도'] || '5',
+                            remarks: row['특이사항'] || ''
+                        });
+                    }
                 });
-                alert('자기분석 보고서 데이터가 로드되었습니다.');
+
+                if (newRows.length > 0) {
+                    setSelfAnalysis(prev => ({ ...prev, rows: newRows }));
+                    alert('주요업무 실적 데이터가 로드되었습니다.');
+                } else {
+                    alert('유효한 데이터가 없습니다.');
+                }
             }
         } catch (err) {
             alert('CSV 파싱 오류');
@@ -193,11 +248,9 @@ export default function EvaluationForm() {
 
     const downloadSelfAnalysisTemplate = () => {
         const data = [
-            { Question: '1. 중요업무 추진내용 및 실적', Answer: '내용을 입력하세요' },
-            { Question: '2. 성공 및 실패 사례 분석', Answer: '내용을 입력하세요' },
-            { Question: '3. 향후 역량 개발 계획', Answer: '내용을 입력하세요' }
+            { '사업명': '예시 사업', '사업내용': '내용 입력', '목표': '100명', '달성도': '100', '사업기간': '01월~12월', '자기만족도': '5', '특이사항': '' }
         ];
-        DataEngine.exportCSV(data, '자기분석보고서_템플릿.csv');
+        DataEngine.exportCSV(data, '자기분석_실적_템플릿.csv');
     };
 
     const handleSelfEvalCSV = async (e) => {
@@ -206,18 +259,14 @@ export default function EvaluationForm() {
         try {
             const data = await DataEngine.parseCSV(file);
             if (data && data.length > 0) {
-                // Map CSV fields to state
-                const newRows = data.map((row, idx) => ({
-                    id: idx + 1,
-                    name: row['사업명'] || '',
-                    content: row['사업내용'] || '',
-                    goal: row['목표'] || '',
-                    achievement: row['달성도'] || '',
-                    period: row['사업기간'] || '',
-                    satisfaction: row['자기만족도'] || '5'
-                }));
-                setSelfEvalRows(newRows);
-                alert('본인평가 데이터가 로드되었습니다.');
+                const newScores = {};
+                data.forEach(row => {
+                    const id = parseInt(row['번호']);
+                    const score = parseInt(row['점수']);
+                    if (id && score) newScores[id] = score;
+                });
+                setSelfEvalScores(newScores);
+                alert('본인 평가 점수가 로드되었습니다.');
             }
         } catch (err) {
             alert('CSV 파싱 오류');
@@ -225,10 +274,8 @@ export default function EvaluationForm() {
     };
 
     const downloadSelfEvalTemplate = () => {
-        const data = [
-            { '사업명': '', '사업내용': '', '목표': '', '달성도': '', '사업기간': '', '자기만족도': '' }
-        ];
-        DataEngine.exportCSV(data, '본인평가_실적_템플릿.csv');
+        const data = SELF_EVAL_ITEMS.map(i => ({ '번호': i.id, '평가항목': i.q, '점수': '' }));
+        DataEngine.exportCSV(data, '본인평가_템플릿.csv');
     };
 
     // Initial Load & Role Check
@@ -364,57 +411,156 @@ export default function EvaluationForm() {
                     {activeTab === 0 && (
                         <div>
                             <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>자기분석 보고서</h3>
-                            <p className="text-sub" style={{ marginBottom: '2rem' }}>지난 한 해 동안의 업무 수행 내용과 성과를 상세히 기술해 주세요.</p>
+                            <p className="text-sub" style={{ marginBottom: '2rem' }}>지난 한 해 동안의 업무 수행 내용과 성과, 향후 계획을 상세히 기술해 주세요.</p>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
-                                <button className="btn btn-outline" onClick={downloadSelfAnalysisTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Download size={16} /> 템플릿 다운로드
-                                </button>
-                                <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <Upload size={16} /> CSV 업로드
-                                    <input type="file" hidden accept=".csv" onChange={handleSelfAnalysisCSV} />
-                                </label>
+                            <div style={{ marginBottom: '2rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h4 style={{ margin: 0 }}>중요업무 추진내용 및 실적</h4>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={downloadSelfAnalysisTemplate} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                            <Download size={14} /> 템플릿
+                                        </button>
+                                        <label className="btn btn-outline" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                                            <Upload size={14} /> CSV 업로드
+                                            <input type="file" hidden accept=".csv" onChange={handleSelfAnalysisCSV} />
+                                        </label>
+                                        <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => {
+                                            setSelfAnalysis(prev => ({
+                                                ...prev,
+                                                rows: [...prev.rows, { id: prev.rows.length + 1, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5', remarks: '' }]
+                                            }));
+                                        }}>+ 행 추가</button>
+                                    </div>
+                                </div>
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                                        <thead>
+                                            <tr style={{ background: 'var(--bg-input)', borderBottom: '2px solid var(--border-light)' }}>
+                                                <th style={{ padding: '0.8rem', minWidth: '150px' }}>사업명</th>
+                                                <th style={{ padding: '0.8rem', minWidth: '200px' }}>사업내용 (추진실적)</th>
+                                                <th style={{ padding: '0.8rem', width: '80px' }}>목표</th>
+                                                <th style={{ padding: '0.8rem', width: '60px' }}>달성도(%)</th>
+                                                <th style={{ padding: '0.8rem', width: '120px' }}>사업기간</th>
+                                                <th style={{ padding: '0.8rem', width: '80px' }}>만족도</th>
+                                                <th style={{ padding: '0.8rem', minWidth: '100px' }}>특이사항</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {selfAnalysis.rows.map((row, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" value={row.name} onChange={(e) => {
+                                                            const newRows = [...selfAnalysis.rows]; newRows[idx].name = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: newRows });
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" value={row.content} onChange={(e) => {
+                                                            const newRows = [...selfAnalysis.rows]; newRows[idx].content = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: newRows });
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" value={row.goal} style={{ textAlign: 'center' }} onChange={(e) => {
+                                                            const newRows = [...selfAnalysis.rows]; newRows[idx].goal = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: newRows });
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" value={row.achievement} style={{ textAlign: 'center' }} onChange={(e) => {
+                                                            const newRows = [...selfAnalysis.rows]; newRows[idx].achievement = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: newRows });
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" value={row.period} style={{ textAlign: 'center' }} onChange={(e) => {
+                                                            const newRows = [...selfAnalysis.rows]; newRows[idx].period = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: newRows });
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <select className="input-field" value={row.satisfaction} onChange={(e) => {
+                                                            const newRows = [...selfAnalysis.rows]; newRows[idx].satisfaction = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: newRows });
+                                                        }}>
+                                                            <option value="5">5</option>
+                                                            <option value="4">4</option>
+                                                            <option value="3">3</option>
+                                                            <option value="2">2</option>
+                                                            <option value="1">1</option>
+                                                        </select>
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" value={row.remarks} onChange={(e) => {
+                                                            const newRows = [...selfAnalysis.rows]; newRows[idx].remarks = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: newRows });
+                                                        }} />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                                <div>
-                                    <h4>1. 중요업무 추진내용 및 실적</h4>
-                                    <textarea
-                                        className="input-field"
-                                        rows="6"
-                                        placeholder="핵심 성과 위주로 구체적으로 작성해 주세요."
-                                        value={selfAnalysis.content1}
-                                        onChange={(e) => setSelfAnalysis({ ...selfAnalysis, content1: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <h4>2. 성공 및 실패 사례 분석</h4>
-                                    <textarea
-                                        className="input-field"
-                                        rows="6"
-                                        placeholder="성공 요인과 실패 원인을 분석하여 작성해 주세요."
-                                        value={selfAnalysis.content2}
-                                        onChange={(e) => setSelfAnalysis({ ...selfAnalysis, content2: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <h4>3. 향후 역량 개발 계획</h4>
-                                    <textarea
-                                        className="input-field"
-                                        rows="6"
-                                        placeholder="전문성 향상을 위한 구체적인 계획을 작성해 주세요."
-                                        value={selfAnalysis.content3}
-                                        onChange={(e) => setSelfAnalysis({ ...selfAnalysis, content3: e.target.value })}
-                                    />
+                            <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
+                                <h4 style={{ marginBottom: '1.5rem' }}>자기개발 및 전문성 향상</h4>
+                                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>1. 2025년 중 복지관의 미션, 비전, 핵심가치 달성에 기여한 구체적 사례는?</label>
+                                        <textarea className="input-field" rows="3" value={selfAnalysis.q1} onChange={e => setSelfAnalysis({ ...selfAnalysis, q1: e.target.value })}></textarea>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>2. 2025년 중 업무와 관련하여 이수한 외부교육, 연수, 자격취득 등?</label>
+                                        <textarea className="input-field" rows="3" value={selfAnalysis.q2} onChange={e => setSelfAnalysis({ ...selfAnalysis, q2: e.target.value })}></textarea>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>3. 2025년 중 직무수행 시 가장 도전적이었던 과제와 이를 극복하기 위해 시도한 방법은?</label>
+                                        <textarea className="input-field" rows="3" value={selfAnalysis.q3} onChange={e => setSelfAnalysis({ ...selfAnalysis, q3: e.target.value })}></textarea>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>4. 2026년 기관(팀)의 발전을 위하여 바라는 점과 건의하고 싶은 사항은?</label>
+                                        <textarea className="input-field" rows="3" value={selfAnalysis.q4} onChange={e => setSelfAnalysis({ ...selfAnalysis, q4: e.target.value })}></textarea>
+                                    </div>
                                 </div>
                             </div>
-                            <div style={{ textAlign: 'right', marginTop: '2rem' }}>
+
+                            <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
+                                <h4 style={{ marginBottom: '1.5rem' }}>만족도 및 직무순환</h4>
+                                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>5. 2025년 근무부서 만족도는?</label>
+                                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                                            {['아주 만족한다', '만족한다', '보통이다', '불만스럽다'].map(opt => (
+                                                <label key={opt} style={{ cursor: 'pointer' }}>
+                                                    <input type="radio" name="q5_sat" value={opt} checked={selfAnalysis.q5 === opt} onChange={e => setSelfAnalysis({ ...selfAnalysis, q5: e.target.value })} /> {opt}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <input className="input-field" placeholder="이유 :" value={selfAnalysis.q5_reason} onChange={e => setSelfAnalysis({ ...selfAnalysis, q5_reason: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>6. 2025년 복지관 근무 만족도는?</label>
+                                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                                            {['아주 만족한다', '만족한다', '보통이다', '불만스럽다'].map(opt => (
+                                                <label key={opt} style={{ cursor: 'pointer' }}>
+                                                    <input type="radio" name="q6_sat" value={opt} checked={selfAnalysis.q6 === opt} onChange={e => setSelfAnalysis({ ...selfAnalysis, q6: e.target.value })} /> {opt}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <input className="input-field" placeholder="이유 :" value={selfAnalysis.q6_reason} onChange={e => setSelfAnalysis({ ...selfAnalysis, q6_reason: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>7. 직무순환을 할 경우 희망부서와 관심직무는?</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                            <input className="input-field" placeholder="희망부서 (1순위)" value={selfAnalysis.q7_dept} onChange={e => setSelfAnalysis({ ...selfAnalysis, q7_dept: e.target.value })} />
+                                            <input className="input-field" placeholder="관심직무" value={selfAnalysis.q7_job} onChange={e => setSelfAnalysis({ ...selfAnalysis, q7_job: e.target.value })} />
+                                        </div>
+                                        <input className="input-field" placeholder="이유 :" value={selfAnalysis.q7_reason} onChange={e => setSelfAnalysis({ ...selfAnalysis, q7_reason: e.target.value })} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ textAlign: 'right' }}>
                                 <button type="button" className="btn btn-primary" onClick={async () => {
-                                    if (confirm('보고서를 저장하시겠습니까?')) {
+                                    if (confirm('자기분석 보고서를 저장하시겠습니까?')) {
                                         const res = await API.saveEvaluation({
                                             type: 'self_analysis',
                                             evaluator: currentUser.name,
-                                            uid: currentUser.id || currentUser.name, // Use ID if available
+                                            uid: currentUser.id || currentUser.name,
                                             data: selfAnalysis
                                         });
                                         if (res.success) alert('저장되었습니다.');
@@ -429,367 +575,401 @@ export default function EvaluationForm() {
 
                     {/* Tab 1: Self Evaluation */}
                     {activeTab === 1 && (
-                        <form>
+                        <div>
                             <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>본인 평가</h3>
                             <p className="text-sub" style={{ marginBottom: '2rem' }}>본인의 업무 성과와 역량을 객관적으로 평가해 주세요.</p>
 
-                            <section style={{ marginBottom: '2.5rem' }}>
-                                <h4>1. 중요업무 추진내용 및 실적</h4>
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem', gap: '0.5rem' }}>
-                                    <button type="button" className="btn btn-outline" onClick={downloadSelfEvalTemplate} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                        <Download size={14} /> 템플릿
-                                    </button>
-                                    <label className="btn btn-outline" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
-                                        <Upload size={14} /> 업로드
-                                        <input type="file" hidden accept=".csv" onChange={handleSelfEvalCSV} />
-                                    </label>
-                                </div>
-                                <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                                        <thead>
-                                            <tr style={{ background: 'var(--primary-50)', borderBottom: '2px solid var(--primary-100)' }}>
-                                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>사업명</th>
-                                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>사업내용 (추진실적)</th>
-                                                <th style={{ padding: '0.8rem', textAlign: 'center', width: '60px' }}>목표</th>
-                                                <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>달성도(%)</th>
-                                                <th style={{ padding: '0.8rem', textAlign: 'center', width: '120px' }}>사업기간</th>
-                                                <th style={{ padding: '0.8rem', textAlign: 'center', width: '100px' }}>자기만족도</th>
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-outline" onClick={downloadSelfEvalTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Download size={16} /> 템플릿
+                                </button>
+                                <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <Upload size={16} /> CSV 업로드
+                                    <input type="file" hidden accept=".csv" onChange={handleSelfEvalCSV} />
+                                </label>
+                            </div>
+
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--bg-input)' }}>
+                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '50px' }}>No</th>
+                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>구분</th>
+                                        <th style={{ padding: '0.8rem', textAlign: 'left' }}>평가 항목</th>
+                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '250px' }}>평가 (5점)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {SELF_EVAL_ITEMS.map((item) => (
+                                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>{item.id}</td>
+                                            <td style={{ padding: '0.8rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary-600)' }}>{item.cat}</td>
+                                            <td style={{ padding: '0.8rem' }}>
+                                                <div style={{ fontWeight: 600, marginBottom: '0.2rem' }}>{item.q.split(':')[0]}</div>
+                                                <div style={{ fontSize: '0.9rem', color: 'var(--text-sub)' }}>{item.q.split(':')[1]}</div>
+                                            </td>
+                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
+                                                    {[5, 4, 3, 2, 1].map(score => (
+                                                        <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: selfEvalScores[item.id] === score ? 'var(--primary-600)' : 'white', color: selfEvalScores[item.id] === score ? 'white' : 'black' }}>
+                                                            <input
+                                                                type="radio"
+                                                                name={`self_${item.id}`}
+                                                                checked={selfEvalScores[item.id] === score}
+                                                                onChange={() => setSelfEvalScores({ ...selfEvalScores, [item.id]: score })}
+                                                                style={{ display: 'none' }}
+                                                            />
+                                                            {score}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px' }}>
+                                <h4 style={{ marginBottom: '1rem' }}>가산점 항목 (해당 사항이 있는 경우만 작성)</h4>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', border: '1px solid var(--border-light)' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid var(--border-light)', background: '#f9fafb' }}>
+                                            <th style={{ padding: '0.8rem', width: '200px', textAlign: 'left' }}>구분</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'left' }}>내용 (사업명, 금액, 건수 등)</th>
+                                            <th style={{ padding: '0.8rem', width: '150px', textAlign: 'center' }}>배점 (4~1점)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selfEvalBonus.map((item, idx) => (
+                                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                <td style={{ padding: '0.8rem', fontWeight: 600 }}>{item.item}</td>
+                                                <td style={{ padding: '0.8rem' }}>
+                                                    <input className="input-field" placeholder="내용을 입력하세요" value={item.content} onChange={(e) => {
+                                                        const newBonus = [...selfEvalBonus]; newBonus[idx].content = e.target.value; setSelfEvalBonus(newBonus);
+                                                    }} />
+                                                </td>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
+                                                        {[4, 3, 2, 1].map(score => (
+                                                            <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: item.score == score ? 'var(--primary-600)' : 'white', color: item.score == score ? 'white' : 'black' }}>
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`bonus_${item.id}`}
+                                                                    checked={item.score == score}
+                                                                    onChange={() => {
+                                                                        const newBonus = [...selfEvalBonus]; newBonus[idx].score = score; setSelfEvalBonus(newBonus);
+                                                                    }}
+                                                                    style={{ display: 'none' }}
+                                                                />
+                                                                {score}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            {selfEvalRows.map((row, idx) => (
-                                                <tr key={idx} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                                    <td style={{ padding: '0.5rem' }}>
-                                                        <input className="input-field" type="text" value={row.name} onChange={(e) => {
-                                                            const newRows = [...selfEvalRows]; newRows[idx].name = e.target.value; setSelfEvalRows(newRows);
-                                                        }} />
-                                                    </td>
-                                                    <td style={{ padding: '0.5rem' }}>
-                                                        <input className="input-field" type="text" value={row.content} onChange={(e) => {
-                                                            const newRows = [...selfEvalRows]; newRows[idx].content = e.target.value; setSelfEvalRows(newRows);
-                                                        }} />
-                                                    </td>
-                                                    <td style={{ padding: '0.5rem' }}>
-                                                        <input className="input-field" type="text" value={row.goal} style={{ textAlign: 'center' }} onChange={(e) => {
-                                                            const newRows = [...selfEvalRows]; newRows[idx].goal = e.target.value; setSelfEvalRows(newRows);
-                                                        }} />
-                                                    </td>
-                                                    <td style={{ padding: '0.5rem' }}>
-                                                        <input className="input-field" type="number" value={row.achievement} style={{ textAlign: 'center' }} onChange={(e) => {
-                                                            const newRows = [...selfEvalRows]; newRows[idx].achievement = e.target.value; setSelfEvalRows(newRows);
-                                                        }} />
-                                                    </td>
-                                                    <td style={{ padding: '0.5rem' }}>
-                                                        <input className="input-field" type="text" placeholder="00월~00월" value={row.period} style={{ textAlign: 'center' }} onChange={(e) => {
-                                                            const newRows = [...selfEvalRows]; newRows[idx].period = e.target.value; setSelfEvalRows(newRows);
-                                                        }} />
-                                                    </td>
-                                                    <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                                                        <select className="input-field" value={row.satisfaction} style={{ padding: '0.5rem' }} onChange={(e) => {
-                                                            const newRows = [...selfEvalRows]; newRows[idx].satisfaction = e.target.value; setSelfEvalRows(newRows);
-                                                        }}>
-                                                            <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
-                                                        </select>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </section>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
 
                             <div style={{ textAlign: 'right', marginTop: '2rem' }}>
                                 <button type="button" className="btn btn-primary" onClick={async () => {
                                     if (confirm('본인 평가를 제출하시겠습니까?')) {
-                                        // Collect form data logic would go here
                                         const res = await API.saveEvaluation({
                                             type: 'self_eval',
                                             evaluator: currentUser.name,
-                                            data: selfEvalRows
+                                            uid: currentUser.id || currentUser.name,
+                                            data: { scores: selfEvalScores, bonus: selfEvalBonus }
                                         });
-                                        if (res.success) alert('제출되었습니다.');
-                                        else alert('실패');
+                                        if (res.success) alert('본인 평가가 제출되었습니다.');
+                                        else alert('제출 실패: ' + res.error);
                                     }
                                 }}>
-                                    본인 평가 제출 (DB)
+                                    평가 제출 (DB)
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     )}
+
 
                     {/* Tab 2: Peer Evaluation */}
-                    {activeTab === 2 && (
-                        <div>
-                            <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>동료 평가</h3>
-                            <p className="text-sub" style={{ marginBottom: '2rem' }}>협업하는 동료의 직무 수행 태도와 능력을 객관적으로 평가해 주세요.</p>
+                    {
+                        activeTab === 2 && (
+                            <div>
+                                <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>동료 평가</h3>
+                                <p className="text-sub" style={{ marginBottom: '2rem' }}>협업하는 동료의 직무 수행 태도와 능력을 객관적으로 평가해 주세요.</p>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
-                                <button className="btn btn-outline" onClick={downloadPeerTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Download size={16} /> 템플릿
-                                </button>
-                                <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <Upload size={16} /> CSV 업로드
-                                    <input type="file" hidden accept=".csv" onChange={handlePeerEvalCSV} />
-                                </label>
-                            </div>
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
+                                    <button className="btn btn-outline" onClick={downloadPeerTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Download size={16} /> 템플릿
+                                    </button>
+                                    <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                        <Upload size={16} /> CSV 업로드
+                                        <input type="file" hidden accept=".csv" onChange={handlePeerEvalCSV} />
+                                    </label>
+                                </div>
 
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-                                <thead>
-                                    <tr style={{ background: 'var(--bg-input)' }}>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '50px' }}>No</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>구분</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'left' }}>평가 내용</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '250px' }}>평가 (5점)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {PEER_EVAL_ITEMS.map((item) => (
-                                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>{item.id}</td>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary-600)' }}>{item.cat}</td>
-                                            <td style={{ padding: '0.8rem' }}>{item.q.split(':')[1]}</td>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
-                                                    {[5, 4, 3, 2, 1].map(score => (
-                                                        <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: peerEvalScores[item.id] === score ? 'var(--primary-600)' : 'white', color: peerEvalScores[item.id] === score ? 'white' : 'black' }}>
-                                                            <input
-                                                                type="radio"
-                                                                name={`peer_${item.id}`}
-                                                                checked={peerEvalScores[item.id] === score}
-                                                                onChange={() => setPeerEvalScores({ ...peerEvalScores, [item.id]: score })}
-                                                                style={{ display: 'none' }}
-                                                            />
-                                                            {score}
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </td>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+                                    <thead>
+                                        <tr style={{ background: 'var(--bg-input)' }}>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '50px' }}>No</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>구분</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'left' }}>평가 내용</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '250px' }}>평가 (5점)</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {PEER_EVAL_ITEMS.map((item) => (
+                                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center' }}>{item.id}</td>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary-600)' }}>{item.cat}</td>
+                                                <td style={{ padding: '0.8rem' }}>{item.q.split(':')[1]}</td>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
+                                                        {[5, 4, 3, 2, 1].map(score => (
+                                                            <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: peerEvalScores[item.id] === score ? 'var(--primary-600)' : 'white', color: peerEvalScores[item.id] === score ? 'white' : 'black' }}>
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`peer_${item.id}`}
+                                                                    checked={peerEvalScores[item.id] === score}
+                                                                    onChange={() => setPeerEvalScores({ ...peerEvalScores, [item.id]: score })}
+                                                                    style={{ display: 'none' }}
+                                                                />
+                                                                {score}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
 
-                            <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px' }}>
-                                <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>동료로서 평가대상자의 가장 큰 강점</label>
-                                        <textarea className="input-field" rows="3" value={peerEvalOpinion.strength} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, strength: e.target.value })}></textarea>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>함께 일하며 개선되면 좋겠다고 생각하는 부분</label>
-                                        <textarea className="input-field" rows="3" value={peerEvalOpinion.improvement} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, improvement: e.target.value })}></textarea>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>동료에게 전하고 싶은 격려나 응원의 메시지</label>
-                                        <textarea className="input-field" rows="3" value={peerEvalOpinion.message} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, message: e.target.value })}></textarea>
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>동료로서 평가대상자의 가장 큰 강점</label>
+                                            <textarea className="input-field" rows="3" value={peerEvalOpinion.strength} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, strength: e.target.value })}></textarea>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>함께 일하며 개선되면 좋겠다고 생각하는 부분</label>
+                                            <textarea className="input-field" rows="3" value={peerEvalOpinion.improvement} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, improvement: e.target.value })}></textarea>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>동료에게 전하고 싶은 격려나 응원의 메시지</label>
+                                            <textarea className="input-field" rows="3" value={peerEvalOpinion.message} onChange={e => setPeerEvalOpinion({ ...peerEvalOpinion, message: e.target.value })}></textarea>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                                <button type="button" className="btn btn-primary" onClick={async () => {
-                                    const res = await API.saveEvaluation({
-                                        type: 'peer_eval',
-                                        evaluator: currentUser.name,
-                                        target: 'Peer',
-                                        data: { scores: peerEvalScores, opinion: peerEvalOpinion } // Send structured data
-                                    });
-                                    if (res.success) alert('동료 평가 저장 완료');
-                                }}>
-                                    평가 제출 (DB)
-                                </button>
+                                <div style={{ textAlign: 'right', marginTop: '2rem' }}>
+                                    <button type="button" className="btn btn-primary" onClick={async () => {
+                                        const res = await API.saveEvaluation({
+                                            type: 'peer_eval',
+                                            evaluator: currentUser.name,
+                                            target: 'Peer',
+                                            data: { scores: peerEvalScores, opinion: peerEvalOpinion } // Send structured data
+                                        });
+                                        if (res.success) alert('동료 평가 저장 완료');
+                                    }}>
+                                        평가 제출 (DB)
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )
+                    }
 
                     {/* Tab 3: Manager Evaluation */}
-                    {activeTab === 3 && (
-                        <div>
+                    {
+                        activeTab === 3 && (
+                            <div>
 
-                            <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
-                                {currentUser.role === 'member' ? '관리자(상급자) 평가' : '관리자(팀장) 평가'}
-                            </h3>
-                            <p className="text-sub" style={{ marginBottom: '2rem' }}>
-                                소속 팀장 또는 사무국장의 리더십과 역량을 평가해 주세요.
-                            </p>
+                                <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                                    {currentUser.role === 'member' ? '관리자(상급자) 평가' : '관리자(팀장) 평가'}
+                                </h3>
+                                <p className="text-sub" style={{ marginBottom: '2rem' }}>
+                                    소속 팀장 또는 사무국장의 리더십과 역량을 평가해 주세요.
+                                </p>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
-                                <button className="btn btn-outline" onClick={downloadManagerTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Download size={16} /> 템플릿
-                                </button>
-                                <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <Upload size={16} /> CSV 업로드
-                                    <input type="file" hidden accept=".csv" onChange={handleManagerEvalCSV} />
-                                </label>
-                            </div>
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
+                                    <button className="btn btn-outline" onClick={downloadManagerTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Download size={16} /> 템플릿
+                                    </button>
+                                    <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                        <Upload size={16} /> CSV 업로드
+                                        <input type="file" hidden accept=".csv" onChange={handleManagerEvalCSV} />
+                                    </label>
+                                </div>
 
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-                                <thead>
-                                    <tr style={{ background: 'var(--bg-input)' }}>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '50px' }}>No</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>구분</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'left' }}>평가 내용</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '250px' }}>평가 (5점)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {MANAGER_EVAL_ITEMS.map((item) => (
-                                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>{item.id}</td>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary-600)' }}>{item.cat}</td>
-                                            <td style={{ padding: '0.8rem' }}>{item.q.split(':')[1]}</td>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
-                                                    {[5, 4, 3, 2, 1].map(score => (
-                                                        <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: managerEvalScores[item.id] === score ? 'var(--primary-600)' : 'white', color: managerEvalScores[item.id] === score ? 'white' : 'black' }}>
-                                                            <input
-                                                                type="radio"
-                                                                name={`mgr_${item.id}`}
-                                                                checked={managerEvalScores[item.id] === score}
-                                                                onChange={() => setManagerEvalScores({ ...managerEvalScores, [item.id]: score })}
-                                                                style={{ display: 'none' }}
-                                                            />
-                                                            {score}
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </td>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+                                    <thead>
+                                        <tr style={{ background: 'var(--bg-input)' }}>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '50px' }}>No</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>구분</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'left' }}>평가 내용</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '250px' }}>평가 (5점)</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {MANAGER_EVAL_ITEMS.map((item) => (
+                                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center' }}>{item.id}</td>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary-600)' }}>{item.cat}</td>
+                                                <td style={{ padding: '0.8rem' }}>{item.q.split(':')[1]}</td>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
+                                                        {[5, 4, 3, 2, 1].map(score => (
+                                                            <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: managerEvalScores[item.id] === score ? 'var(--primary-600)' : 'white', color: managerEvalScores[item.id] === score ? 'white' : 'black' }}>
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`mgr_${item.id}`}
+                                                                    checked={managerEvalScores[item.id] === score}
+                                                                    onChange={() => setManagerEvalScores({ ...managerEvalScores, [item.id]: score })}
+                                                                    style={{ display: 'none' }}
+                                                                />
+                                                                {score}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
 
-                            <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px' }}>
-                                <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>관리자로서 가장 우수한 점</label>
-                                        <textarea className="input-field" rows="3" value={managerEvalOpinion.strength} onChange={e => setManagerEvalOpinion({ ...managerEvalOpinion, strength: e.target.value })}></textarea>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>개선이 필요한 부분</label>
-                                        <textarea className="input-field" rows="3" value={managerEvalOpinion.weakness} onChange={e => setManagerEvalOpinion({ ...managerEvalOpinion, weakness: e.target.value })}></textarea>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>관리자에게 바라는 지원</label>
-                                        <textarea className="input-field" rows="3" value={managerEvalOpinion.support} onChange={e => setManagerEvalOpinion({ ...managerEvalOpinion, support: e.target.value })}></textarea>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>관리자에게 감사한 점</label>
-                                        <textarea className="input-field" rows="3" value={managerEvalOpinion.thanks} onChange={e => setManagerEvalOpinion({ ...managerEvalOpinion, thanks: e.target.value })}></textarea>
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>관리자로서 가장 우수한 점</label>
+                                            <textarea className="input-field" rows="3" value={managerEvalOpinion.strength} onChange={e => setManagerEvalOpinion({ ...managerEvalOpinion, strength: e.target.value })}></textarea>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>개선이 필요한 부분</label>
+                                            <textarea className="input-field" rows="3" value={managerEvalOpinion.weakness} onChange={e => setManagerEvalOpinion({ ...managerEvalOpinion, weakness: e.target.value })}></textarea>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>관리자에게 바라는 지원</label>
+                                            <textarea className="input-field" rows="3" value={managerEvalOpinion.support} onChange={e => setManagerEvalOpinion({ ...managerEvalOpinion, support: e.target.value })}></textarea>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>관리자에게 감사한 점</label>
+                                            <textarea className="input-field" rows="3" value={managerEvalOpinion.thanks} onChange={e => setManagerEvalOpinion({ ...managerEvalOpinion, thanks: e.target.value })}></textarea>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                                <button type="button" className="btn btn-primary" onClick={async () => {
-                                    const res = await API.saveEvaluation({
-                                        type: 'manager_eval',
-                                        evaluator: currentUser.name,
-                                        target: 'Manager',
-                                        data: { scores: managerEvalScores, opinion: managerEvalOpinion }
-                                    });
-                                    if (res.success) alert('관리자 평가 저장 완료');
-                                }}>
-                                    평가 제출 (DB)
-                                </button>
+                                <div style={{ textAlign: 'right', marginTop: '2rem' }}>
+                                    <button type="button" className="btn btn-primary" onClick={async () => {
+                                        const res = await API.saveEvaluation({
+                                            type: 'manager_eval',
+                                            evaluator: currentUser.name,
+                                            target: 'Manager',
+                                            data: { scores: managerEvalScores, opinion: managerEvalOpinion }
+                                        });
+                                        if (res.success) alert('관리자 평가 저장 완료');
+                                    }}>
+                                        평가 제출 (DB)
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )
+                    }
 
                     {/* Tab 4: Subordinate Evaluation */}
-                    {activeTab === 4 && (
-                        <div>
-                            <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>종사자(하급자) 평가</h3>
-                            <p className="text-sub" style={{ marginBottom: '2rem' }}>하급자의 직무 수행 능력과 태도를 평가해 주세요.</p>
+                    {
+                        activeTab === 4 && (
+                            <div>
+                                <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>종사자(하급자) 평가</h3>
+                                <p className="text-sub" style={{ marginBottom: '2rem' }}>하급자의 직무 수행 능력과 태도를 평가해 주세요.</p>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
-                                <button className="btn btn-outline" onClick={downloadWorkerTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Download size={16} /> 템플릿
-                                </button>
-                                <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <Upload size={16} /> CSV 업로드
-                                    <input type="file" hidden accept=".csv" onChange={handleWorkerEvalCSV} />
-                                </label>
-                            </div>
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
+                                    <button className="btn btn-outline" onClick={downloadWorkerTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Download size={16} /> 템플릿
+                                    </button>
+                                    <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                        <Upload size={16} /> CSV 업로드
+                                        <input type="file" hidden accept=".csv" onChange={handleWorkerEvalCSV} />
+                                    </label>
+                                </div>
 
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-                                <thead>
-                                    <tr style={{ background: 'var(--bg-input)' }}>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '50px' }}>No</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>구분</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'left' }}>평가 내용</th>
-                                        <th style={{ padding: '0.8rem', textAlign: 'center', width: '250px' }}>평가 (5점)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {WORKER_EVAL_ITEMS.map((item) => (
-                                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>{item.id}</td>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary-600)' }}>{item.cat}</td>
-                                            <td style={{ padding: '0.8rem' }}>{item.q.split(':')[1]}</td>
-                                            <td style={{ padding: '0.8rem', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
-                                                    {[5, 4, 3, 2, 1].map(score => (
-                                                        <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: workerEvalScores[item.id] === score ? 'var(--primary-600)' : 'white', color: workerEvalScores[item.id] === score ? 'white' : 'black' }}>
-                                                            <input
-                                                                type="radio"
-                                                                name={`wkr_${item.id}`}
-                                                                checked={workerEvalScores[item.id] === score}
-                                                                onChange={() => setWorkerEvalScores({ ...workerEvalScores, [item.id]: score })}
-                                                                style={{ display: 'none' }}
-                                                            />
-                                                            {score}
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </td>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+                                    <thead>
+                                        <tr style={{ background: 'var(--bg-input)' }}>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '50px' }}>No</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '80px' }}>구분</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'left' }}>평가 내용</th>
+                                            <th style={{ padding: '0.8rem', textAlign: 'center', width: '250px' }}>평가 (5점)</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {WORKER_EVAL_ITEMS.map((item) => (
+                                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center' }}>{item.id}</td>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--primary-600)' }}>{item.cat}</td>
+                                                <td style={{ padding: '0.8rem' }}>{item.q.split(':')[1]}</td>
+                                                <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                                                    <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
+                                                        {[5, 4, 3, 2, 1].map(score => (
+                                                            <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: workerEvalScores[item.id] === score ? 'var(--primary-600)' : 'white', color: workerEvalScores[item.id] === score ? 'white' : 'black' }}>
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`wkr_${item.id}`}
+                                                                    checked={workerEvalScores[item.id] === score}
+                                                                    onChange={() => setWorkerEvalScores({ ...workerEvalScores, [item.id]: score })}
+                                                                    style={{ display: 'none' }}
+                                                                />
+                                                                {score}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
 
-                            <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px' }}>
-                                <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>직원의 주요 강점 및 우수한 점</label>
-                                        <textarea className="input-field" rows="3" value={workerEvalOpinion.strength} onChange={e => setWorkerEvalOpinion({ ...workerEvalOpinion, strength: e.target.value })}></textarea>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>개선이 필요한 부분 및 발전방향</label>
-                                        <textarea className="input-field" rows="3" value={workerEvalOpinion.weakness} onChange={e => setWorkerEvalOpinion({ ...workerEvalOpinion, weakness: e.target.value })}></textarea>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>향후 교육·훈련 필요사항</label>
-                                        <textarea className="input-field" rows="3" value={workerEvalOpinion.training} onChange={e => setWorkerEvalOpinion({ ...workerEvalOpinion, training: e.target.value })}></textarea>
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>적합한 업무 및 배치 의견</label>
-                                        <textarea className="input-field" rows="3" value={workerEvalOpinion.placement} onChange={e => setWorkerEvalOpinion({ ...workerEvalOpinion, placement: e.target.value })}></textarea>
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>직원의 주요 강점 및 우수한 점</label>
+                                            <textarea className="input-field" rows="3" value={workerEvalOpinion.strength} onChange={e => setWorkerEvalOpinion({ ...workerEvalOpinion, strength: e.target.value })}></textarea>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>개선이 필요한 부분 및 발전방향</label>
+                                            <textarea className="input-field" rows="3" value={workerEvalOpinion.weakness} onChange={e => setWorkerEvalOpinion({ ...workerEvalOpinion, weakness: e.target.value })}></textarea>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>향후 교육·훈련 필요사항</label>
+                                            <textarea className="input-field" rows="3" value={workerEvalOpinion.training} onChange={e => setWorkerEvalOpinion({ ...workerEvalOpinion, training: e.target.value })}></textarea>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>적합한 업무 및 배치 의견</label>
+                                            <textarea className="input-field" rows="3" value={workerEvalOpinion.placement} onChange={e => setWorkerEvalOpinion({ ...workerEvalOpinion, placement: e.target.value })}></textarea>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                                <button type="button" className="btn btn-primary" onClick={async () => {
-                                    const res = await API.saveEvaluation({
-                                        type: 'subordinate_eval',
-                                        evaluator: currentUser.name,
-                                        target: 'Subordinate',
-                                        data: { scores: workerEvalScores, opinion: workerEvalOpinion }
-                                    });
-                                    if (res.success) alert('종사자 평가 저장 완료');
-                                }}>
-                                    평가 제출 (DB)
-                                </button>
+                                <div style={{ textAlign: 'right', marginTop: '2rem' }}>
+                                    <button type="button" className="btn btn-primary" onClick={async () => {
+                                        const res = await API.saveEvaluation({
+                                            type: 'subordinate_eval',
+                                            evaluator: currentUser.name,
+                                            target: 'Subordinate',
+                                            data: { scores: workerEvalScores, opinion: workerEvalOpinion }
+                                        });
+                                        if (res.success) alert('종사자 평가 저장 완료');
+                                    }}>
+                                        평가 제출 (DB)
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )
+                    }
 
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
 }
