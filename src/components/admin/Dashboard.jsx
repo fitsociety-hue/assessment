@@ -9,28 +9,48 @@ export default function Dashboard() {
         progress: 58
     });
 
+    const [showPreview, setShowPreview] = useState(false);
+    const [previewData, setPreviewData] = useState([]);
+
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
             try {
                 const data = await DataEngine.parseCSV(file);
-                // Mock processing
-                setStats({
-                    total: data.length,
-                    completed: 0,
-                    progress: 0
-                });
-                alert(`${data.length}명의 직원 데이터가 로드되었습니다.`);
+                setPreviewData(data); // Store for preview
+                setShowPreview(true); // Open Modal
+                e.target.value = ''; // Reset input
             } catch (err) {
                 alert('CSV 파일 처리 중 오류가 발생했습니다.');
             }
         }
     };
 
+    const handleConfirmUpload = () => {
+        setShowPreview(false);
+        setStats({
+            total: previewData.length,
+            completed: 0,
+            progress: 0
+        });
+        alert(`${previewData.length}명의 데이터가 최종 등록되었습니다.`);
+    };
+
+    const handleDataChange = (idx, field, val) => {
+        const newData = [...previewData];
+        newData[idx][field] = val;
+        setPreviewData(newData);
+    };
+
     return (
         <div className="dashboard-grid animate-fade-in">
             <div className="card" style={{ gridColumn: '1 / -1', marginBottom: '2rem' }}>
-                <h2>관리자님, 안녕하세요.</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2>관리자님, 안녕하세요.</h2>
+                    <a href="#/admin/config" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
+                        <Settings size={18} /> 설정
+                    </a>
+                </div>
                 <p className="text-sub">2025년 근무평정 종합 현황입니다.</p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginTop: '1.5rem' }}>
@@ -86,6 +106,41 @@ export default function Dashboard() {
                     <AlertItem type="info" msg="사업1팀: 평가 완료율 85% 달성" />
                 </div>
             </div>
+            {/* CSV Review Modal */}
+            {showPreview && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="card" style={{ width: '80%', maxHeight: '80%', overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+                        <h3>데이터 검증 및 수정</h3>
+                        <p className="text-sub" style={{ marginBottom: '1rem' }}>업로드된 데이터를 검토하고 필요시 직접 수정하세요.</p>
+
+                        <div style={{ overflow: 'auto', flex: 1, border: '1px solid var(--border-light)', marginBottom: '1rem' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                                <thead>
+                                    <tr style={{ position: 'sticky', top: 0, background: 'var(--bg-input)' }}>
+                                        <th style={{ padding: '0.5rem' }}>성명</th>
+                                        <th style={{ padding: '0.5rem' }}>부서</th>
+                                        <th style={{ padding: '0.5rem' }}>직위</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {previewData.slice(0, 100).map((row, idx) => ( // Show first 100 for safety
+                                        <tr key={idx} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                            <td style={{ padding: '0.3rem' }}><input className="input-field" value={row.name || ''} onChange={(e) => handleDataChange(idx, 'name', e.target.value)} /></td>
+                                            <td style={{ padding: '0.3rem' }}><input className="input-field" value={row.team || ''} onChange={(e) => handleDataChange(idx, 'team', e.target.value)} /></td>
+                                            <td style={{ padding: '0.3rem' }}><input className="input-field" value={row.position || ''} onChange={(e) => handleDataChange(idx, 'position', e.target.value)} /></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                            <button className="btn btn-outline" onClick={() => setShowPreview(false)}>취소</button>
+                            <button className="btn btn-primary" onClick={handleConfirmUpload}>최종 등록</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

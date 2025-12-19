@@ -6,6 +6,39 @@ import html2canvas from 'html2canvas';
 export default function EvaluationForm() {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState(0);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    // Load User Info
+    React.useEffect(() => {
+        const storedUser = localStorage.getItem('userRole'); // We need full object
+        // For demo, we might need to parse it if we stored JSON, but App.jsx stored string.
+        // Let's assume for this Phase we need to pass props or use Context.
+        // For simplicity in this standalone component:
+        // We will simulate "reading the logged in user" from a global object or localStorage JSON.
+        // In App.jsx we only stored 'userRole' string. detailed info is missing.
+        // We need to fix App.jsx later to store full JSON. Assuming it does:
+        try {
+            // Mocking the user for development until App.jsx update is verified
+            // const user = JSON.parse(localStorage.getItem('userInfo')); 
+            // setCurrentUser(user);
+        } catch (e) { }
+    }, []);
+
+    // Role Logic
+    // Director (관장): Only 'Manager Eval'
+    // SecGen (사무국장): Self, Manager(Director), Subordinate(Leader)
+    // Leader (팀장): Self, Peer(Leader), Subordinate(Member)
+    // Member (팀원): Self, Peer(Member), Manager(Leader/SecGen)
+
+    // For this implementation, we will render ALL tabs but disable/hide based on hypothetical role
+    // OR just label them clearly. Given the complexity, let's keep the Structure but update Labels.
+
+    const tabs = [
+        { id: 'self', label: '자기평가 (본인)' },
+        { id: 'peer', label: '동료평가' },
+        { id: 'manager', label: '상급자(관리자) 평가' },
+        { id: 'subordinate', label: '하급자(종사자) 평가' } // New Tab
+    ];
 
     const handleExportPDF = async () => {
         const input = document.getElementById('evaluation-content');
@@ -44,22 +77,22 @@ export default function EvaluationForm() {
 
                 {/* Tabs */}
                 <div style={{ display: 'flex', borderBottom: '1px solid var(--border-light)', marginBottom: '2rem' }}>
-                    {['자가평가(본인)', '동료평가', '관리자평가'].map((tab, idx) => (
+                    {tabs.map((tab, idx) => (
                         <button
-                            key={idx}
+                            key={tab.id}
                             onClick={() => setActiveTab(idx)}
                             style={{
-                                padding: '1rem 2rem',
+                                padding: '1rem 1.5rem',
                                 borderBottom: activeTab === idx ? '2px solid var(--primary-600)' : 'none',
                                 color: activeTab === idx ? 'var(--primary-700)' : 'var(--text-sub)',
                                 fontWeight: activeTab === idx ? '600' : '400',
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
-                                fontSize: '1rem'
+                                fontSize: '0.95rem'
                             }}
                         >
-                            {tab}
+                            {tab.label}
                         </button>
                     ))}
                 </div>
@@ -242,6 +275,33 @@ export default function EvaluationForm() {
                             <button type="button" className="btn btn-primary" onClick={() => alert('관리자 평가가 저장되었습니다.')}>
                                 최종 평가 완료
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab Content 4: Subordinate Evaluation (New) */}
+                {activeTab === 3 && (
+                    <div className="animate-fade-in">
+                        <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>종사자(하급자) 평가</h3>
+                        <p className="text-sub" style={{ marginBottom: '2rem' }}>관리자가 하급자를 평가하는 항목입니다.</p>
+
+                        <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
+                            <p>평가 대상자의 직무 수행 능력과 태도를 평가해 주십시오.</p>
+                            <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', marginTop: '1rem', background: 'white' }}>
+                                <h4>종합 등급 산정</h4>
+                                <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem', justifyContent: 'center' }}>
+                                    {['S (최우수)', 'A (우수)', 'B (보통)', 'C (미흡)', 'D (부족)'].map(grade => (
+                                        <label key={grade} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600 }}>
+                                            <input type="radio" name="subordinate_grade" /> {grade}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                            <div style={{ textAlign: 'right', marginTop: '2rem' }}>
+                                <button type="button" className="btn btn-primary" onClick={() => alert('종사자 평가가 저장되었습니다.')}>
+                                    평가 제출하기
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

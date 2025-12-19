@@ -6,6 +6,7 @@ import './styles/index.css';
 // Lazy load components
 const AdminDashboard = React.lazy(() => import('./components/admin/Dashboard'));
 const HRDashboard = React.lazy(() => import('./components/admin/HRDashboard'));
+const EvaluationConfig = React.lazy(() => import('./components/admin/EvaluationConfig'));
 const EvaluationForm = React.lazy(() => import('./components/evaluation/EvaluationForm'));
 const Login = React.lazy(() => import('./components/auth/Login'));
 
@@ -49,6 +50,12 @@ function App() {
               <Route path="/admin" element={
                 <ProtectedRoute currentRole={userRole} allowedRole="admin">
                   <AdminDashboard />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/admin/config" element={
+                <ProtectedRoute currentRole={userRole} allowedRole="admin">
+                  <EvaluationConfig />
                 </ProtectedRoute>
               } />
 
