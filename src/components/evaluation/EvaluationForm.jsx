@@ -31,31 +31,34 @@ export default function EvaluationForm() {
         // Tab Definitions
         const TAB_SELF_ANALYSIS = { id: 0, label: '자기분석 보고서' };
         const TAB_SELF_EVAL = { id: 1, label: '본인평가' };
+        // "Manager Eval" = Evaluating Upper Level (or specific target defined by user)
+        // User Request: "관리자(팀장) 평가" -> Evaluating Team Leader
+        const TAB_EVAL_LEADER = { id: 3, label: '관리자(팀장) 평가' };
+
         const TAB_PEER_EVAL = { id: 2, label: '동료평가' };
-        const TAB_MANAGER_EVAL = { id: 3, label: '관리자평가' };
-        const TAB_SUBORDINATE_EVAL = { id: 4, label: '종사자(하급자) 평가' };
 
-        // Director (관장): Manager Eval Only (Evaluating SecGen/Leaders)
-        // Wait, User Request: "관장은 본인 평가는 없고, 관리자(팀장) 평가를 진행" -> "Manager Evaluation" in my Code usually means "Evaluating My Manager".
-        // BUT for Director, "Manager Eval" conceptually means "Director evaluating Manager level" OR "Director IS the Manager evaluating".
-        // Given the matrix "관리자평가" is the row title where Evaluators are Director/Leader...
-        // Let's assume Director uses "Manager Eval" tab to evaluate SecGen/Leaders.
-        // Or "Subordinate Eval"? 
-        // Let's use "Manager Eval" as the tab name for Consistency if it maps to that column.
-        // Let's stick to the user's prompt list: "관장... 관리자(팀장) 평가를 진행" -> Eval Type: 'Manager Eval'.
-        if (role === 'director') return [TAB_MANAGER_EVAL];
+        // "Subordinate Eval" = Evaluating Lower Level
+        // User Request: "종사자(팀원) 평가" -> Evaluating Team Member
+        const TAB_EVAL_MEMBER = { id: 4, label: '종사자(팀원) 평가' };
 
-        // SecGen: Self Analysis, Self Eval, Manager Eval (Evaluated by Director), Subordinate Eval (Evaluating Leaders)
-        if (role === 'secgen') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_SUBORDINATE_EVAL];
+        // 1. Team Leader (팀장)
+        // Request: 자기분석 보고서, 본인평가, 종사자(팀원) 평가, 동료평가
+        if (role === 'leader') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_EVAL_MEMBER, TAB_PEER_EVAL];
 
-        // Leader: Self Analysis, Self Eval, Subordinate Eval (Evaluating Members), Peer Eval (Evaluating Leaders)
-        if (role === 'leader') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_SUBORDINATE_EVAL, TAB_PEER_EVAL];
+        // 2. Team Member (팀원)
+        // Request: 자기분석 보고서, 본인평가, 관리자(팀장, 사무국장) 평가, 동료평가
+        // Note: Label might need to be generic "Manager Eval" if they eval SecGen too.
+        // Let's keep it as TAB_EVAL_LEADER but label it dynamically if needed, or just "관리자 평가"
+        const TAB_EVAL_MANAGER_GENERIC = { id: 3, label: '관리자 평가' };
+        if (role === 'member') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_EVAL_MANAGER_GENERIC, TAB_PEER_EVAL];
 
-        // Member: Self Analysis, Self Eval, Manager Eval (Evaluated by Leader?), Peer Eval (Evaluating Members)
-        // User said: "팀원: ... 관리자 평가" -> Usually meaning "Evaluation BY Manager". 
-        // But if Member is filling the form... Member evaluates Manager?
-        // 360 Degree usually implies Member evaluates Manager.
-        if (role === 'member') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_PEER_EVAL];
+        // 3. Secretary General (사무국장)
+        // Request: 자기분석 보고서, 본인평가, 관리자(팀장) 평가, 종사자(팀원) 평가
+        if (role === 'secgen') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_EVAL_LEADER, TAB_EVAL_MEMBER];
+
+        // 4. Director (관장)
+        // Request: 본인 평가 없음, 관리자(팀장) 평가 진행
+        if (role === 'director') return [TAB_EVAL_LEADER];
 
         return [];
     };
@@ -292,9 +295,14 @@ export default function EvaluationForm() {
                     {/* Tab 3: Manager Evaluation */}
                     {activeTab === 3 && (
                         <div>
-                            <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>관리자 평가</h3>
+
+                            <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                                {currentUser.role === 'member' ? '관리자(상급자) 평가' : '관리자(팀장) 평가'}
+                            </h3>
                             <p className="text-sub" style={{ marginBottom: '2rem' }}>
-                                {currentUser.role === 'member' ? '상급자(팀장/관장)의 리더십과 역량을 평가해 주세요.' : '팀장의 리더십과 관리 역량을 평가해 주세요.'}
+                                {currentUser.role === 'member'
+                                    ? '소속 팀장 또는 사무국장의 리더십과 역량을 평가해 주세요.'
+                                    : '팀장의 리더십과 중간 관리자로서의 역량을 평가해 주세요.'}
                             </p>
 
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
