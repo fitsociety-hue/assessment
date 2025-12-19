@@ -1,6 +1,7 @@
 {
   "name": "assessment",
   "private": true,
+  "homepage": "https://fitsociety-hue.github.io/assessment/",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
