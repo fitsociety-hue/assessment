@@ -1,14 +1,40 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function EvaluationForm() {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState(0);
 
+    const handleExportPDF = async () => {
+        const input = document.getElementById('evaluation-content');
+        if (!input) return;
+
+        try {
+            const canvas = await html2canvas(input, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save('evaluation_report.pdf');
+        } catch (err) {
+            console.error('PDF Export Error:', err);
+            alert('PDF 생성 중 오류가 발생했습니다.');
+        }
+    };
+
     return (
         <div className="container">
-            <div className="card">
-                <h1>근무평정 시스템</h1>
+            <div className="card" id="evaluation-content">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h1>근무평정 시스템</h1>
+                    <button onClick={handleExportPDF} className="btn" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                        PDF 다운로드
+                    </button>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', background: 'var(--bg-input)', padding: '1rem', borderRadius: 'var(--radius-md)', fontSize: '0.9rem', marginBottom: '2rem' }}>
                     <div><strong>성명:</strong> 홍길동</div>
                     <div><strong>부서:</strong> 운영지원팀</div>
