@@ -4,9 +4,9 @@ import { DataEngine } from '../../utils/dataEngine';
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
-        total: 0,
-        completed: 0,
-        progress: 0
+        total: 152, // Mock initial data
+        completed: 89,
+        progress: 58
     });
 
     const handleFileUpload = async (e) => {
@@ -17,66 +17,73 @@ export default function Dashboard() {
                 // Mock processing
                 setStats({
                     total: data.length,
-                    completed: Math.floor(data.length * 0.3), // Mock
-                    progress: 30
+                    completed: 0,
+                    progress: 0
                 });
-                alert(`Successfully loaded ${data.length} records.`);
+                alert(`${data.length}명의 직원 데이터가 로드되었습니다.`);
             } catch (err) {
-                alert('Error parsing CSV');
+                alert('CSV 파일 처리 중 오류가 발생했습니다.');
             }
         }
     };
 
     return (
-        <div className="dashboard-grid">
+        <div className="dashboard-grid animate-fade-in">
             <div className="card" style={{ gridColumn: '1 / -1', marginBottom: '2rem' }}>
-                <h2>Good Morning, Administrator</h2>
-                <p className="text-sub">Here is the overview of the 2025 Performance Appraisal.</p>
+                <h2>관리자님, 안녕하세요.</h2>
+                <p className="text-sub">2025년 근무평정 종합 현황입니다.</p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginTop: '1.5rem' }}>
                     <StatCard
                         icon={<Users className="text-blue-500" />}
-                        label="Total Employees"
-                        value={stats.total || '-'}
-                        sub="Target Targets"
+                        label="전체 대상자"
+                        value={stats.total}
+                        sub="평가 대상"
                     />
                     <StatCard
                         icon={<FileText className="text-teal-500" />}
-                        label="Evaluations"
-                        value={stats.completed || '-'}
-                        sub="Submitted"
+                        label="평가 제출"
+                        value={stats.completed}
+                        sub="완료 건수"
                     />
                     <StatCard
                         icon={<BarChart3 className="text-indigo-500" />}
-                        label="Progress"
+                        label="진행률"
                         value={`${stats.progress}%`}
-                        sub="Overall Rate"
+                        sub="전체 평균"
                     />
-                    <div className="card" style={{ border: '2px dashed var(--border-light)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: '1rem' }}>
+                    <div className="card" style={{
+                        border: '2px dashed var(--border-light)',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', padding: '1rem',
+                        background: 'rgba(255,255,255,0.5)'
+                    }}>
                         <input type="file" id="csvInput" style={{ display: 'none' }} onChange={handleFileUpload} accept=".csv" />
-                        <label htmlFor="csvInput" style={{ cursor: 'pointer', textAlign: 'center' }}>
-                            <Upload className="text-sub" size={32} />
-                            <div style={{ marginTop: '0.5rem', fontWeight: 500 }}>Upload Employee List</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>CSV Format</div>
+                        <label htmlFor="csvInput" style={{ cursor: 'pointer', textAlign: 'center', width: '100%' }}>
+                            <Upload className="text-sub" size={32} style={{ marginBottom: '0.5rem' }} />
+                            <div style={{ fontWeight: 600 }}>직원 명단 업로드</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>CSV 형식 지원</div>
                         </label>
                     </div>
                 </div>
             </div>
 
             <div className="card" style={{ minHeight: '400px' }}>
-                <h3>Department Status</h3>
-                <p className="text-sub">Real-time submission monitoring</p>
+                <h3>부서별 현황</h3>
+                <p className="text-sub">실시간 제출 현황 모니터링</p>
                 {/* Placeholder for Charts */}
-                <div style={{ background: 'var(--bg-input)', height: '200px', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    Chart Visualization Area
+                <div style={{ background: 'var(--bg-input)', height: '200px', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '1rem' }}>
+                    차트 영역 (데이터 연동 시 활성화)
                 </div>
             </div>
 
             <div className="card" style={{ minHeight: '400px' }}>
-                <h3>Action Required</h3>
-                <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column', marginTop: '1rem' }}>
-                    <AlertItem type="weak" msg="3 Employees need Supervision" />
-                    <AlertItem type="info" msg="Marketing Team: Low Completion Rate" />
+                <h3>주요 알림</h3>
+                <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column', marginTop: '1.5rem' }}>
+                    <AlertItem type="weak" msg="미제출 인원 3명 (독촉 필요)" />
+                    <AlertItem type="info" msg="운영지원팀: 평가 완료율 90% 달성" />
+                    <AlertItem type="info" msg="사업1팀: 평가 완료율 85% 달성" />
                 </div>
             </div>
         </div>
