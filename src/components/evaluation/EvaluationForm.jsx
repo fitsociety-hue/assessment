@@ -5,11 +5,83 @@ import html2canvas from 'html2canvas';
 
 
 import { API } from '../../services/api';
+import { DataEngine } from '../../utils/dataEngine';
+import { Upload, Download } from 'lucide-react';
 
 export default function EvaluationForm() {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState(null); // Will set to first available tab
+
     const [currentUser, setCurrentUser] = useState(null);
+
+    // Form States
+    const [selfAnalysis, setSelfAnalysis] = useState({ content1: '', content2: '', content3: '' });
+    const [selfEvalRows, setSelfEvalRows] = useState([
+        { id: 1, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5' },
+        { id: 2, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5' },
+        { id: 3, name: '', content: '', goal: '', achievement: '', period: '', satisfaction: '5' }
+    ]);
+
+    // CSV Handlers
+    const handleSelfAnalysisCSV = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const data = await DataEngine.parseCSV(file);
+            if (data && data.length > 0) {
+                // Expecting CSV with headers: Question, Answer OR just mapping rows
+                // Let's assume a simple format or mapping by index
+                setSelfAnalysis({
+                    content1: data[0]?.Answer || data[0]?.content1 || '',
+                    content2: data[1]?.Answer || data[1]?.content2 || '',
+                    content3: data[2]?.Answer || data[2]?.content3 || ''
+                });
+                alert('자기분석 보고서 데이터가 로드되었습니다.');
+            }
+        } catch (err) {
+            alert('CSV 파싱 오류');
+        }
+    };
+
+    const downloadSelfAnalysisTemplate = () => {
+        const data = [
+            { Question: '1. 중요업무 추진내용 및 실적', Answer: '내용을 입력하세요' },
+            { Question: '2. 성공 및 실패 사례 분석', Answer: '내용을 입력하세요' },
+            { Question: '3. 향후 역량 개발 계획', Answer: '내용을 입력하세요' }
+        ];
+        DataEngine.exportCSV(data, '자기분석보고서_템플릿.csv');
+    };
+
+    const handleSelfEvalCSV = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const data = await DataEngine.parseCSV(file);
+            if (data && data.length > 0) {
+                // Map CSV fields to state
+                const newRows = data.map((row, idx) => ({
+                    id: idx + 1,
+                    name: row['사업명'] || '',
+                    content: row['사업내용'] || '',
+                    goal: row['목표'] || '',
+                    achievement: row['달성도'] || '',
+                    period: row['사업기간'] || '',
+                    satisfaction: row['자기만족도'] || '5'
+                }));
+                setSelfEvalRows(newRows);
+                alert('본인평가 데이터가 로드되었습니다.');
+            }
+        } catch (err) {
+            alert('CSV 파싱 오류');
+        }
+    };
+
+    const downloadSelfEvalTemplate = () => {
+        const data = [
+            { '사업명': '', '사업내용': '', '목표': '', '달성도': '', '사업기간': '', '자기만족도': '' }
+        ];
+        DataEngine.exportCSV(data, '본인평가_실적_템플릿.csv');
+    };
 
     // Initial Load & Role Check
     useEffect(() => {
@@ -146,18 +218,46 @@ export default function EvaluationForm() {
                             <h3 style={{ borderBottom: '2px solid var(--primary-100)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>자기분석 보고서</h3>
                             <p className="text-sub" style={{ marginBottom: '2rem' }}>지난 한 해 동안의 업무 수행 내용과 성과를 상세히 기술해 주세요.</p>
 
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-outline" onClick={downloadSelfAnalysisTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Download size={16} /> 템플릿 다운로드
+                                </button>
+                                <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <Upload size={16} /> CSV 업로드
+                                    <input type="file" hidden accept=".csv" onChange={handleSelfAnalysisCSV} />
+                                </label>
+                            </div>
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                                 <div>
                                     <h4>1. 중요업무 추진내용 및 실적</h4>
-                                    <textarea className="input-field" rows="6" placeholder="핵심 성과 위주로 구체적으로 작성해 주세요."></textarea>
+                                    <textarea
+                                        className="input-field"
+                                        rows="6"
+                                        placeholder="핵심 성과 위주로 구체적으로 작성해 주세요."
+                                        value={selfAnalysis.content1}
+                                        onChange={(e) => setSelfAnalysis({ ...selfAnalysis, content1: e.target.value })}
+                                    />
                                 </div>
                                 <div>
                                     <h4>2. 성공 및 실패 사례 분석</h4>
-                                    <textarea className="input-field" rows="6" placeholder="성공 요인과 실패 원인을 분석하여 작성해 주세요."></textarea>
+                                    <textarea
+                                        className="input-field"
+                                        rows="6"
+                                        placeholder="성공 요인과 실패 원인을 분석하여 작성해 주세요."
+                                        value={selfAnalysis.content2}
+                                        onChange={(e) => setSelfAnalysis({ ...selfAnalysis, content2: e.target.value })}
+                                    />
                                 </div>
                                 <div>
                                     <h4>3. 향후 역량 개발 계획</h4>
-                                    <textarea className="input-field" rows="6" placeholder="전문성 향상을 위한 구체적인 계획을 작성해 주세요."></textarea>
+                                    <textarea
+                                        className="input-field"
+                                        rows="6"
+                                        placeholder="전문성 향상을 위한 구체적인 계획을 작성해 주세요."
+                                        value={selfAnalysis.content3}
+                                        onChange={(e) => setSelfAnalysis({ ...selfAnalysis, content3: e.target.value })}
+                                    />
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right', marginTop: '2rem' }}>
@@ -167,11 +267,7 @@ export default function EvaluationForm() {
                                             type: 'self_analysis',
                                             evaluator: currentUser.name,
                                             uid: currentUser.id || currentUser.name, // Use ID if available
-                                            data: {
-                                                content1: document.querySelector('textarea[placeholder*="핵심 성과"]').value,
-                                                content2: document.querySelector('textarea[placeholder*="성공 요인"]').value,
-                                                content3: document.querySelector('textarea[placeholder*="전문성 향상"]').value
-                                            }
+                                            data: selfAnalysis
                                         });
                                         if (res.success) alert('저장되었습니다.');
                                         else alert('저장 실패: ' + res.error);
@@ -191,7 +287,16 @@ export default function EvaluationForm() {
 
                             <section style={{ marginBottom: '2.5rem' }}>
                                 <h4>1. 중요업무 추진내용 및 실적</h4>
-                                <div style={{ overflowX: 'auto', marginTop: '1rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem', gap: '0.5rem' }}>
+                                    <button type="button" className="btn btn-outline" onClick={downloadSelfEvalTemplate} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                        <Download size={14} /> 템플릿
+                                    </button>
+                                    <label className="btn btn-outline" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}>
+                                        <Upload size={14} /> 업로드
+                                        <input type="file" hidden accept=".csv" onChange={handleSelfEvalCSV} />
+                                    </label>
+                                </div>
+                                <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                                         <thead>
                                             <tr style={{ background: 'var(--primary-50)', borderBottom: '2px solid var(--primary-100)' }}>
@@ -204,15 +309,37 @@ export default function EvaluationForm() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {[1, 2, 3].map((row) => (
-                                                <tr key={row} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                                    <td style={{ padding: '0.5rem' }}><input className="input-field" type="text" /></td>
-                                                    <td style={{ padding: '0.5rem' }}><input className="input-field" type="text" /></td>
-                                                    <td style={{ padding: '0.5rem' }}><input className="input-field" type="text" style={{ textAlign: 'center' }} /></td>
-                                                    <td style={{ padding: '0.5rem' }}><input className="input-field" type="number" style={{ textAlign: 'center' }} /></td>
-                                                    <td style={{ padding: '0.5rem' }}><input className="input-field" type="text" placeholder="00월~00월" style={{ textAlign: 'center' }} /></td>
+                                            {selfEvalRows.map((row, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" type="text" value={row.name} onChange={(e) => {
+                                                            const newRows = [...selfEvalRows]; newRows[idx].name = e.target.value; setSelfEvalRows(newRows);
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" type="text" value={row.content} onChange={(e) => {
+                                                            const newRows = [...selfEvalRows]; newRows[idx].content = e.target.value; setSelfEvalRows(newRows);
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" type="text" value={row.goal} style={{ textAlign: 'center' }} onChange={(e) => {
+                                                            const newRows = [...selfEvalRows]; newRows[idx].goal = e.target.value; setSelfEvalRows(newRows);
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" type="number" value={row.achievement} style={{ textAlign: 'center' }} onChange={(e) => {
+                                                            const newRows = [...selfEvalRows]; newRows[idx].achievement = e.target.value; setSelfEvalRows(newRows);
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.5rem' }}>
+                                                        <input className="input-field" type="text" placeholder="00월~00월" value={row.period} style={{ textAlign: 'center' }} onChange={(e) => {
+                                                            const newRows = [...selfEvalRows]; newRows[idx].period = e.target.value; setSelfEvalRows(newRows);
+                                                        }} />
+                                                    </td>
                                                     <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                                                        <select className="input-field" style={{ padding: '0.5rem' }}>
+                                                        <select className="input-field" value={row.satisfaction} style={{ padding: '0.5rem' }} onChange={(e) => {
+                                                            const newRows = [...selfEvalRows]; newRows[idx].satisfaction = e.target.value; setSelfEvalRows(newRows);
+                                                        }}>
                                                             <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
                                                         </select>
                                                     </td>
@@ -230,7 +357,7 @@ export default function EvaluationForm() {
                                         const res = await API.saveEvaluation({
                                             type: 'self_eval',
                                             evaluator: currentUser.name,
-                                            data: { score: 85 } // Mock score collection for demo
+                                            data: selfEvalRows
                                         });
                                         if (res.success) alert('제출되었습니다.');
                                         else alert('실패');
