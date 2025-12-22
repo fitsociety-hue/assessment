@@ -253,11 +253,13 @@ export default function EvaluationForm() {
     };
 
     // Target Selection Logic
+    // Target Selection Logic
     const getTargets = () => {
         if (!currentUser) return [];
         const role = currentUser.role;
-        // Use employeesList fetched from API/State
-        const sourceData = employeesList.length > 0 ? employeesList : EMPLOYEES;
+        // ALWAYS use the full static employee list for finding targets to ensure everyone is evaluable
+        // (API might only return registered users)
+        const sourceData = EMPLOYEES;
 
         const currentTeam = currentUser.team ? currentUser.team.trim() : '';
         const currentTeamNormalized = normalizeTeam(currentTeam);
@@ -274,7 +276,7 @@ export default function EvaluationForm() {
         // --- Secretary General Logic ---
         if (role === 'secgen') {
             if (activeTab === 4) return sourceData.filter(e => e.role === 'leader'); // Subordinate: Team Leaders
-            if (activeTab === 3) return sourceData.filter(e => e.role === 'director'); // Manager: Director (if applicable)
+            if (activeTab === 3) return sourceData.filter(e => e.role === 'director'); // Manager: Director
         }
 
         // --- Team Leader Logic ---
