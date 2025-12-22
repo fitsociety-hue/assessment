@@ -53,41 +53,6 @@ function loginUser(creds) {
     return { success: false, message: '사용자를 찾을 수 없습니다.' };
 }
 
-function saveEvaluation(evalData) {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Evaluations");
-    if (!sheet) {
-        sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Evaluations");
-        sheet.appendRow(["Timestamp", "Type", "Evaluator", "Target", "Data_JSON"]);
-    }
-
-    var data = sheet.getDataRange().getValues();
-    var rowIndex = -1;
-
-    // 중복 확인: 평가 종류, 평가자, 대상이 모두 같으면 업데이트 (공백 제거 후 비교)
-    for (var i = 1; i < data.length; i++) {
-        if (String(data[i][1]).trim() == String(evalData.type).trim() &&
-            String(data[i][2]).trim() == String(evalData.evaluator).trim() &&
-            String(data[i][3]).trim() == String(evalData.target).trim()) {
-            rowIndex = i + 1;
-            break;
-        }
-    }
-
-    var timestamp = new Date();
-    var jsonStr = JSON.stringify(evalData.data);
-
-    if (rowIndex > 0) {
-        // 기존 행 업데이트
-        sheet.getRange(rowIndex, 1).setValue(timestamp);
-        sheet.getRange(rowIndex, 5).setValue(jsonStr);
-        return { success: true, message: 'Evaluation updated' };
-    } else {
-        // 새 행 추가
-        sheet.appendRow([timestamp, evalData.type, evalData.evaluator, evalData.target, jsonStr]);
-        return { success: true, message: 'Evaluation saved' };
-    }
-}
-
 function getEmployees() {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
     if (!sheet) return { success: true, data: [] };
@@ -117,11 +82,17 @@ function registerUser(userData) {
 
 function resetPassword(data) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
+    if (!sheet) return { success: false, message: 'Employee DB not found' };
     var rows = sheet.getDataRange().getValues();
+    var name = data.name;
+    var newPassword = data.newPassword;
     for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] == data.name) { sheet.getRange(i + 1, 5).setValue(data.newPassword); return { success: true }; }
+        if (rows[i][0] == name) {
+            sheet.getRange(i + 1, 5).setValue(newPassword);
+            return { success: true };
+        }
     }
-    return { success: false };
+    return { success: false, message: 'User not found: ' + name };
 }
 
 function syncEmployees(data) {
@@ -135,4 +106,56 @@ function syncEmployees(data) {
     }
     if (rows.length > 0) { sheet.getRange(2, 1, rows.length, 5).setValues(rows); }
     return { success: true };
+}
+
+function saveEvaluation(evalData) {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Evaluations");
+    if (!sheet) {
+        sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Evaluations");
+        sheet.appendRow(["Timestamp", "Type", "Evaluator", "Target", "Data_JSON"]);
+        SpreadsheetApp.flush();
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var foundRowIndex = -1;
+
+    // Normalize helper specifically for comparison
+    var normalize = function (val) {
+        var s = String(val || "").trim();
+        return s.normalize ? s.normalize("NFC") : s;
+    };
+
+    var keyType = normalize(evalData.type);
+    var keyEvaluator = normalize(evalData.evaluator);
+    var keyTarget = normalize(evalData.target);
+
+    // Check for existing evaluation (Skip header row 0)
+    for (var i = 1; i < data.length; i++) {
+        if (normalize(data[i][1]) === keyType &&
+            normalize(data[i][2]) === keyEvaluator &&
+            normalize(data[i][3]) === keyTarget) {
+            foundRowIndex = i + 1; // 1-based index
+            break;
+        }
+    }
+
+    var timestamp = new Date();
+    var jsonStr = JSON.stringify(evalData.data);
+
+    if (foundRowIndex > 0) {
+        // Update existing row
+        sheet.getRange(foundRowIndex, 1).setValue(timestamp);
+        sheet.getRange(foundRowIndex, 5).setValue(jsonStr);
+        return { success: true, message: 'Evaluation updated' };
+    } else {
+        // Append new row
+        sheet.appendRow([
+            timestamp,
+            evalData.type,
+            evalData.evaluator,
+            evalData.target,
+            jsonStr
+        ]);
+        return { success: true, message: 'Evaluation saved' };
+    }
 }
