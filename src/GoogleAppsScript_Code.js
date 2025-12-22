@@ -156,14 +156,29 @@ function loginUser(creds) {
     var password = creds.password;
 
     for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] == name && rows[i][4] == password) {
-            var user = {
-                name: rows[i][0],
-                team: rows[i][1],
-                position: rows[i][2],
-                jobGroup: rows[i][3]
-            };
-            return { success: true, user: user };
+        if (rows[i][0] == name) {
+            // Check if password matches
+            if (rows[i][4] == password) {
+                var user = {
+                    name: rows[i][0],
+                    team: rows[i][1],
+                    position: rows[i][2],
+                    jobGroup: rows[i][3]
+                };
+                return { success: true, user: user };
+            }
+            // Check if password Is Empty (First Time Login / Auto-Sync)
+            else if (rows[i][4] === "" || rows[i][4] === undefined) {
+                // Set the password to the provided hash
+                sheet.getRange(i + 1, 5).setValue(password);
+                var user = {
+                    name: rows[i][0],
+                    team: rows[i][1],
+                    position: rows[i][2],
+                    jobGroup: rows[i][3]
+                };
+                return { success: true, user: user, message: 'Password set successfully' };
+            }
         }
     }
     return { success: false, message: 'Invalid credentials' };
