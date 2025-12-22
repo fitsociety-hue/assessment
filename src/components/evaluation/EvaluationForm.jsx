@@ -183,7 +183,7 @@ export default function EvaluationForm() {
 
     const getTabsForRole = (role) => {
         if (!role) return [];
-        if (role === 'director') return [TAB_SELF_ANALYSIS, TAB_MANAGER_EVAL]; // Director judges managers
+        if (role === 'director') return [TAB_MANAGER_EVAL]; // Director judges managers only
         if (role === 'secgen') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_SUBORDINATE_EVAL]; // Judges TLs & Workers
         if (role === 'leader') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_SUBORDINATE_EVAL, TAB_PEER_EVAL];
         if (role === 'member') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_PEER_EVAL];
@@ -550,12 +550,41 @@ export default function EvaluationForm() {
 
                         {activeTab === 3 && (
                             <div>
-                                <h3>관리자 평가 ({selectedTarget?.name})</h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h3>관리자 평가 ({selectedTarget?.name})</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(MANAGER_EVAL_ITEMS, [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Download size={16} /> 템플릿
+                                        </button>
+                                        <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                            <Upload size={16} /> CSV 업로드
+                                            <input type="file" hidden accept=".csv" onChange={(e) => handleCSV(e, setEvalScores)} />
+                                        </label>
+                                    </div>
+                                </div>
+
                                 {renderQuestionTable(MANAGER_EVAL_ITEMS, evalScores, setEvalScores)}
-                                <div style={{ marginTop: '1rem' }}>
-                                    <h4>종합 의견</h4>
-                                    <textarea className="input-field" placeholder="우수점" value={evalOpinion.strength} onChange={e => setEvalOpinion({ ...evalOpinion, strength: e.target.value })} style={{ marginBottom: '0.5rem' }} />
-                                    <textarea className="input-field" placeholder="개선점" value={evalOpinion.weakness} onChange={e => setEvalOpinion({ ...evalOpinion, weakness: e.target.value })} />
+
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px', marginTop: '2rem' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
+                                    <div style={{ display: 'grid', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>관리자로서 가장 우수한 점</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.strength} onChange={e => setEvalOpinion({ ...evalOpinion, strength: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>개선이 필요하다고 생각되는 부분</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.weakness} onChange={e => setEvalOpinion({ ...evalOpinion, weakness: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>관리자에게 바라는 지원 및 협력</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.support} onChange={e => setEvalOpinion({ ...evalOpinion, support: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>관리자에게 감사한 점</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.thanks} onChange={e => setEvalOpinion({ ...evalOpinion, thanks: e.target.value })} />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div style={{ textAlign: 'right', marginTop: '2rem' }}><button className="btn btn-primary" onClick={handlePreview}>저장 및 미리보기</button></div>
                             </div>

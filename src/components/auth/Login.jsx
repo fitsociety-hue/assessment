@@ -64,7 +64,22 @@ export default function Login({ onLogin }) {
                 return;
             }
 
-            // Strict Validation against DB
+            // Special Case: Director Login (As per user request)
+            if (staffInfo.name === '윤제원' && staffInfo.team === '관장') {
+                // Manually log in as Director
+                const director = dbEmployees.find(e => e.role === 'director') || {
+                    id: 0, name: '윤제원', team: '관장실', position: '관장', role: 'director'
+                };
+
+                onLogin({
+                    ...director,
+                    role: 'director'
+                });
+                navigate('/eval/dashboard');
+                return;
+            }
+
+            // Strict Validation against DB for everyone else
             let found = false;
             let foundEmp = null;
 
@@ -78,14 +93,11 @@ export default function Login({ onLogin }) {
 
             if (!found) {
                 // Strict denial
-                alert(`'${staffInfo.name}'님은 '${staffInfo.team}' 소속으로 등록되어 있지 않습니다.\n정보를 다시 확인해주세요.`);
+                alert(`'${staffInfo.name}'님은 '${staffInfo.team}' 소속으로 등록되어 있지 않습니다.\n정보를 다시 확인해주세요.\n(입력하신 정보가 정확한지 확인바랍니다)`);
                 return;
             }
 
-            // Auto-fill position if found (optional but good for UX)
-            // const role = mapPositionToRole(foundEmp.position); 
-            // Better to trust the User's input OR the DB? User request says "Name/Dept match -> Start".
-            // We should use the DB role ideally, but let's stick to the mapped role from DB info to be safe.
+            // Auto-fill position if found
             const role = mapPositionToRole(foundEmp.position); // Use strict DB position
 
             onLogin({
