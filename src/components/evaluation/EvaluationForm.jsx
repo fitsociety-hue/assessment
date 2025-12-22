@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-
 import { API } from '../../services/api';
 import { DataEngine } from '../../utils/dataEngine';
 import { EMPLOYEES } from '../../data/employees';
@@ -14,6 +11,7 @@ export default function EvaluationForm() {
     const [currentUser, setCurrentUser] = useState(null);
     const [selectedTarget, setSelectedTarget] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
+    const [employeesList, setEmployeesList] = useState([]); // Dynamic list from API
 
     // Form States
     const [selfAnalysis, setSelfAnalysis] = useState({
@@ -37,8 +35,6 @@ export default function EvaluationForm() {
         { id: 5, item: '자원개발(후원, 자원봉사 등)', content: '', score: '' }
     ]);
 
-    // Generic Evaluation States (reused for Peer, Manager, Subordinate to clean up state)
-    // We will reset these when target changes or load them if we had per-target storage (not in this scope, assume one-at-a-time submission)
     const [evalScores, setEvalScores] = useState({});
     const [evalOpinion, setEvalOpinion] = useState({ strength: '', weakness: '', support: '', thanks: '', improvement: '', message: '', training: '', placement: '' });
 
@@ -154,12 +150,21 @@ export default function EvaluationForm() {
         } catch (err) { alert('CSV 파싱 오류'); }
     };
 
-    const downloadTemplate = (items, bonus = []) => {
+    const downloadTemplate = (items, filename, bonus = []) => {
         const data = items.map(i => ({ '번호': i.id, '평가항목': i.q, '점수': '' }));
         if (bonus.length > 0) {
             bonus.forEach(b => data.push({ '번호': b.id + 100, '평가항목': b.item, '점수': '' }));
         }
-        DataEngine.exportCSV(data, '평가_템플릿.csv');
+        DataEngine.exportCSV(data, filename);
+    };
+
+    const downloadSelfAnalysisTemplate = () => {
+        // Create template with correct headers for Self Analysis
+        const data = [
+            { '사업명': '예시 사업 A', '내용': '사업 내용 예시', '달성도(%)': '100', '만족도': '5' },
+            { '사업명': '', '내용': '', '달성도(%)': '', '만족도': '' }
+        ];
+        DataEngine.exportCSV(data, '자기분석보고서_템플릿.csv');
     };
 
 
@@ -174,7 +179,40 @@ export default function EvaluationForm() {
                 console.error("Failed to parse user info", e);
             }
         }
+
+        // Fetch Employees from API to ensure consistent data with Login
+        const loadEmployees = async () => {
+            try {
+                const allEmployees = await API.fetchEmployees();
+                if (allEmployees && Array.isArray(allEmployees) && allEmployees.length > 0) {
+                    // Map generic API data to application Model (add 'role', 'id')
+                    const mapped = allEmployees.map((e, idx) => ({
+                        ...e,
+                        id: 1000 + idx, // Generate temporary ID
+                        role: mapPositionToRole(e.position)
+                    }));
+                    setEmployeesList(mapped);
+                } else {
+                    console.warn("API employees empty, falling back to static");
+                    setEmployeesList(EMPLOYEES);
+                }
+            } catch (e) {
+                console.error("Failed to fetch employees, using fallback", e);
+                setEmployeesList(EMPLOYEES);
+            }
+        };
+        loadEmployees();
+
     }, []);
+
+    const mapPositionToRole = (pos) => {
+        if (!pos) return 'member';
+        const p = pos.trim();
+        if (p === '관장') return 'director';
+        if (p === '사무국장') return 'secgen';
+        if (p === '팀장') return 'leader';
+        return 'member';
+    };
 
     // Tab Logic
     const TAB_SELF_ANALYSIS = { id: 0, label: '자기분석 보고서' };
@@ -212,45 +250,47 @@ export default function EvaluationForm() {
     const getTargets = () => {
         if (!currentUser) return [];
         const role = currentUser.role;
+        // Use employeesList fetched from API/State
+        const sourceData = employeesList.length > 0 ? employeesList : EMPLOYEES;
+
+        const currentTeam = currentUser.team ? currentUser.team.trim() : '';
+        // Helper for safe comparison
+        const isSameTeam = (u) => u.team && u.team.trim() === currentTeam;
 
         // Director: Evaluates SecGen and Leaders
         if (activeTab === 3 && role === 'director') {
-            return EMPLOYEES.filter(e => e.role === 'secgen' || e.role === 'leader');
+            return sourceData.filter(e => e.role === 'secgen' || e.role === 'leader');
         }
 
         // SecGen
-        // Manager Eval (Tab 3): Judges Team Leaders?
-        // Prompt says "Manager(Team Leader) Eval: [List of TLs]" -> It seems "Manager Eval" tab here is used for "Evaluating Managers (Team Leaders)" 
         if (activeTab === 3 && role === 'secgen') {
-            return EMPLOYEES.filter(e => e.role === 'leader');
+            return sourceData.filter(e => e.role === 'leader');
         }
-        // Worker Eval (Tab 4): Judges All Staff
         if (activeTab === 4 && role === 'secgen') {
-            return EMPLOYEES.filter(e => e.role === 'member');
+            return sourceData.filter(e => e.role === 'member');
         }
 
         // Team Leader
-        // Manager Eval (Tab 3): Judges SecGen (Kim Eun-ah)
         if (activeTab === 3 && role === 'leader') {
-            return EMPLOYEES.filter(e => e.role === 'secgen');
+            return sourceData.filter(e => e.role === 'secgen');
         }
         // Worker Eval (Tab 4): Judges Own Team Members
         if (activeTab === 4 && role === 'leader') {
-            return EMPLOYEES.filter(e => e.role === 'member' && e.team === currentUser.team);
+            return sourceData.filter(e => e.role === 'member' && isSameTeam(e));
         }
         // Peer Eval (Tab 2): Judges Other Team Leaders
         if (activeTab === 2 && role === 'leader') {
-            return EMPLOYEES.filter(e => e.role === 'leader' && e.id !== currentUser.id && e.name !== currentUser.name);
+            return sourceData.filter(e => e.role === 'leader' && e.name !== currentUser.name);
         }
 
         // Team Member
         // Manager Eval (Tab 3): Judges Own Team Leader
         if (activeTab === 3 && role === 'member') {
-            return EMPLOYEES.filter(e => e.role === 'leader' && e.team === currentUser.team);
+            return sourceData.filter(e => e.role === 'leader' && isSameTeam(e));
         }
         // Peer Eval (Tab 2): Judges Own Team Members
         if (activeTab === 2 && role === 'member') {
-            return EMPLOYEES.filter(e => e.role === 'member' && e.team === currentUser.team && e.id !== currentUser.id && e.name !== currentUser.name);
+            return sourceData.filter(e => e.role === 'member' && isSameTeam(e) && e.name !== currentUser.name);
         }
 
         return [];
@@ -363,8 +403,8 @@ export default function EvaluationForm() {
                             <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--bg-input)', borderRadius: '8px' }}>평가 가능한 대상자가 없습니다.</div>
                         ) : (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-                                {targetList.map(target => (
-                                    <div key={target.id} onClick={() => setSelectedTarget(target)}
+                                {targetList.map((target, idx) => (
+                                    <div key={target.id || idx} onClick={() => setSelectedTarget(target)}
                                         style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s', background: 'white', textAlign: 'center' }}
                                         onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary-500)'}
                                         onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
@@ -395,13 +435,12 @@ export default function EvaluationForm() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                     <h3>자기분석 보고서</h3>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className="btn btn-outline" onClick={() => downloadTemplate(selfAnalysis.rows.map(r => ({ ...r, q: 'Task' })), [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={downloadSelfAnalysisTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <Download size={16} /> 템플릿
                                         </button>
                                         <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                                             <Upload size={16} /> CSV 업로드
                                             <input type="file" hidden accept=".csv" onChange={(e) => handleCSV(e, (data) => {
-                                                // Custom CSV handler for rows would be better, but simplified here
                                                 alert('Not fully implemented for complex rows in this demo');
                                             })} />
                                         </label>
@@ -480,7 +519,7 @@ export default function EvaluationForm() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                     <h3>본인 평가</h3>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className="btn btn-outline" onClick={() => downloadTemplate(SELF_EVAL_ITEMS, selfEvalBonus)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(SELF_EVAL_ITEMS, '본인평가_템플릿.csv', selfEvalBonus)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <Download size={16} /> 템플릿
                                         </button>
                                         <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -542,7 +581,7 @@ export default function EvaluationForm() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                     <h3>동료 평가 ({selectedTarget?.name})</h3>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className="btn btn-outline" onClick={() => downloadTemplate(PEER_EVAL_ITEMS, [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(PEER_EVAL_ITEMS, '동료평가_템플릿.csv', [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <Download size={16} /> 템플릿
                                         </button>
                                         <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -580,7 +619,7 @@ export default function EvaluationForm() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                     <h3>관리자 평가 ({selectedTarget?.name})</h3>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className="btn btn-outline" onClick={() => downloadTemplate(MANAGER_EVAL_ITEMS, [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(MANAGER_EVAL_ITEMS, '관리자평가_템플릿.csv', [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <Download size={16} /> 템플릿
                                         </button>
                                         <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -622,7 +661,7 @@ export default function EvaluationForm() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                     <h3>종사자(팀원) 평가 ({selectedTarget?.name})</h3>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button className="btn btn-outline" onClick={() => downloadTemplate(WORKER_EVAL_ITEMS, [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(WORKER_EVAL_ITEMS, '종사자(팀원)평가_템플릿.csv', [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <Download size={16} /> 템플릿
                                         </button>
                                         <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
