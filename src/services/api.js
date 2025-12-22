@@ -3,7 +3,7 @@
  * Interact with the Apps Script Web App to manage data.
  */
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbys9msN-mdGOAVBiT-JpnGHn3BT11rFZG6TqYgsfe0xUqROFkwceOChHC0v1Oda_Lvk/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4xCItNbQMUKHdiZP3cK_XHSet0yZywaZFFBySVmt53_dBTYlKyG7rFjKF0dW4_OhW/exec';
 
 export const API = {
     /**
@@ -23,6 +23,46 @@ export const API = {
     },
 
     /**
+     * Register a new user (or link to existing employee)
+     * @param {Object} userData { name, team, position, jobGroup, password }
+     */
+    registerUser: async (userData) => {
+        try {
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                // Using standard CORS. Apps Script must handle OPTIONS or return correct headers.
+                // If this fails due to CORS, user must ensure script deployment is 'Anyone' and handles CORS.
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'register', data: userData })
+            });
+            const json = await response.json();
+            return json;
+        } catch (error) {
+            console.error("API Error (registerUser):", error);
+            return { success: false, message: '서버 통신 오류가 발생했습니다.' };
+        }
+    },
+
+    /**
+     * Login user
+     * @param {Object} credentials { name, password }
+     */
+    loginUser: async (credentials) => {
+        try {
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', data: credentials })
+            });
+            const json = await response.json();
+            return json;
+        } catch (error) {
+            console.error("API Error (loginUser):", error);
+            return { success: false, message: '서버 통신 오류가 발생했습니다.' };
+        }
+    },
+
+    /**
      * Sync full employee list (e.g. from CSV upload)
      * @param {Array} employees - Array of employee objects
      */
@@ -30,7 +70,7 @@ export const API = {
         try {
             const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', // Apps Script POST often requires no-cors opaque mode
+                mode: 'no-cors', // Apps Script POST often requires no-cors opaque mode for fire-and-forget
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'syncEmployees', data: employees })
             });

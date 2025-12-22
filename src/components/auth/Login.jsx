@@ -1,130 +1,45 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Lock, ChevronRight, UserCircle, Building2, Briefcase, User } from 'lucide-react';
+import { Users, Lock, ChevronRight, UserCircle, Building2, Briefcase, User, UserPlus } from 'lucide-react';
 import { API } from '../../services/api';
-import { EMPLOYEES } from '../../data/employees';
 
 export default function Login({ onLogin }) {
-    const [loginType, setLoginType] = useState('staff'); // 'staff' or 'admin'
-    const [dbEmployees, setDbEmployees] = useState([]); // Store fetched employees
+    // Top Level Mode: 'staff' (Default) or 'admin'
+    const [accessMode, setAccessMode] = useState('staff');
+
+    // Staff Sub-Mode: 'login' or 'signup'
+    const [staffMode, setStaffMode] = useState('login');
+
     const [isLoading, setIsLoading] = useState(false);
-
-    // Load employees from DB on mount
-    React.useEffect(() => {
-        const loadData = async () => {
-            setIsLoading(true);
-            try {
-                const data = await API.fetchEmployees();
-                if (data && Array.isArray(data) && data.length > 0) {
-                    setDbEmployees(data);
-                } else {
-                    console.log("Using local employee data");
-                    setDbEmployees(EMPLOYEES);
-                }
-            } catch (e) {
-                console.error("API Error, using fallback", e);
-                setDbEmployees(EMPLOYEES);
-            }
-            setIsLoading(false);
-        };
-        loadData();
-    }, []);
-
-    // Staff State
-    const [staffInfo, setStaffInfo] = useState({
-        name: '',
-        team: '',
-        position: 'Team Member', // Default
-        jobGroup: ''
-    });
-
-    // Admin State
-    const [adminRole, setAdminRole] = useState('admin'); // 'admin' or 'hr'
-    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // Mock Database for Passwords
+    // --- Staff Login States ---
+    const [loginInfo, setLoginInfo] = useState({ name: '', password: '' });
+
+    // --- Staff Signup States ---
+    const [signupInfo, setSignupInfo] = useState({
+        name: '',
+        team: '',
+        position: '팀원', // Default
+        jobGroup: '',    // Text Input (e.g. 사회복지사)
+        password: ''
+    });
+
+    // --- Admin States ---
+    const [adminRole, setAdminRole] = useState('admin'); // 'admin' or 'hr'
+    const [adminPwInput, setAdminPwInput] = useState('');
+
+    // Mock Database for Passwords (Admin Only)
     const [adminPw, setAdminPw] = useState(() => localStorage.getItem('adminPassword') || '0000');
     const [hrPw, setHrPw] = useState(() => localStorage.getItem('hrPassword') || '0741');
 
-    const [isPasswordChanged, setIsPasswordChanged] = useState(false);
     const [showChangePw, setShowChangePw] = useState(false);
     const [currentPwInput, setCurrentPwInput] = useState('');
     const [newPw, setNewPw] = useState('');
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError('');
-
-        if (loginType === 'staff') {
-            if (!staffInfo.name || !staffInfo.team) {
-                setError('이름과 부서를 입력해주세요.');
-                return;
-            }
-
-            // Special Case: Director Login (As per user request)
-            if (staffInfo.name === '윤제원' && staffInfo.team === '관장') {
-                // Manually log in as Director
-                const director = dbEmployees.find(e => e.role === 'director') || {
-                    id: 0, name: '윤제원', team: '관장실', position: '관장', role: 'director'
-                };
-
-                onLogin({
-                    ...director,
-                    role: 'director'
-                });
-                navigate('/eval/dashboard');
-                return;
-            }
-
-            // Strict Validation against DB for everyone else
-            let found = false;
-            let foundEmp = null;
-
-            if (dbEmployees.length > 0) {
-                foundEmp = dbEmployees.find(emp =>
-                    emp.name === staffInfo.name &&
-                    emp.team === staffInfo.team
-                );
-                if (foundEmp) found = true;
-            }
-
-            if (!found) {
-                // Strict denial
-                alert(`'${staffInfo.name}'님은 '${staffInfo.team}' 소속으로 등록되어 있지 않습니다.\n정보를 다시 확인해주세요.\n(입력하신 정보가 정확한지 확인바랍니다)`);
-                return;
-            }
-
-            // Auto-fill position if found
-            const role = mapPositionToRole(foundEmp.position); // Use strict DB position
-
-            onLogin({
-                ...foundEmp, // Use DB data to ensure role is correct
-                role: role
-            });
-            navigate('/eval/dashboard');
-
-        } else {
-            // Admin/HR Logic
-            if (adminRole === 'admin') {
-                if (password === adminPw) {
-                    onLogin({ role: 'admin', name: '관리자' });
-                    navigate('/admin');
-                } else {
-                    setError('비밀번호가 올바르지 않습니다.');
-                }
-            } else if (adminRole === 'hr') {
-                if (password === hrPw) {
-                    onLogin({ role: 'hr', name: '인사담당자' });
-                    navigate('/hr');
-                } else {
-                    setError('비밀번호가 올바르지 않습니다.');
-                }
-            }
-        }
-    };
+    // --- Handlers ---
 
     const mapPositionToRole = (pos) => {
         if (pos === '관장') return 'director';
@@ -133,19 +48,79 @@ export default function Login({ onLogin }) {
         return 'member';
     };
 
-    const handleChangePassword = () => {
+    const handleStaffLogin = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (!loginInfo.name || !loginInfo.password) {
+            setError('이름과 비밀번호를 입력해주세요.');
+            return;
+        }
+
+        setIsLoading(true);
+        const res = await API.loginUser(loginInfo);
+        setIsLoading(false);
+
+        if (res.success && res.user) {
+            // Success
+            // Map role based on position
+            const role = mapPositionToRole(res.user.position);
+            onLogin({
+                ...res.user,
+                role: role
+            });
+            navigate('/eval/dashboard');
+        } else {
+            setError(res.message || '로그인에 실패했습니다.');
+        }
+    };
+
+    const handleStaffSignup = async (e) => {
+        e.preventDefault();
+        setError('');
+
+        // Validation
+        if (!signupInfo.name || !signupInfo.team || !signupInfo.password || !signupInfo.jobGroup) {
+            setError('모든 항목을 입력해주세요.');
+            return;
+        }
+
+        setIsLoading(true);
+        const res = await API.registerUser(signupInfo);
+        setIsLoading(false);
+
+        if (res.success) {
+            alert('회원가입이 완료되었습니다.\n로그인 화면으로 이동합니다.');
+            setStaffMode('login');
+            // Pre-fill name for convenience
+            setLoginInfo({ name: signupInfo.name, password: '' });
+        } else {
+            setError(res.message || '회원가입에 실패했습니다.');
+        }
+    };
+
+    const handleAdminLogin = (e) => {
+        e.preventDefault();
+        setError('');
         const targetPw = adminRole === 'admin' ? adminPw : hrPw;
 
+        if (adminPwInput === targetPw) {
+            onLogin({ role: adminRole, name: adminRole === 'admin' ? '관리자' : '인사담당자' });
+            navigate(adminRole === 'admin' ? '/admin' : '/hr');
+        } else {
+            setError('비밀번호가 올바르지 않습니다.');
+        }
+    };
+
+    const handleChangePassword = () => {
+        const targetPw = adminRole === 'admin' ? adminPw : hrPw;
         if (currentPwInput !== targetPw) {
             alert('현재 비밀번호가 일치하지 않습니다.');
             return;
         }
-
         if (newPw.length < 4) {
             alert('비밀번호는 4자리 이상이어야 합니다.');
             return;
         }
-
         if (adminRole === 'admin') {
             setAdminPw(newPw);
             localStorage.setItem('adminPassword', newPw);
@@ -153,8 +128,6 @@ export default function Login({ onLogin }) {
             setHrPw(newPw);
             localStorage.setItem('hrPassword', newPw);
         }
-
-        setIsPasswordChanged(true);
         setShowChangePw(false);
         setNewPw('');
         setCurrentPwInput('');
@@ -174,112 +147,144 @@ export default function Login({ onLogin }) {
                     HR Insight Pro
                 </h2>
 
-                {/* Login Type Toggles */}
+                {/* Top Level Tabs: Staff vs Admin */}
                 <div style={{ display: 'flex', borderBottom: '1px solid var(--border-light)', marginBottom: '2rem' }}>
                     <button
-                        style={{ flex: 1, padding: '1rem', borderBottom: loginType === 'staff' ? '2px solid var(--primary-600)' : 'none', fontWeight: loginType === 'staff' ? 700 : 400, color: loginType === 'staff' ? 'var(--primary-700)' : 'var(--text-sub)', background: 'none', border: 'none', cursor: 'pointer' }}
-                        onClick={() => setLoginType('staff')}
+                        style={{ flex: 1, padding: '1rem', borderBottom: accessMode === 'staff' ? '2px solid var(--primary-600)' : 'none', fontWeight: accessMode === 'staff' ? 700 : 400, color: accessMode === 'staff' ? 'var(--primary-700)' : 'var(--text-sub)', background: 'none', border: 'none', cursor: 'pointer' }}
+                        onClick={() => setAccessMode('staff')}
                     >
                         직원 접속
                     </button>
                     <button
-                        style={{ flex: 1, padding: '1rem', borderBottom: loginType === 'admin' ? '2px solid var(--primary-600)' : 'none', fontWeight: loginType === 'admin' ? 700 : 400, color: loginType === 'admin' ? 'var(--primary-700)' : 'var(--text-sub)', background: 'none', border: 'none', cursor: 'pointer' }}
-                        onClick={() => setLoginType('admin')}
+                        style={{ flex: 1, padding: '1rem', borderBottom: accessMode === 'admin' ? '2px solid var(--primary-600)' : 'none', fontWeight: accessMode === 'admin' ? 700 : 400, color: accessMode === 'admin' ? 'var(--primary-700)' : 'var(--text-sub)', background: 'none', border: 'none', cursor: 'pointer' }}
+                        onClick={() => setAccessMode('admin')}
                     >
                         관리자 접속
                     </button>
                 </div>
 
-                <form onSubmit={handleLogin}>
-                    {loginType === 'staff' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <input
-                                className="input-field" placeholder="이름 (예: 홍길동)"
-                                value={staffInfo.name} onChange={e => setStaffInfo({ ...staffInfo, name: e.target.value })}
-                            />
-                            <input
-                                className="input-field" placeholder="부서 (예: 전략기획팀)"
-                                value={staffInfo.team} onChange={e => setStaffInfo({ ...staffInfo, team: e.target.value })}
-                            />
-                            {/* Position Select removed as we auto-detect from DB or keep it read-only? 
-                                User Request: "Name, Dept match -> Start". 
-                                The user might NOT want to select Position if we know it. 
-                                But if DB fallback fails, they might need it. 
-                                Let's keep it but maybe it's less critical if we enforce DB match.
-                                Actually, if we enforce DB match, we don't need them to select 'Position' or 'JobGroup' if it's in DB.
-                                But let's keep the existing UI logic for now, just enforce the MATCH.
-                            */}
-                            {/* We will hide the Position/JobGroup inputs if we are strictly matching against DB anyway, 
-                                BUT simplifying the UI to just Name/Team as per request "Name, Dept match -> Page". 
-                            */}
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: '0.5rem' }}>
-                                * 이름과 부서를 정확히 입력해주세요. (등록된 정보와 일치해야 합니다)
-                            </div>
+                {/* STAFF MODE */}
+                {accessMode === 'staff' && (
+                    <>
+                        {/* Sub Tabs: Login vs Signup */}
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
+                            <button
+                                className={`btn ${staffMode === 'login' ? 'btn-primary' : 'btn-outline'}`}
+                                onClick={() => { setStaffMode('login'); setError(''); }}
+                                style={{ flex: 1 }}
+                            >
+                                로그인
+                            </button>
+                            <button
+                                className={`btn ${staffMode === 'signup' ? 'btn-primary' : 'btn-outline'}`}
+                                onClick={() => { setStaffMode('signup'); setError(''); }}
+                                style={{ flex: 1 }}
+                            >
+                                회원가입
+                            </button>
                         </div>
-                    )}
 
-                    {loginType === 'admin' && (
-                        <>
-                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
-                                <button type="button" className={`btn ${adminRole === 'admin' ? 'btn-primary' : 'btn-outline'} `} onClick={() => setAdminRole('admin')} style={{ flex: 1 }}>
-                                    <User size={18} style={{ marginRight: '0.5rem' }} /> 관리자
+                        {staffMode === 'login' && (
+                            <form onSubmit={handleStaffLogin}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div style={{ position: 'relative' }}>
+                                        <User size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
+                                        <input
+                                            className="input-field" placeholder="이름 (예: 홍길동)"
+                                            style={{ paddingLeft: '2.8rem' }}
+                                            value={loginInfo.name} onChange={e => setLoginInfo({ ...loginInfo, name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div style={{ position: 'relative' }}>
+                                        <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
+                                        <input
+                                            type="password"
+                                            className="input-field" placeholder="비밀번호"
+                                            style={{ paddingLeft: '2.8rem' }}
+                                            value={loginInfo.password} onChange={e => setLoginInfo({ ...loginInfo, password: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                {error && <div style={{ color: '#ef4444', fontSize: '0.9rem', margin: '1rem 0', textAlign: 'center' }}>{error}</div>}
+                                <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: '100%', padding: '0.8rem', marginTop: '1.5rem' }}>
+                                    {isLoading ? '확인 중...' : '평가 시작하기'}
                                 </button>
-                                <button type="button" className={`btn ${adminRole === 'hr' ? 'btn-primary' : 'btn-outline'} `} onClick={() => setAdminRole('hr')} style={{ flex: 1 }}>
-                                    <Users size={18} style={{ marginRight: '0.5rem' }} /> 인사팀
+                            </form>
+                        )}
+
+                        {staffMode === 'signup' && (
+                            <form onSubmit={handleStaffSignup}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <input className="input-field" placeholder="이름 (예: 홍길동)" value={signupInfo.name} onChange={e => setSignupInfo({ ...signupInfo, name: e.target.value })} />
+                                    <input className="input-field" placeholder="부서 (예: 전략기획팀)" value={signupInfo.team} onChange={e => setSignupInfo({ ...signupInfo, team: e.target.value })} />
+                                    <select className="input-field" value={signupInfo.position} onChange={e => setSignupInfo({ ...signupInfo, position: e.target.value })}>
+                                        <option value="팀원">팀원</option>
+                                        <option value="팀장">팀장</option>
+                                        <option value="사무국장">사무국장</option>
+                                        <option value="관장">관장</option>
+                                    </select>
+                                    <input className="input-field" placeholder="직종 (예: 사회복지사)" value={signupInfo.jobGroup} onChange={e => setSignupInfo({ ...signupInfo, jobGroup: e.target.value })} />
+                                    <input type="password" className="input-field" placeholder="비밀번호 설정" value={signupInfo.password} onChange={e => setSignupInfo({ ...signupInfo, password: e.target.value })} />
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: '0.5rem' }}>
+                                    * 기존 직원은 이름과 부서가 일치하면 자동으로 연동됩니다.
+                                </div>
+                                {error && <div style={{ color: '#ef4444', fontSize: '0.9rem', margin: '1rem 0', textAlign: 'center' }}>{error}</div>}
+                                <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: '100%', padding: '0.8rem', marginTop: '1.5rem' }}>
+                                    {isLoading ? '처리 중...' : '가입하기'}
                                 </button>
-                            </div>
+                            </form>
+                        )}
+                    </>
+                )}
 
-                            <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
-                                <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
-                                <input
-                                    type="password" className="input-field" placeholder="비밀번호 입력"
-                                    style={{ paddingLeft: '2.8rem' }}
-                                    value={password} onChange={(e) => setPassword(e.target.value)}
-                                />
-                            </div>
+                {/* ADMIN MODE */}
+                {accessMode === 'admin' && (
+                    <form onSubmit={handleAdminLogin}>
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
+                            <button type="button" className={`btn ${adminRole === 'admin' ? 'btn-primary' : 'btn-outline'} `} onClick={() => setAdminRole('admin')} style={{ flex: 1 }}>
+                                <User size={18} style={{ marginRight: '0.5rem' }} /> 관리자
+                            </button>
+                            <button type="button" className={`btn ${adminRole === 'hr' ? 'btn-primary' : 'btn-outline'} `} onClick={() => setAdminRole('hr')} style={{ flex: 1 }}>
+                                <Users size={18} style={{ marginRight: '0.5rem' }} /> 인사팀
+                            </button>
+                        </div>
 
-                            <div style={{ textAlign: 'center', marginTop: '0.5rem', marginBottom: '1rem' }}>
-                                <button
-                                    type="button"
-                                    style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
-                                    onClick={() => setShowChangePw(true)}
-                                >
-                                    {adminRole === 'hr' ? '인사팀 비밀번호 변경' : '관리자 비밀번호 변경'}
-                                </button>
-                            </div>
-                        </>
-                    )}
+                        <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+                            <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
+                            <input
+                                type="password" className="input-field" placeholder="비밀번호 입력"
+                                style={{ paddingLeft: '2.8rem' }}
+                                value={adminPwInput} onChange={(e) => setAdminPwInput(e.target.value)}
+                            />
+                        </div>
 
-                    {error && <div style={{ color: '#ef4444', fontSize: '0.9rem', margin: '1rem 0', textAlign: 'center' }}>{error}</div>}
+                        <div style={{ textAlign: 'center', marginTop: '0.5rem', marginBottom: '1rem' }}>
+                            <button
+                                type="button"
+                                style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
+                                onClick={() => setShowChangePw(true)}
+                            >
+                                {adminRole === 'hr' ? '인사팀 비밀번호 변경' : '관리자 비밀번호 변경'}
+                            </button>
+                        </div>
 
-                    <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem', marginTop: '1.5rem' }}>
-                        {loginType === 'staff' ? '평가 시작하기' : '로그인'}
-                    </button>
-                </form>
+                        {error && <div style={{ color: '#ef4444', fontSize: '0.9rem', margin: '1rem 0', textAlign: 'center' }}>{error}</div>}
 
-                {/* Change Password Modal */}
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.8rem', marginTop: '1.5rem' }}>
+                            로그인
+                        </button>
+                    </form>
+                )}
+
+                {/* Change Password Modal (Admin) */}
                 {showChangePw && (
-                    <div style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-                    }}>
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
                         <div className="card" style={{ width: '350px', background: 'white' }}>
-                            <h3 style={{ marginBottom: '1.5rem' }}>{adminRole === 'hr' ? '인사팀 비밀번호 변경' : '관리자 비밀번호 변경'}</h3>
+                            <h3 style={{ marginBottom: '1.5rem' }}>{adminRole === 'hr' ? '인사 비밀번호 변경' : '관리자 비밀번호 변경'}</h3>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <input
-                                    type="password"
-                                    className="input-field"
-                                    placeholder="현재 비밀번호"
-                                    value={currentPwInput}
-                                    onChange={(e) => setCurrentPwInput(e.target.value)}
-                                />
-                                <input
-                                    type="password"
-                                    className="input-field"
-                                    placeholder="새 비밀번호 (4자리 이상)"
-                                    value={newPw}
-                                    onChange={(e) => setNewPw(e.target.value)}
-                                />
+                                <input type="password" className="input-field" placeholder="현재 비밀번호" value={currentPwInput} onChange={(e) => setCurrentPwInput(e.target.value)} />
+                                <input type="password" className="input-field" placeholder="새 비밀번호 (4자리 이상)" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
                                 <button className="btn btn-outline" onClick={() => { setShowChangePw(false); setCurrentPwInput(''); setNewPw(''); }}>취소</button>
