@@ -389,25 +389,148 @@ export default function EvaluationForm() {
                         )}
 
                         {activeTab === 0 && (
-                            // Self Analysis Form (Simplified for brevity, assuming standard blocks)
                             <div>
-                                <h3>자기분석 보고서</h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h3>자기분석 보고서</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(selfAnalysis.rows.map(r => ({ ...r, q: 'Task' })), [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Download size={16} /> 템플릿
+                                        </button>
+                                        <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                            <Upload size={16} /> CSV 업로드
+                                            <input type="file" hidden accept=".csv" onChange={(e) => handleCSV(e, (data) => {
+                                                // Custom CSV handler for rows would be better, but simplified here
+                                                alert('Not fully implemented for complex rows in this demo');
+                                            })} />
+                                        </label>
+                                    </div>
+                                </div>
                                 <p className="text-sub">지난 한 해 성과를 기술해주세요.</p>
-                                {/* Example Table */}
+
+                                <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>1. 주요업무 추진실적</h4>
                                 <table style={{ width: '100%', marginBottom: '1rem', borderCollapse: 'collapse' }}>
-                                    <thead><tr style={{ background: 'var(--bg-input)' }}><th style={{ padding: '0.5rem' }}>사업명</th><th style={{ padding: '0.5rem' }}>내용</th></tr></thead>
-                                    <tbody>{selfAnalysis.rows.map((r, i) => <tr key={i}><td style={{ padding: '0.5rem' }}><input className="input-field" value={r.name} onChange={e => { const n = [...selfAnalysis.rows]; n[i].name = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: n }) }} /></td>
-                                        <td style={{ padding: '0.5rem' }}><input className="input-field" value={r.content} onChange={e => { const n = [...selfAnalysis.rows]; n[i].content = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: n }) }} /></td></tr>)}</tbody>
+                                    <thead>
+                                        <tr style={{ background: 'var(--bg-input)' }}>
+                                            <th style={{ padding: '0.5rem', border: '1px solid #eee' }}>사업명</th>
+                                            <th style={{ padding: '0.5rem', border: '1px solid #eee' }}>내용</th>
+                                            <th style={{ padding: '0.5rem', border: '1px solid #eee', width: '80px' }}>달성도(%)</th>
+                                            <th style={{ padding: '0.5rem', border: '1px solid #eee', width: '60px' }}>만족도</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{selfAnalysis.rows.map((r, i) => (
+                                        <tr key={i}>
+                                            <td style={{ padding: '0.5rem', border: '1px solid #eee' }}><input className="input-field" value={r.name} onChange={e => { const n = [...selfAnalysis.rows]; n[i].name = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: n }) }} placeholder="사업명" /></td>
+                                            <td style={{ padding: '0.5rem', border: '1px solid #eee' }}><input className="input-field" value={r.content} onChange={e => { const n = [...selfAnalysis.rows]; n[i].content = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: n }) }} placeholder="추진내용" /></td>
+                                            <td style={{ padding: '0.5rem', border: '1px solid #eee' }}><input className="input-field" value={r.achievement} onChange={e => { const n = [...selfAnalysis.rows]; n[i].achievement = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: n }) }} style={{ textAlign: 'center' }} /></td>
+                                            <td style={{ padding: '0.5rem', border: '1px solid #eee' }}>
+                                                <select className="input-field" value={r.satisfaction} onChange={e => { const n = [...selfAnalysis.rows]; n[i].satisfaction = e.target.value; setSelfAnalysis({ ...selfAnalysis, rows: n }) }}>
+                                                    {[5, 4, 3, 2, 1].map(n => <option key={n} value={n}>{n}</option>)}
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    ))}</tbody>
                                 </table>
-                                <button className="btn btn-primary" onClick={() => setSelfAnalysis(p => ({ ...p, rows: [...p.rows, { id: p.rows.length + 1, name: '', content: '' }] }))}>+ 행 추가</button>
+                                <button className="btn btn-primary" onClick={() => setSelfAnalysis(p => ({ ...p, rows: [...p.rows, { id: p.rows.length + 1, name: '', content: '', achievement: '', satisfaction: '5' }] }))}>+ 행 추가</button>
+
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px', marginTop: '2rem' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>2. 자기개발 및 전문성 향상</h4>
+                                    <div style={{ display: 'grid', gap: '1rem' }}>
+                                        <div><label style={{ fontWeight: 'bold' }}>1) 복지관 미션/비전 기여 사례</label><textarea className="input-field" rows="3" value={selfAnalysis.q1} onChange={e => setSelfAnalysis({ ...selfAnalysis, q1: e.target.value })} /></div>
+                                        <div><label style={{ fontWeight: 'bold' }}>2) 외부교육 및 자격취득</label><textarea className="input-field" rows="3" value={selfAnalysis.q2} onChange={e => setSelfAnalysis({ ...selfAnalysis, q2: e.target.value })} /></div>
+                                        <div><label style={{ fontWeight: 'bold' }}>3) 가장 도전적이었던 과제와 극복</label><textarea className="input-field" rows="3" value={selfAnalysis.q3} onChange={e => setSelfAnalysis({ ...selfAnalysis, q3: e.target.value })} /></div>
+                                        <div><label style={{ fontWeight: 'bold' }}>4) 기관 발전을 위한 제언</label><textarea className="input-field" rows="3" value={selfAnalysis.q4} onChange={e => setSelfAnalysis({ ...selfAnalysis, q4: e.target.value })} /></div>
+                                    </div>
+                                </div>
+
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px', marginTop: '1rem' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>3. 만족도 및 직무순환</h4>
+                                    <div style={{ display: 'grid', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ fontWeight: 'bold' }}>5) 현재 부서 만족도</label>
+                                            <div style={{ display: 'flex', gap: '1rem', margin: '0.5rem 0' }}>
+                                                {['아주 만족', '만족', '보통', '불만'].map(o => <label key={o}><input type="radio" checked={selfAnalysis.q5 === o} onChange={() => setSelfAnalysis({ ...selfAnalysis, q5: o })} /> {o}</label>)}
+                                            </div>
+                                            <input className="input-field" placeholder="이유" value={selfAnalysis.q5_reason} onChange={e => setSelfAnalysis({ ...selfAnalysis, q5_reason: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: 'bold' }}>6) 복지관 근무 만족도</label>
+                                            <div style={{ display: 'flex', gap: '1rem', margin: '0.5rem 0' }}>
+                                                {['아주 만족', '만족', '보통', '불만'].map(o => <label key={o}><input type="radio" checked={selfAnalysis.q6 === o} onChange={() => setSelfAnalysis({ ...selfAnalysis, q6: o })} /> {o}</label>)}
+                                            </div>
+                                            <input className="input-field" placeholder="이유" value={selfAnalysis.q6_reason} onChange={e => setSelfAnalysis({ ...selfAnalysis, q6_reason: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: 'bold' }}>7) 희망 부서/직무</label>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                                <input className="input-field" placeholder="희망부서" value={selfAnalysis.q7_dept} onChange={e => setSelfAnalysis({ ...selfAnalysis, q7_dept: e.target.value })} />
+                                                <input className="input-field" placeholder="희망직무" value={selfAnalysis.q7_job} onChange={e => setSelfAnalysis({ ...selfAnalysis, q7_job: e.target.value })} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div style={{ textAlign: 'right', marginTop: '2rem' }}><button className="btn btn-primary" onClick={handlePreview}>저장 및 미리보기</button></div>
                             </div>
                         )}
 
                         {activeTab === 1 && (
                             <div>
-                                <h3>본인 평가</h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h3>본인 평가</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(SELF_EVAL_ITEMS, selfEvalBonus)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Download size={16} /> 템플릿
+                                        </button>
+                                        <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                            <Upload size={16} /> CSV 업로드
+                                            <input type="file" hidden accept=".csv" onChange={(e) => handleCSV(e, setSelfEvalScores)} />
+                                        </label>
+                                    </div>
+                                </div>
                                 {renderQuestionTable(SELF_EVAL_ITEMS, selfEvalScores, setSelfEvalScores)}
+
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px', marginTop: '2rem' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>가산점 항목 (해당 사항이 있는 경우만 작성)</h4>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', border: '1px solid var(--border-light)' }}>
+                                        <thead>
+                                            <tr style={{ borderBottom: '1px solid var(--border-light)', background: '#f9fafb' }}>
+                                                <th style={{ padding: '0.8rem', width: '200px', textAlign: 'left' }}>구분</th>
+                                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>내용 (사업명, 금액, 건수 등)</th>
+                                                <th style={{ padding: '0.8rem', width: '150px', textAlign: 'center' }}>배점 (4~1점)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {selfEvalBonus.map((item, idx) => (
+                                                <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                    <td style={{ padding: '0.8rem', fontWeight: 600 }}>{item.item}</td>
+                                                    <td style={{ padding: '0.8rem' }}>
+                                                        <input className="input-field" placeholder="내용을 입력하세요" value={item.content} onChange={(e) => {
+                                                            const newBonus = [...selfEvalBonus]; newBonus[idx].content = e.target.value; setSelfEvalBonus(newBonus);
+                                                        }} />
+                                                    </td>
+                                                    <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                                                        <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
+                                                            {[4, 3, 2, 1].map(score => (
+                                                                <label key={score} style={{ cursor: 'pointer', padding: '0.2rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: item.score == score ? 'var(--primary-600)' : 'white', color: item.score == score ? 'white' : 'black' }}>
+                                                                    <input
+                                                                        type="radio"
+                                                                        name={`bonus_${item.id}`}
+                                                                        checked={item.score == score}
+                                                                        onChange={() => {
+                                                                            const newBonus = [...selfEvalBonus]; newBonus[idx].score = score; setSelfEvalBonus(newBonus);
+                                                                        }}
+                                                                        style={{ display: 'none' }}
+                                                                    />
+                                                                    {score}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <div style={{ textAlign: 'right', marginTop: '2rem' }}><button className="btn btn-primary" onClick={handlePreview}>저장 및 미리보기</button></div>
                             </div>
                         )}

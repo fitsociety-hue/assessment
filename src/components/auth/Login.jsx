@@ -45,13 +45,16 @@ export default function Login({ onLogin }) {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // Mock Database for Password (In a real app, this would be a backend)
-    const [storedPassword, setStoredPassword] = useState(() => localStorage.getItem('adminPassword') || '0741');
+    // Mock Database for Passwords
+    const [adminPw, setAdminPw] = useState(() => localStorage.getItem('adminPassword') || '0000');
+    const [hrPw, setHrPw] = useState(() => localStorage.getItem('hrPassword') || '0741');
+
     const [isPasswordChanged, setIsPasswordChanged] = useState(false);
     const [showChangePw, setShowChangePw] = useState(false);
+    const [currentPwInput, setCurrentPwInput] = useState('');
     const [newPw, setNewPw] = useState('');
 
-    const handleLogin = async (e) => { // Changed to async to await API calls if needed in future
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
 
@@ -61,47 +64,47 @@ export default function Login({ onLogin }) {
                 return;
             }
 
-            // Validation against DB
+            // Strict Validation against DB
+            let found = false;
+            let foundEmp = null;
+
             if (dbEmployees.length > 0) {
-                const found = dbEmployees.find(emp =>
+                foundEmp = dbEmployees.find(emp =>
                     emp.name === staffInfo.name &&
                     emp.team === staffInfo.team
                 );
-
-                if (!found) {
-                    const confirmLogin = window.confirm(
-                        `데이터베이스에서 '${staffInfo.name}'(${staffInfo.team}) 직원을 찾을 수 없습니다.\n\n` +
-                        `그래도 계속하시겠습니까 ? (DB 미등록 사용자로 진행)`
-                    );
-                    if (!confirmLogin) {
-                        return;
-                    }
-                } else {
-                    // Optionally update staffInfo with data from DB if found
-                    // For example, if DB has a more accurate position or jobGroup
-                    // setStaffInfo(prev => ({ ...prev, position: found.position, jobGroup: found.jobGroup }));
-                }
+                if (foundEmp) found = true;
             }
 
-            const role = mapPositionToRole(staffInfo.position);
+            if (!found) {
+                // Strict denial
+                alert(`'${staffInfo.name}'님은 '${staffInfo.team}' 소속으로 등록되어 있지 않습니다.\n정보를 다시 확인해주세요.`);
+                return;
+            }
+
+            // Auto-fill position if found (optional but good for UX)
+            // const role = mapPositionToRole(foundEmp.position); 
+            // Better to trust the User's input OR the DB? User request says "Name/Dept match -> Start".
+            // We should use the DB role ideally, but let's stick to the mapped role from DB info to be safe.
+            const role = mapPositionToRole(foundEmp.position); // Use strict DB position
+
             onLogin({
-                ...staffInfo,
+                ...foundEmp, // Use DB data to ensure role is correct
                 role: role
             });
-            navigate('/eval/dashboard'); // Redirect to personal evaluation dashboard (New Route)
+            navigate('/eval/dashboard');
 
         } else {
             // Admin/HR Logic
             if (adminRole === 'admin') {
-                if (password === storedPassword) {
+                if (password === adminPw) {
                     onLogin({ role: 'admin', name: '관리자' });
                     navigate('/admin');
                 } else {
                     setError('비밀번호가 올바르지 않습니다.');
                 }
             } else if (adminRole === 'hr') {
-                // Shared password for now, as usually requested in simple systems
-                if (password === storedPassword) {
+                if (password === hrPw) {
                     onLogin({ role: 'hr', name: '인사담당자' });
                     navigate('/hr');
                 } else {
@@ -119,16 +122,31 @@ export default function Login({ onLogin }) {
     };
 
     const handleChangePassword = () => {
+        const targetPw = adminRole === 'admin' ? adminPw : hrPw;
+
+        if (currentPwInput !== targetPw) {
+            alert('현재 비밀번호가 일치하지 않습니다.');
+            return;
+        }
+
         if (newPw.length < 4) {
             alert('비밀번호는 4자리 이상이어야 합니다.');
             return;
         }
-        setStoredPassword(newPw);
-        localStorage.setItem('adminPassword', newPw);
+
+        if (adminRole === 'admin') {
+            setAdminPw(newPw);
+            localStorage.setItem('adminPassword', newPw);
+        } else {
+            setHrPw(newPw);
+            localStorage.setItem('hrPassword', newPw);
+        }
+
         setIsPasswordChanged(true);
         setShowChangePw(false);
         setNewPw('');
-        alert('비밀번호가 변경되었습니다. 새로운 비밀번호로 로그인해주세요.');
+        setCurrentPwInput('');
+        alert('비밀번호가 변경되었습니다.');
     };
 
     return (
@@ -171,22 +189,19 @@ export default function Login({ onLogin }) {
                                 className="input-field" placeholder="부서 (예: 전략기획팀)"
                                 value={staffInfo.team} onChange={e => setStaffInfo({ ...staffInfo, team: e.target.value })}
                             />
-                            <select
-                                className="input-field"
-                                value={staffInfo.position}
-                                onChange={e => setStaffInfo({ ...staffInfo, position: e.target.value })}
-                            >
-                                <option value="팀원">팀원 (사회복지사 등)</option>
-                                <option value="팀장">팀장</option>
-                                <option value="사무국장">사무국장</option>
-                                <option value="관장">관장</option>
-                            </select>
-                            <input
-                                className="input-field" placeholder="직군 (예: 사회복지사)"
-                                value={staffInfo.jobGroup} onChange={e => setStaffInfo({ ...staffInfo, jobGroup: e.target.value })}
-                            />
+                            {/* Position Select removed as we auto-detect from DB or keep it read-only? 
+                                User Request: "Name, Dept match -> Start". 
+                                The user might NOT want to select Position if we know it. 
+                                But if DB fallback fails, they might need it. 
+                                Let's keep it but maybe it's less critical if we enforce DB match.
+                                Actually, if we enforce DB match, we don't need them to select 'Position' or 'JobGroup' if it's in DB.
+                                But let's keep the existing UI logic for now, just enforce the MATCH.
+                            */}
+                            {/* We will hide the Position/JobGroup inputs if we are strictly matching against DB anyway, 
+                                BUT simplifying the UI to just Name/Team as per request "Name, Dept match -> Page". 
+                            */}
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: '0.5rem' }}>
-                                * 본인의 인사 정보를 정확히 입력해 주세요.
+                                * 이름과 부서를 정확히 입력해주세요. (등록된 정보와 일치해야 합니다)
                             </div>
                         </div>
                     )}
@@ -202,7 +217,6 @@ export default function Login({ onLogin }) {
                                 </button>
                             </div>
 
-                            {/* Password Field for both Admin and HR */}
                             <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
                                 <Lock size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-sub)' }} />
                                 <input
@@ -212,18 +226,15 @@ export default function Login({ onLogin }) {
                                 />
                             </div>
 
-                            {/* Change Password Link only for Admin (optional, but requested for 'Admin/HR' logic usually implies Admin manages it) */}
-                            {adminRole === 'admin' && (
-                                <div style={{ textAlign: 'center', marginTop: '0.5rem', marginBottom: '1rem' }}>
-                                    <button
-                                        type="button"
-                                        style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
-                                        onClick={() => setShowChangePw(true)}
-                                    >
-                                        비밀번호 변경
-                                    </button>
-                                </div>
-                            )}
+                            <div style={{ textAlign: 'center', marginTop: '0.5rem', marginBottom: '1rem' }}>
+                                <button
+                                    type="button"
+                                    style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
+                                    onClick={() => setShowChangePw(true)}
+                                >
+                                    {adminRole === 'hr' ? '인사팀 비밀번호 변경' : '관리자 비밀번호 변경'}
+                                </button>
+                            </div>
                         </>
                     )}
 
@@ -238,21 +249,29 @@ export default function Login({ onLogin }) {
                 {showChangePw && (
                     <div style={{
                         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
                     }}>
-                        <div className="card" style={{ width: '300px' }}>
-                            <h3>비밀번호 변경</h3>
-                            <input
-                                type="password"
-                                className="input-field"
-                                placeholder="새 비밀번호"
-                                value={newPw}
-                                onChange={(e) => setNewPw(e.target.value)}
-                                style={{ margin: '1rem 0' }}
-                            />
-                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                <button className="btn btn-outline" onClick={() => setShowChangePw(false)}>취소</button>
-                                <button className="btn btn-primary" onClick={handleChangePassword}>변경</button>
+                        <div className="card" style={{ width: '350px', background: 'white' }}>
+                            <h3 style={{ marginBottom: '1.5rem' }}>{adminRole === 'hr' ? '인사팀 비밀번호 변경' : '관리자 비밀번호 변경'}</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <input
+                                    type="password"
+                                    className="input-field"
+                                    placeholder="현재 비밀번호"
+                                    value={currentPwInput}
+                                    onChange={(e) => setCurrentPwInput(e.target.value)}
+                                />
+                                <input
+                                    type="password"
+                                    className="input-field"
+                                    placeholder="새 비밀번호 (4자리 이상)"
+                                    value={newPw}
+                                    onChange={(e) => setNewPw(e.target.value)}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                                <button className="btn btn-outline" onClick={() => { setShowChangePw(false); setCurrentPwInput(''); setNewPw(''); }}>취소</button>
+                                <button className="btn btn-primary" onClick={handleChangePassword}>변경하기</button>
                             </div>
                         </div>
                     </div>
