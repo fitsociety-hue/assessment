@@ -275,8 +275,8 @@ export default function EvaluationForm() {
 
         // --- Secretary General Logic ---
         if (role === 'secgen') {
-            if (activeTab === 4) return sourceData.filter(e => e.role === 'leader'); // Subordinate: Team Leaders
-            if (activeTab === 3) return sourceData.filter(e => e.role === 'director'); // Manager: Director
+            if (activeTab === 3) return sourceData.filter(e => e.role === 'leader'); // Manager Eval: Team Leaders
+            if (activeTab === 4) return sourceData.filter(e => e.role === 'member'); // Subordinate Eval: All Members (Excl. Leaders)
         }
 
         // --- Team Leader Logic ---
