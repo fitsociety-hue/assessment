@@ -3,7 +3,7 @@
  * Interact with the Apps Script Web App to manage data.
  */
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5eG9xjOgBb6ogu_6sre-HyDsOgs36sJsX5nGVBXadwTYGpIG0Ywv7dEFOzEzJ8-MU/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-psRAVjskDR9m2HIPsshE5wzZfQYC6_OZWV6-GTz25zQ2rESB88nwMRSkbonlnjTS/exec';
 
 export const API = {
     /**
