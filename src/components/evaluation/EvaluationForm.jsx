@@ -70,10 +70,10 @@ export default function EvaluationForm() {
         { id: 1, cat: '직무수행태도', q: '미션비전 이해: 복지관의 미션과 비전을 이해하고 실천하려 노력한다.' },
         { id: 2, cat: '직무수행태도', q: '이용자 존중: 복지관 이용 장애인 및 지역주민을 존중하고 친절하게 응대하는가?' },
         { id: 3, cat: '직무수행태도', q: '동료 신뢰: 원만한 대인관계로 신뢰할 수 있는 동료이며, 자신의 업무 외에도 적극 협조하는가?' },
-        { id: 4, cat: '직무수행태도', q: '근무 태도: 규율을 준수하고 공사 구별이 분명하며 긍정적 자세로 업무에 임하는가?' },
+        { id: 4, cat: '직무수행태도', q: '근무 태도: 규율을 준수하고 공·사 구별이 분명하며 긍정적 자세로 업무에 임하는가?' },
         { id: 5, cat: '직무수행태도', q: '피드백 수용: 동료나 상사의 조언(피드백)을 감정적으로 받아들이지 않고, 자신의 성장을 위한 기회로 긍정적으로 수용하는가?' },
         { id: 6, cat: '직무수행능력', q: '도전 의식: 새롭고 어려운 업무도 두려워하지 않고 도전의식을 갖고 수행하는가?' },
-        { id: 7, cat: '직무수행능력', q: '역활 수용: 자신이 원하는 업무에 제한하지 않고 맡은 직무를 성실히 수행하는가?' },
+        { id: 7, cat: '직무수행능력', q: '역할 수용: 자신이 원하는 업무에 제한하지 않고 맡은 직무를 성실히 수행하는가?' },
         { id: 8, cat: '직무수행능력', q: '지식 공유: 자신이 습득한 정보, 전문지식, 경험을 동료 및 팀에게 적극 공유하는가?' },
         { id: 9, cat: '직무수행능력', q: '책임 완수: 어려운 일에도 스스로 나서며 맡은 업무를 끝까지 완수하는가?' },
         { id: 10, cat: '직무수행능력', q: '전문성: 업무 수행에 필요한 전문지식 수준이 우수한가?' },
@@ -87,29 +87,6 @@ export default function EvaluationForm() {
         { id: 18, cat: '근무실적', q: '품질향상: 담당 사업의 서비스 질과 이용자 만족도 향상을 위해 노력하는가?' },
         { id: 19, cat: '근무실적', q: '협업 기여: 팀 프로젝트나 협업 과제 수행 시 적극적으로 기여하는가?' },
         { id: 20, cat: '근무실적', q: '내부지원 및 외부연계: 기관 운영에 필요한 인적·물적 자원을 효율적으로 관리하거나, 업무 개선을 위한 새로운 정보 및 외부 자원을 적극적으로 도입하는가?' }
-    ];
-
-    const MANAGER_EVAL_ITEMS = [
-        { id: 1, cat: '직무수행태도', q: '근태관리: 출퇴근 시간을 준수하고 근무시간에 업무에 집중하는가?' },
-        { id: 2, cat: '직무수행태도', q: '조직가치: 기관의 미션, 비전, 인재상을 이해하고 실천하기 위해 노력하는가?' },
-        { id: 3, cat: '직무수행태도', q: '협조성: 타 팀과의 업무협조가 원활하고 전체 조직 관점에서 협력하는가?' },
-        { id: 4, cat: '직무수행태도', q: '책임감: 팀의 업무와 성과에 대해 책임감을 가지고 완수하는가?' },
-        { id: 5, cat: '직무수행태도', q: '자기개발: 관리자로서 전문성 향상을 위해 지속적으로 자기개발에 힘쓰는가?' },
-        { id: 6, cat: '직무수행능력', q: '전문성: 담당 업무 분야의 전문지식과 기술을 충분히 보유하고 있는가?' },
-        { id: 7, cat: '직무수행능력', q: '업무추진력: 업무 추진과정에서 우선순위를 정하고 장애요소를 극복하며 신속히 처리하는가?' },
-        { id: 8, cat: '직무수행능력', q: '자원개발: 인적·물적 자원개발에 적극적으로 노력하고 성과를 창출하는가?' },
-        { id: 9, cat: '직무수행능력', q: '보고체계: 업무 수행과정과 결과를 상급자에게 적절하게 보고하는가?' },
-        { id: 10, cat: '직무수행능력', q: '업무이해: 기관 방침과 업무방향을 정확하게 이해하고 판단하는가?' },
-        { id: 11, cat: '직무수행능력', q: '기록능력: 객관적이고 체계적인 방법으로 업무를 기록·관리하는가?' },
-        { id: 12, cat: '직무수행능력', q: '적응력: 새로운 업무 및 변화하는 상황에 순발력 있게 적응하고 대처하는가?' },
-        { id: 13, cat: '리더십', q: '소통능력: 팀원의 의견을 경청하고 효과적으로 소통하는가?' },
-        { id: 14, cat: '리더십', q: '업무지도: 업무수행에 필요한 조언과 슈퍼비전을 적절히 제공하는가?' },
-        { id: 15, cat: '리더십', q: '업무배분: 업무를 공정하고 효율적으로 배분하며 적절히 관리하는가?' },
-        { id: 16, cat: '리더십', q: '팀 분위기: 팀의 긍정적이고 협력적인 분위기 조성을 위해 노력하는가?' },
-        { id: 17, cat: '근무실적', q: '목표달성: 팀의 업무목표를 효과적으로 달성했는가?' },
-        { id: 18, cat: '근무실적', q: '예산관리: 팀의 예산을 효율적으로 관리하고 집행했는가?' },
-        { id: 19, cat: '근무실적', q: '기한준수: 보고서 등 제출기한을 철저히 준수했는가?' },
-        { id: 20, cat: '근무실적', q: '혁신노력: 신규 프로그램 개발이나 업무개선을 위해 적극 노력했는가?' }
     ];
 
     const WORKER_EVAL_ITEMS = [
@@ -156,7 +133,9 @@ export default function EvaluationForm() {
 
     const downloadTemplate = (items, bonus = []) => {
         const data = items.map(i => ({ '번호': i.id, '평가항목': i.q, '점수': '' }));
-        bonus.forEach(b => data.push({ '번호': b.id + 100, '평가항목': b.item, '점수': '' })); // Hack for bonus
+        if (bonus.length > 0) {
+            bonus.forEach(b => data.push({ '번호': b.id + 100, '평가항목': b.item, '점수': '' }));
+        }
         DataEngine.exportCSV(data, '평가_템플릿.csv');
     };
 
@@ -178,8 +157,8 @@ export default function EvaluationForm() {
     const TAB_SELF_ANALYSIS = { id: 0, label: '자기분석 보고서' };
     const TAB_SELF_EVAL = { id: 1, label: '본인평가' };
     const TAB_PEER_EVAL = { id: 2, label: '동료평가' };
-    const TAB_MANAGER_EVAL = { id: 3, label: '관리자 평가' }; // Upward or Specific
-    const TAB_SUBORDINATE_EVAL = { id: 4, label: '종사자(하급자) 평가' }; // Downward
+    const TAB_MANAGER_EVAL = { id: 3, label: '관리자 평가' };
+    const TAB_SUBORDINATE_EVAL = { id: 4, label: '종사자(팀원) 평가' };
 
     const getTabsForRole = (role) => {
         if (!role) return [];
@@ -537,12 +516,37 @@ export default function EvaluationForm() {
 
                         {activeTab === 2 && (
                             <div>
-                                <h3>동료 평가 ({selectedTarget?.name})</h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h3>동료 평가 ({selectedTarget?.name})</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(PEER_EVAL_ITEMS, [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Download size={16} /> 템플릿
+                                        </button>
+                                        <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                            <Upload size={16} /> CSV 업로드
+                                            <input type="file" hidden accept=".csv" onChange={(e) => handleCSV(e, setEvalScores)} />
+                                        </label>
+                                    </div>
+                                </div>
+
                                 {renderQuestionTable(PEER_EVAL_ITEMS, evalScores, setEvalScores)}
-                                <div style={{ marginTop: '1rem' }}>
-                                    <h4>종합 의견</h4>
-                                    <textarea className="input-field" placeholder="강점" value={evalOpinion.strength} onChange={e => setEvalOpinion({ ...evalOpinion, strength: e.target.value })} style={{ marginBottom: '0.5rem' }} />
-                                    <textarea className="input-field" placeholder="개선점" value={evalOpinion.improvement} onChange={e => setEvalOpinion({ ...evalOpinion, improvement: e.target.value })} />
+
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px', marginTop: '2rem' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
+                                    <div style={{ display: 'grid', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>동료로서 평가대상자의 가장 큰 강점</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.strength} onChange={e => setEvalOpinion({ ...evalOpinion, strength: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>함께 일하며 개선되면 좋겠다고 생각하는 부분</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.improvement} onChange={e => setEvalOpinion({ ...evalOpinion, improvement: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>동료에게 전하고 싶은 격려나 응원의 메시지</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.message} onChange={e => setEvalOpinion({ ...evalOpinion, message: e.target.value })} />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div style={{ textAlign: 'right', marginTop: '2rem' }}><button className="btn btn-primary" onClick={handlePreview}>저장 및 미리보기</button></div>
                             </div>
@@ -592,13 +596,43 @@ export default function EvaluationForm() {
 
                         {activeTab === 4 && (
                             <div>
-                                <h3>종사자 평가 ({selectedTarget?.name})</h3>
-                                {renderQuestionTable(WORKER_EVAL_ITEMS, evalScores, setEvalScores)}
-                                <div style={{ marginTop: '1rem' }}>
-                                    <h4>종합 의견</h4>
-                                    <textarea className="input-field" placeholder="강점" value={evalOpinion.strength} onChange={e => setEvalOpinion({ ...evalOpinion, strength: e.target.value })} style={{ marginBottom: '0.5rem' }} />
-                                    <textarea className="input-field" placeholder="개선점" value={evalOpinion.weakness} onChange={e => setEvalOpinion({ ...evalOpinion, weakness: e.target.value })} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h3>종사자(팀원) 평가 ({selectedTarget?.name})</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button className="btn btn-outline" onClick={() => downloadTemplate(WORKER_EVAL_ITEMS, [])} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Download size={16} /> 템플릿
+                                        </button>
+                                        <label className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                            <Upload size={16} /> CSV 업로드
+                                            <input type="file" hidden accept=".csv" onChange={(e) => handleCSV(e, setEvalScores)} />
+                                        </label>
+                                    </div>
                                 </div>
+
+                                {renderQuestionTable(WORKER_EVAL_ITEMS, evalScores, setEvalScores)}
+
+                                <div style={{ background: 'var(--bg-input)', padding: '1.5rem', borderRadius: '8px', marginTop: '2rem' }}>
+                                    <h4 style={{ marginBottom: '1rem' }}>종합의견 및 제안</h4>
+                                    <div style={{ display: 'grid', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>직원의 주요 강점 및 우수한 점</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.strength} onChange={e => setEvalOpinion({ ...evalOpinion, strength: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>개선이 필요한 부분 및 발전방향</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.weakness} onChange={e => setEvalOpinion({ ...evalOpinion, weakness: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>향후 교육·훈련 필요사항</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.training} onChange={e => setEvalOpinion({ ...evalOpinion, training: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>적합한 업무 및 배치 의견</label>
+                                            <textarea className="input-field" rows="3" value={evalOpinion.placement} onChange={e => setEvalOpinion({ ...evalOpinion, placement: e.target.value })} />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div style={{ textAlign: 'right', marginTop: '2rem' }}><button className="btn btn-primary" onClick={handlePreview}>저장 및 미리보기</button></div>
                             </div>
                         )}
