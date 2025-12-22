@@ -32,7 +32,7 @@ export const API = {
                 method: 'POST',
                 // Using standard CORS. Apps Script must handle OPTIONS or return correct headers.
                 // If this fails due to CORS, user must ensure script deployment is 'Anyone' and handles CORS.
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+
                 body: JSON.stringify({ action: 'register', data: userData })
             });
             const json = await response.json();
@@ -51,7 +51,7 @@ export const API = {
         try {
             const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+
                 body: JSON.stringify({ action: 'login', data: credentials })
             });
             const json = await response.json();
@@ -71,7 +71,7 @@ export const API = {
             const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors', // Apps Script POST often requires no-cors opaque mode for fire-and-forget
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+
                 body: JSON.stringify({ action: 'syncEmployees', data: employees })
             });
             // In no-cors mode, we can't read the response. We assume success if no network error.
@@ -91,7 +91,7 @@ export const API = {
             await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+
                 body: JSON.stringify({ action: 'syncResults', data: results })
             });
             return { success: true };
@@ -110,7 +110,7 @@ export const API = {
             await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+
                 body: JSON.stringify({ action: 'saveEvaluation', data: evaluationData })
             });
             return { success: true };
@@ -129,7 +129,7 @@ export const API = {
             await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+
                 body: JSON.stringify({ action: 'saveConfig', data: config })
             });
             return { success: true };
