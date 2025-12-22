@@ -8,7 +8,6 @@ function handleRequest(e) {
         var action = e.parameter.action;
         var data = e.parameter.data ? JSON.parse(e.parameter.data) : null;
 
-        // POST Body Parsing
         if (!action && e.postData && e.postData.contents) {
             try {
                 var body = JSON.parse(e.postData.contents);
@@ -16,7 +15,6 @@ function handleRequest(e) {
                 if (body.data) data = body.data;
             } catch (z) { }
         }
-
         var result = {};
         if (action === 'login') result = loginUser(data);
         else if (action === 'getEmployees') result = getEmployees();
@@ -38,7 +36,6 @@ function loginUser(creds) {
     var rows = sheet.getDataRange().getValues();
     var name = String(creds.name).trim();
     var password = creds.password;
-
     for (var i = 1; i < rows.length; i++) {
         var sheetName = String(rows[i][0]).trim();
         if (sheetName == name) {
@@ -56,81 +53,6 @@ function loginUser(creds) {
     return { success: false, message: '사용자를 찾을 수 없습니다.' };
 }
 
-function getEmployees() {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
-    if (!sheet) return { success: true, data: [] };
-    var rows = sheet.getDataRange().getValues();
-    var data = [];
-    for (var i = 1; i < rows.length; i++) {
-        var row = rows[i];
-        data.push({ name: row[0], team: row[1], position: row[2], jobGroup: row[3] });
-    }
-    return { success: true, data: data };
-}
-
-function registerUser(userData) {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
-    if (!sheet) {
-        sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Employees");
-        sheet.appendRow(["Name", "Team", "Position", "JobGroup", "Password"]);
-    }
-    if (!userData) return { success: false, message: 'No data provided' };
-    var name = userData.name;
-    var team = userData.team;
-    var position = userData.position;
-    var jobGroup = userData.jobGroup;
-    var password = userData.password;
-    var rows = sheet.getDataRange().getValues();
-    var foundIndex = -1;
-    for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] == name && rows[i][1] == team) {
-            foundIndex = i + 1;
-            break;
-        }
-    }
-    if (foundIndex > 0) {
-        sheet.getRange(foundIndex, 3).setValue(position);
-        sheet.getRange(foundIndex, 4).setValue(jobGroup);
-        sheet.getRange(foundIndex, 5).setValue(password);
-        return { success: true, message: 'Updated existing user profile' };
-    } else {
-        sheet.appendRow([name, team, position, jobGroup, password]);
-        return { success: true, message: 'Created new user profile' };
-    }
-}
-
-function resetPassword(data) {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
-    if (!sheet) return { success: false, message: 'Employee DB not found' };
-    var rows = sheet.getDataRange().getValues();
-    var name = data.name;
-    var newPassword = data.newPassword;
-    for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] == name) {
-            sheet.getRange(i + 1, 5).setValue(newPassword);
-            return { success: true };
-        }
-    }
-    return { success: false, message: 'User not found: ' + name };
-}
-
-function syncEmployees(data) {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
-    if (!sheet) {
-        sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Employees");
-    }
-    sheet.clear();
-    sheet.appendRow(["Name", "Team", "Position", "JobGroup", "Password"]);
-    var rows = [];
-    for (var i = 0; i < data.length; i++) {
-        rows.push([data[i].name, data[i].team, data[i].position, data[i].jobGroup || '', data[i].password || '']);
-    }
-    if (rows.length > 0) {
-        sheet.getRange(2, 1, rows.length, 5).setValues(rows);
-    }
-    return { success: true };
-}
-
 function saveEvaluation(evalData) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Evaluations");
     if (!sheet) {
@@ -141,12 +63,12 @@ function saveEvaluation(evalData) {
     var data = sheet.getDataRange().getValues();
     var rowIndex = -1;
 
-    // Check for existing evaluation (Skip header row 0)
+    // 중복 확인: 평가 종류, 평가자, 대상이 모두 같으면 업데이트 (공백 제거 후 비교)
     for (var i = 1; i < data.length; i++) {
         if (String(data[i][1]).trim() == String(evalData.type).trim() &&
             String(data[i][2]).trim() == String(evalData.evaluator).trim() &&
             String(data[i][3]).trim() == String(evalData.target).trim()) {
-            rowIndex = i + 1; // 1-based index
+            rowIndex = i + 1;
             break;
         }
     }
@@ -155,19 +77,62 @@ function saveEvaluation(evalData) {
     var jsonStr = JSON.stringify(evalData.data);
 
     if (rowIndex > 0) {
-        // Update existing row
+        // 기존 행 업데이트
         sheet.getRange(rowIndex, 1).setValue(timestamp);
         sheet.getRange(rowIndex, 5).setValue(jsonStr);
         return { success: true, message: 'Evaluation updated' };
     } else {
-        // Append new row
-        sheet.appendRow([
-            timestamp,
-            evalData.type,
-            evalData.evaluator,
-            evalData.target,
-            jsonStr
-        ]);
+        // 새 행 추가
+        sheet.appendRow([timestamp, evalData.type, evalData.evaluator, evalData.target, jsonStr]);
         return { success: true, message: 'Evaluation saved' };
     }
+}
+
+function getEmployees() {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
+    if (!sheet) return { success: true, data: [] };
+    var rows = sheet.getDataRange().getValues();
+    var data = [];
+    for (var i = 1; i < rows.length; i++) {
+        data.push({ name: rows[i][0], team: rows[i][1], position: rows[i][2], jobGroup: rows[i][3] });
+    }
+    return { success: true, data: data };
+}
+
+function registerUser(userData) {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
+    if (!sheet) { sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Employees"); sheet.appendRow(["Name", "Team", "Position", "JobGroup", "Password"]); }
+    var rows = sheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+        if (rows[i][0] == userData.name && rows[i][1] == userData.team) {
+            sheet.getRange(i + 1, 3).setValue(userData.position);
+            sheet.getRange(i + 1, 4).setValue(userData.jobGroup);
+            sheet.getRange(i + 1, 5).setValue(userData.password);
+            return { success: true };
+        }
+    }
+    sheet.appendRow([userData.name, userData.team, userData.position, userData.jobGroup, userData.password]);
+    return { success: true };
+}
+
+function resetPassword(data) {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
+    var rows = sheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+        if (rows[i][0] == data.name) { sheet.getRange(i + 1, 5).setValue(data.newPassword); return { success: true }; }
+    }
+    return { success: false };
+}
+
+function syncEmployees(data) {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
+    if (!sheet) { sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Employees"); }
+    sheet.clear();
+    sheet.appendRow(["Name", "Team", "Position", "JobGroup", "Password"]);
+    var rows = [];
+    for (var i = 0; i < data.length; i++) {
+        rows.push([data[i].name, data[i].team, data[i].position, data[i].jobGroup || '', data[i].password || '']);
+    }
+    if (rows.length > 0) { sheet.getRange(2, 1, rows.length, 5).setValues(rows); }
+    return { success: true };
 }
