@@ -32,8 +32,9 @@ export default function Login({ onLogin }) {
     const [adminPwInput, setAdminPwInput] = useState('');
 
     // Mock Database for Passwords (Admin Only)
-    const [adminPw, setAdminPw] = useState(() => localStorage.getItem('adminPassword') || '0000');
-    const [hrPw, setHrPw] = useState(() => localStorage.getItem('hrPassword') || '0741');
+    // Force reset to '0741' as requested, ignoring localStorage for now to fix login issues
+    const [adminPw, setAdminPw] = useState('0741');
+    const [hrPw, setHrPw] = useState('0741');
 
     const [showChangePw, setShowChangePw] = useState(false);
     const [currentPwInput, setCurrentPwInput] = useState('');
