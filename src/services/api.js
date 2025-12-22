@@ -43,7 +43,7 @@ export const API = {
             return json;
         } catch (error) {
             console.error("API Error (registerUser):", error);
-            return { success: false, message: '서버 통신 오류가 발생했습니다. (네트워크/CORS)' };
+            return { success: false, message: '서버 통신 오류 발생. 확인된 URL: ' + APPS_SCRIPT_URL + ' \n에러내용: ' + error.toString() };
         }
     },
 
@@ -65,7 +65,7 @@ export const API = {
             return json;
         } catch (error) {
             console.error("API Error (loginUser):", error);
-            return { success: false, message: '서버 통신 오류가 발생했습니다.' };
+            return { success: false, message: '서버 통신 오류 발생. 확인된 URL: ' + APPS_SCRIPT_URL + ' \n에러내용: ' + error.toString() };
         }
     },
 
