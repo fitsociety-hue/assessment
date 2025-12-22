@@ -15,11 +15,16 @@ export default function Dashboard() {
     const [uploadType, setUploadType] = useState('employee'); // 'employee' or 'result'
     const [analysisResults, setAnalysisResults] = useState(null);
 
+    // New: Employee List for Management
+    const [allEmployees, setAllEmployees] = useState([]);
+    const [empSearch, setEmpSearch] = useState('');
+
     // Load Stats from DB on Mount
     React.useEffect(() => {
         const loadStats = async () => {
             const employees = await API.fetchEmployees();
             if (employees && Array.isArray(employees)) {
+                setAllEmployees(employees); // Store full list
                 // Calculate real stats from DB data
                 const total = employees.length;
                 setStats({
@@ -31,6 +36,30 @@ export default function Dashboard() {
         };
         loadStats();
     }, []);
+
+    // SHA-256 Hash Helper
+    const sha256 = async (message) => {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
+    const handleResetUserPassword = async (name) => {
+        const newPw = prompt(`'${name}' 직원의 새로운 비밀번호를 입력해주세요.`);
+        if (!newPw) return;
+        if (newPw.length < 4) { alert('비밀번호는 최소 4자 이상이어야 합니다.'); return; }
+
+        // Hash new password
+        const hashedPassword = await sha256(newPw);
+
+        const res = await API.resetUserPassword({ name, newPassword: hashedPassword });
+        if (res.success) {
+            alert('비밀번호가 성공적으로 변경되었습니다.');
+        } else {
+            alert('비밀번호 변경 실패: ' + res.message);
+        }
+    };
 
     const handleFileUpload = async (e, type) => {
         const file = e.target.files[0];
@@ -235,6 +264,59 @@ export default function Dashboard() {
                     <AlertItem type="weak" msg="미제출 인원 3명 (독촉 필요)" />
                     <AlertItem type="info" msg="운영지원팀: 평가 완료율 90% 달성" />
                     <AlertItem type="info" msg="사업1팀: 평가 완료율 85% 달성" />
+                </div>
+            </div>
+
+            {/* Employee Management Section */}
+            <div className="card" style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3>직원 관리 (비밀번호 초기화)</h3>
+                    <input
+                        className="input-field"
+                        placeholder="이름 검색..."
+                        style={{ width: '200px' }}
+                        value={empSearch}
+                        onChange={(e) => setEmpSearch(e.target.value)}
+                    />
+                </div>
+                <div style={{ overflowX: 'auto', maxHeight: '400px', overflowY: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                        <thead>
+                            <tr style={{ background: 'var(--bg-input)', borderBottom: '1px solid var(--border-light)' }}>
+                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>이름</th>
+                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>부서</th>
+                                <th style={{ padding: '0.8rem', textAlign: 'left' }}>직급</th>
+                                <th style={{ padding: '0.8rem', textAlign: 'center' }}>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {allEmployees
+                                .filter(e => e.name && e.name.includes(empSearch))
+                                .map((emp, idx) => (
+                                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                        <td style={{ padding: '0.8rem' }}>{emp.name}</td>
+                                        <td style={{ padding: '0.8rem' }}>{emp.team}</td>
+                                        <td style={{ padding: '0.8rem' }}>{emp.position}</td>
+                                        <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                                            <button
+                                                className="btn btn-outline"
+                                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                                onClick={() => handleResetUserPassword(emp.name)}
+                                            >
+                                                비밀번호 재설정
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            {allEmployees.length === 0 && (
+                                <tr>
+                                    <td colSpan="4" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-sub)' }}>
+                                        등록된 직원이 없습니다.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

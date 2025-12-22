@@ -41,6 +41,14 @@ export default function Login({ onLogin }) {
 
     // --- Handlers ---
 
+    // SHA-256 Hash Helper
+    const sha256 = async (message) => {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
     const mapPositionToRole = (pos) => {
         if (pos === '관장') return 'director';
         if (pos === '사무국장') return 'secgen';
@@ -57,7 +65,9 @@ export default function Login({ onLogin }) {
         }
 
         setIsLoading(true);
-        const res = await API.loginUser(loginInfo);
+        // Hash Password
+        const hashedPassword = await sha256(loginInfo.password);
+        const res = await API.loginUser({ ...loginInfo, password: hashedPassword });
         setIsLoading(false);
 
         if (res.success && res.user) {
@@ -92,7 +102,9 @@ export default function Login({ onLogin }) {
         }
 
         setIsLoading(true);
-        const res = await API.registerUser(signupInfo);
+        // Hash Password
+        const hashedPassword = await sha256(signupInfo.password);
+        const res = await API.registerUser({ ...signupInfo, password: hashedPassword });
         setIsLoading(false);
 
         if (res.success) {

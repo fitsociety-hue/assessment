@@ -62,6 +62,8 @@ function handleRequest(e) {
             result = syncEmployees(data);
         } else if (action === 'saveEvaluation') {
             result = saveEvaluation(data);
+        } else if (action === 'resetPassword') {
+            result = resetPassword(data);
         } else if (action === 'getConfig') {
             result = { success: true, data: {} };
         } else {
@@ -165,6 +167,28 @@ function loginUser(creds) {
         }
     }
     return { success: false, message: 'Invalid credentials' };
+}
+
+function resetPassword(data) {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
+    if (!sheet) return { success: false, message: 'Employee DB not found' };
+
+    var rows = sheet.getDataRange().getValues();
+    var name = data.name;
+    var newPassword = data.newPassword;
+
+    // Find user by name (assume unique name or enforce uniqueness in app)
+    // Ideally we match Team too, but Admin might only know Name. 
+    // We'll iterate.
+
+    for (var i = 1; i < rows.length; i++) {
+        if (rows[i][0] == name) {
+            // Found
+            sheet.getRange(i + 1, 5).setValue(newPassword); // Update Col 5: Password
+            return { success: true };
+        }
+    }
+    return { success: false, message: 'User not found: ' + name };
 }
 
 function syncEmployees(data) {

@@ -70,6 +70,28 @@ export const API = {
     },
 
     /**
+     * Reset User Password (Admin)
+     * @param {Object} data { name, newPassword }
+     */
+    resetUserPassword: async (data) => {
+        try {
+            const params = new URLSearchParams();
+            params.append('action', 'resetPassword');
+            params.append('data', JSON.stringify(data));
+
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: params
+            });
+            const json = await response.json();
+            return json;
+        } catch (error) {
+            console.error("API Error (resetUserPassword):", error);
+            return { success: false, message: error.toString() };
+        }
+    },
+
+    /**
      * Sync full employee list (e.g. from CSV upload)
      * Keep using no-cors for this one if we don't care about response, 
      * but we'll use JSON body since legacy backend handles it (or new backend handles both).

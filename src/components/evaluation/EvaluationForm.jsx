@@ -223,8 +223,8 @@ export default function EvaluationForm() {
 
     const getTabsForRole = (role) => {
         if (!role) return [];
-        if (role === 'director') return [TAB_MANAGER_EVAL]; // Director judges managers only
-        if (role === 'secgen') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_SUBORDINATE_EVAL]; // Judges TLs & Workers
+        if (role === 'director') return [TAB_MANAGER_EVAL];
+        if (role === 'secgen') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_SUBORDINATE_EVAL];
         if (role === 'leader') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_SUBORDINATE_EVAL, TAB_PEER_EVAL];
         if (role === 'member') return [TAB_SELF_ANALYSIS, TAB_SELF_EVAL, TAB_MANAGER_EVAL, TAB_PEER_EVAL];
         return [];
@@ -265,40 +265,28 @@ export default function EvaluationForm() {
             return normalizeTeam(u.team) === currentTeamNormalized;
         };
 
-        // Director: Evaluates SecGen and Leaders
-        if (activeTab === 3 && role === 'director') {
+        // --- Director Logic ---
+        if (role === 'director' && activeTab === 3) {
             return sourceData.filter(e => e.role === 'secgen' || e.role === 'leader');
         }
 
-        // SecGen
-        if (activeTab === 3 && role === 'secgen') {
-            return sourceData.filter(e => e.role === 'leader');
-        }
-        if (activeTab === 4 && role === 'secgen') {
-            return sourceData.filter(e => e.role === 'member');
+        // --- Secretary General Logic ---
+        if (role === 'secgen') {
+            if (activeTab === 4) return sourceData.filter(e => e.role === 'leader'); // Subordinate: Team Leaders
+            if (activeTab === 3) return sourceData.filter(e => e.role === 'director'); // Manager: Director (if applicable)
         }
 
-        // Team Leader
-        if (activeTab === 3 && role === 'leader') {
-            return sourceData.filter(e => e.role === 'secgen');
-        }
-        // Worker Eval (Tab 4): Judges Own Team Members
-        if (activeTab === 4 && role === 'leader') {
-            return sourceData.filter(e => e.role === 'member' && isSameTeam(e));
-        }
-        // Peer Eval (Tab 2): Judges Other Team Leaders
-        if (activeTab === 2 && role === 'leader') {
-            return sourceData.filter(e => e.role === 'leader' && e.name !== currentUser.name);
+        // --- Team Leader Logic ---
+        if (role === 'leader') {
+            if (activeTab === 3) return sourceData.filter(e => e.role === 'secgen'); // Manager: SecGen
+            if (activeTab === 4) return sourceData.filter(e => e.role === 'member' && isSameTeam(e)); // Subordinate: Own Members
+            if (activeTab === 2) return sourceData.filter(e => e.role === 'leader' && e.name !== currentUser.name); // Peer: Other Team Leaders
         }
 
-        // Team Member
-        // Manager Eval (Tab 3): Judges Own Team Leader
-        if (activeTab === 3 && role === 'member') {
-            return sourceData.filter(e => e.role === 'leader' && isSameTeam(e));
-        }
-        // Peer Eval (Tab 2): Judges Own Team Members
-        if (activeTab === 2 && role === 'member') {
-            return sourceData.filter(e => e.role === 'member' && isSameTeam(e) && e.name !== currentUser.name);
+        // --- Team Member Logic ---
+        if (role === 'member') {
+            if (activeTab === 3) return sourceData.filter(e => e.role === 'leader' && isSameTeam(e)); // Manager: Own Leader
+            if (activeTab === 2) return sourceData.filter(e => e.role === 'member' && isSameTeam(e) && e.name !== currentUser.name); // Peer: Own Team Members
         }
 
         return [];

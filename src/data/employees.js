@@ -33,6 +33,5 @@ export const EMPLOYEES = [
     { id: 32, name: '임창현', team: '미래경영팀', position: '시설관리', role: 'member' },
     { id: 33, name: '최영권', team: '미래경영팀', position: '영양사', role: 'member' },
     { id: 34, name: '최영희', team: '미래경영팀', position: '안내', role: 'member' },
-    { id: 35, name: '허정윤', team: '미래경영팀', position: '회계', role: 'member' },
-    { id: 0, name: '윤제원', team: '관장실', position: '관장', role: 'director' } // Added Director based on context
+    { id: 35, name: '허정윤', team: '미래경영팀', position: '회계', role: 'member' }
 ];
