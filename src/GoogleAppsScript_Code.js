@@ -152,13 +152,17 @@ function loginUser(creds) {
     if (!sheet) return { success: false, message: 'Employee DB not found' };
 
     var rows = sheet.getDataRange().getValues();
-    var name = creds.name;
+    var name = String(creds.name).trim(); // Normalize Input
     var password = creds.password;
 
     for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] == name) {
+        var sheetName = String(rows[i][0]).trim(); // Normalize Sheet Data
+
+        if (sheetName == name) {
+            var storedPw = rows[i][4];
+
             // Check if password matches
-            if (rows[i][4] == password) {
+            if (storedPw == password) {
                 var user = {
                     name: rows[i][0],
                     team: rows[i][1],
@@ -168,7 +172,8 @@ function loginUser(creds) {
                 return { success: true, user: user };
             }
             // Check if password Is Empty (First Time Login / Auto-Sync)
-            else if (rows[i][4] === "" || rows[i][4] === undefined) {
+            // Handle both empty string and undefined/null
+            else if (!storedPw || storedPw === "") {
                 // Set the password to the provided hash
                 sheet.getRange(i + 1, 5).setValue(password);
                 var user = {
@@ -179,9 +184,13 @@ function loginUser(creds) {
                 };
                 return { success: true, user: user, message: 'Password set successfully' };
             }
+            else {
+                // Found user, but password wrong
+                return { success: false, message: '비밀번호가 일치하지 않습니다.' };
+            }
         }
     }
-    return { success: false, message: 'Invalid credentials' };
+    return { success: false, message: '사용자를 찾을 수 없습니다.' };
 }
 
 function resetPassword(data) {
