@@ -3,12 +3,11 @@
  * Interact with the Apps Script Web App to manage data.
  */
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4xCItNbQMUKHdiZP3cK_XHSet0yZywaZFFBySVmt53_dBTYlKyG7rFjKF0dW4_OhW/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5eG9xjOgBb6ogu_6sre-HyDsOgs36sJsX5nGVBXadwTYGpIG0Ywv7dEFOzEzJ8-MU/exec';
 
 export const API = {
     /**
      * Fetch all employees from the sheet
-     * Expected backend return: { success: true, data: [ { name, team, position, ... } ] }
      */
     fetchEmployees: async () => {
         try {
@@ -18,28 +17,33 @@ export const API = {
             throw new Error(json.message || 'Failed to fetch employees');
         } catch (error) {
             console.error("API Error (fetchEmployees):", error);
-            return []; // Return empty on error to prevent crash
+            return [];
         }
     },
 
     /**
      * Register a new user (or link to existing employee)
+     * Uses URLSearchParams (application/x-www-form-urlencoded) to ensure Simple Request (CORS Safe)
+     * and robust delivery to GAS.
      * @param {Object} userData { name, team, position, jobGroup, password }
      */
     registerUser: async (userData) => {
         try {
+            // Use URLSearchParams to force 'application/x-www-form-urlencoded'
+            // This is a "Simple Request" and bypasses CORS preflight strictly.
+            const params = new URLSearchParams();
+            params.append('action', 'register');
+            params.append('data', JSON.stringify(userData));
+
             const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
-                // Using standard CORS. Apps Script must handle OPTIONS or return correct headers.
-                // If this fails due to CORS, user must ensure script deployment is 'Anyone' and handles CORS.
-
-                body: JSON.stringify({ action: 'register', data: userData })
+                body: params
             });
             const json = await response.json();
             return json;
         } catch (error) {
             console.error("API Error (registerUser):", error);
-            return { success: false, message: '서버 통신 오류가 발생했습니다.' };
+            return { success: false, message: '서버 통신 오류가 발생했습니다. (네트워크/CORS)' };
         }
     },
 
@@ -49,10 +53,13 @@ export const API = {
      */
     loginUser: async (credentials) => {
         try {
+            const params = new URLSearchParams();
+            params.append('action', 'login');
+            params.append('data', JSON.stringify(credentials));
+
             const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
-
-                body: JSON.stringify({ action: 'login', data: credentials })
+                body: params
             });
             const json = await response.json();
             return json;
@@ -64,17 +71,19 @@ export const API = {
 
     /**
      * Sync full employee list (e.g. from CSV upload)
-     * @param {Array} employees - Array of employee objects
+     * Keep using no-cors for this one if we don't care about response, 
+     * but we'll use JSON body since legacy backend handles it (or new backend handles both).
+     * New backend handles JSON body too, so we can stick to JSON or change to Params.
+     * Let's stick to JSON body but removing header (Simple Request) just in case.
      */
     syncEmployees: async (employees) => {
         try {
             const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', // Apps Script POST often requires no-cors opaque mode for fire-and-forget
-
+                mode: 'no-cors',
+                // No explicit Content-Type => text/plain (Simple)
                 body: JSON.stringify({ action: 'syncEmployees', data: employees })
             });
-            // In no-cors mode, we can't read the response. We assume success if no network error.
             return { success: true };
         } catch (error) {
             console.error("API Error (syncEmployees):", error);
@@ -84,14 +93,12 @@ export const API = {
 
     /**
      * Sync Evaluation Results (CSV Analysis)
-     * @param {Array} results - Array of analyzed result objects
      */
     syncResults: async (results) => {
         try {
             await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-
                 body: JSON.stringify({ action: 'syncResults', data: results })
             });
             return { success: true };
@@ -103,14 +110,12 @@ export const API = {
 
     /**
      * Save a completed evaluation
-     * @param {Object} evaluationData 
      */
     saveEvaluation: async (evaluationData) => {
         try {
             await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-
                 body: JSON.stringify({ action: 'saveEvaluation', data: evaluationData })
             });
             return { success: true };
@@ -122,14 +127,12 @@ export const API = {
 
     /**
      * Save Configuration (Weights)
-     * @param {Object} config 
      */
     saveConfig: async (config) => {
         try {
             await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-
                 body: JSON.stringify({ action: 'saveConfig', data: config })
             });
             return { success: true };

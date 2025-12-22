@@ -6,10 +6,10 @@
  * 2. Go to Extensions > Apps Script.
  * 3. Clear existing code and Paste the code below.
  * 4. Create sheets named "Employees", "Evaluations" if they don't exist.
- *    - "Employees" columns: Name, Team, Position, JobGroup, Password, Role (optional but derived from position in frontend)
+ *    - "Employees" columns: Name, Team, Position, JobGroup, Password
  * 5. Deploy as Web App:
  *    - Execute as: "Me" (User account)
- *    - Who has access: "Anyone"
+ *    - Who has access: "Anyone" (Anonymous) -> CRITICAL for CORS to work without auth headers.
  * 6. Copy the Web App URL and ensure it matches the url in src/services/api.js
  */
 
@@ -26,17 +26,27 @@ function handleRequest(e) {
     lock.tryLock(10000);
 
     try {
-        var action = e.parameter.action;
+        var action = null;
         var data = null;
 
-        // Handle POST body data
-        if (e.postData && e.postData.contents) {
+        // 1. Try to get data from URL parameters (GET or POST x-www-form-urlencoded)
+        if (e.parameter.action) action = e.parameter.action;
+        if (e.parameter.data) {
+            try {
+                data = JSON.parse(e.parameter.data);
+            } catch (err) {
+                data = e.parameter.data;
+            }
+        }
+
+        // 2. If not found, try to parse JSON Body (POST text/plain or application/json)
+        if (!action && e.postData && e.postData.contents) {
             try {
                 var postBody = JSON.parse(e.postData.contents);
                 if (postBody.action) action = postBody.action;
                 if (postBody.data) data = postBody.data;
             } catch (err) {
-                // Only if parsing fails, ignore
+                // Ignore parsing errors for body if parameters were present
             }
         }
 
@@ -53,13 +63,12 @@ function handleRequest(e) {
         } else if (action === 'saveEvaluation') {
             result = saveEvaluation(data);
         } else if (action === 'getConfig') {
-            // Placeholder for config if needed
             result = { success: true, data: {} };
         } else {
-            result = { success: false, message: 'Invalid Action' };
+            result = { success: false, message: 'Invalid Action: ' + action };
         }
 
-        // CORS Headers for direct fetch access
+        // Return JSON with CORS support
         var output = ContentService.createTextOutput(JSON.stringify(result));
         output.setMimeType(ContentService.MimeType.JSON);
         return output;
@@ -79,23 +88,18 @@ function getEmployees() {
     if (!sheet) return { success: true, data: [] };
 
     var rows = sheet.getDataRange().getValues();
-    var headers = rows[0]; // Assume Row 1 is headers
+    // Assume headers in Row 1. Data starts Row 2.
     var data = [];
 
     for (var i = 1; i < rows.length; i++) {
         var row = rows[i];
-        // Map columns by index assuming order: Name (0), Team (1), Position (2), JobGroup (3), Password (4)
-        // Or better, find index by header name if dynamic. For simplicity, assume fixed or simple iteration.
-        // Let's assume standard headers: Name, Team, Position, JobGroup, Password
-        // We send back everything EXCEPT Password for safety, unless needed (frontend doesn't need password list)
-
-        // Simple Object Mapper
+        // Map columns: 0:Name, 1:Team, 2:Position, 3:JobGroup, 4:Password
         var emp = {
             name: row[0],
             team: row[1],
             position: row[2],
-            jobGroup: row[3],
-            // skip password
+            jobGroup: row[3]
+            // Password not returned
         };
         data.push(emp);
     }
@@ -109,6 +113,9 @@ function registerUser(userData) {
         sheet.appendRow(["Name", "Team", "Position", "JobGroup", "Password"]);
     }
 
+    // Ensure data exists
+    if (!userData) return { success: false, message: 'No data provided' };
+
     var name = userData.name;
     var team = userData.team;
     var position = userData.position;
@@ -118,24 +125,21 @@ function registerUser(userData) {
     var rows = sheet.getDataRange().getValues();
     var foundIndex = -1;
 
-    // Check for existing user by Name + Team
     for (var i = 1; i < rows.length; i++) {
         if (rows[i][0] == name && rows[i][1] == team) {
-            foundIndex = i + 1; // 1-based index
+            foundIndex = i + 1;
             break;
         }
     }
 
     if (foundIndex > 0) {
-        // Update existing user
-        // Update Position, JobGroup, Password
-        // Columns: Name(1), Team(2), Position(3), JobGroup(4), PW(5)
-        sheet.getRange(foundIndex, 3).setValue(position);
-        sheet.getRange(foundIndex, 4).setValue(jobGroup);
-        sheet.getRange(foundIndex, 5).setValue(password);
+        // Update
+        sheet.getRange(foundIndex, 3).setValue(position); // Col 3: Position
+        sheet.getRange(foundIndex, 4).setValue(jobGroup); // Col 4: JobGroup
+        sheet.getRange(foundIndex, 5).setValue(password); // Col 5: Password
         return { success: true, message: 'Updated existing user profile' };
     } else {
-        // Register new user
+        // Create
         sheet.appendRow([name, team, position, jobGroup, password]);
         return { success: true, message: 'Created new user profile' };
     }
@@ -150,7 +154,7 @@ function loginUser(creds) {
     var password = creds.password;
 
     for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] == name && rows[i][4] == password) { // Assuming PW is col 4 (index 4 = 5th col)
+        if (rows[i][0] == name && rows[i][4] == password) {
             var user = {
                 name: rows[i][0],
                 team: rows[i][1],
@@ -163,24 +167,11 @@ function loginUser(creds) {
     return { success: false, message: 'Invalid credentials' };
 }
 
-// Legacy / Other Support
 function syncEmployees(data) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Employees");
     if (!sheet) {
         sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Employees");
     }
-
-    // CAUTION: Sync typically overwrites. But now we have passwords.
-    // We should preserve passwords if we are just updating list.
-    // For safety in this prompt context, we won't fully overwrite if not asked.
-    // But usually Admin sync implies "Master Reset". 
-    // Let's implement smart sync or just append? 
-    // User asked for "Membership feature", implying users manage own accounts.
-    // We will assume "syncEmployees" (from admin dashboard csv upload) might be dangerous.
-    // Let's just Clear and Replace for now, assuming Admin knows best. 
-    // OR, we assume simpler: Just Append.
-
-    // Implementation: Clear and Replace (Standard Sync)
     sheet.clear();
     sheet.appendRow(["Name", "Team", "Position", "JobGroup", "Password"]);
 
@@ -188,7 +179,6 @@ function syncEmployees(data) {
     for (var i = 0; i < data.length; i++) {
         rows.push([data[i].name, data[i].team, data[i].position, data[i].jobGroup || '', data[i].password || '']);
     }
-
     if (rows.length > 0) {
         sheet.getRange(2, 1, rows.length, 5).setValues(rows);
     }
@@ -202,7 +192,6 @@ function saveEvaluation(evalData) {
         sheet.appendRow(["Timestamp", "Type", "Evaluator", "Target", "Data_JSON"]);
     }
 
-    // evalData structure: { type, evaluator, target, data }
     var row = [
         new Date(),
         evalData.type,
