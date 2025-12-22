@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Lock, ChevronRight, UserCircle, Building2, Briefcase, User } from 'lucide-react';
 import { API } from '../../services/api';
+import { EMPLOYEES } from '../../data/employees';
 
 export default function Login({ onLogin }) {
     const [loginType, setLoginType] = useState('staff'); // 'staff' or 'admin'
@@ -13,10 +14,17 @@ export default function Login({ onLogin }) {
     React.useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
-            const data = await API.fetchEmployees();
-            if (data && Array.isArray(data)) {
-                setDbEmployees(data);
-                console.log("DB Loaded:", data.length, "employees");
+            try {
+                const data = await API.fetchEmployees();
+                if (data && Array.isArray(data) && data.length > 0) {
+                    setDbEmployees(data);
+                } else {
+                    console.log("Using local employee data");
+                    setDbEmployees(EMPLOYEES);
+                }
+            } catch (e) {
+                console.error("API Error, using fallback", e);
+                setDbEmployees(EMPLOYEES);
             }
             setIsLoading(false);
         };
