@@ -5,6 +5,12 @@ import { DataEngine } from '../../utils/dataEngine';
 import { EMPLOYEES } from '../../data/employees';
 import { Upload, Download, User, ArrowLeft, CheckCircle, FileText } from 'lucide-react';
 
+// Helper for safe comparison
+const normalizeTeam = (t) => {
+    if (!t) return '';
+    return t.replace(/\s+/g, '').replace(/팀$/, ''); // Remove spaces and trailing 'Team'/'팀'
+};
+
 export default function EvaluationForm() {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState(null);
@@ -254,11 +260,6 @@ export default function EvaluationForm() {
         const sourceData = employeesList.length > 0 ? employeesList : EMPLOYEES;
 
         const currentTeam = currentUser.team ? currentUser.team.trim() : '';
-        // Helper for safe comparison
-        const normalizeTeam = (t) => {
-            if (!t) return '';
-            return t.replace(/\s+/g, '').replace(/팀$/, ''); // Remove spaces and trailing 'Team'/'팀'
-        };
         const currentTeamNormalized = normalizeTeam(currentTeam);
 
         const isSameTeam = (u) => {

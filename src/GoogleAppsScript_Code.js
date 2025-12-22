@@ -1,16 +1,6 @@
 /**
  * Google Apps Script Backend Code
- * 
- * Instructions:
- * 1. Open your Google Sheet.
- * 2. Go to Extensions > Apps Script.
- * 3. Clear existing code and Paste the code below.
- * 4. Create sheets named "Employees", "Evaluations" if they don't exist.
- *    - "Employees" columns: Name, Team, Position, JobGroup, Password
- * 5. Deploy as Web App:
- *    - Execute as: "Me" (User account)
- *    - Who has access: "Anyone" (Anonymous) -> CRITICAL for CORS to work without auth headers.
- * 6. Copy the Web App URL and ensure it matches the url in src/services/api.js
+ * Latest Update: Enhanced Login & Password Reset
  */
 
 function doGet(e) {
@@ -29,7 +19,6 @@ function handleRequest(e) {
         var action = null;
         var data = null;
 
-        // 1. Try to get data from URL parameters (GET or POST x-www-form-urlencoded)
         if (e.parameter.action) action = e.parameter.action;
         if (e.parameter.data) {
             try {
@@ -39,14 +28,12 @@ function handleRequest(e) {
             }
         }
 
-        // 2. If not found, try to parse JSON Body (POST text/plain or application/json)
         if (!action && e.postData && e.postData.contents) {
             try {
                 var postBody = JSON.parse(e.postData.contents);
                 if (postBody.action) action = postBody.action;
                 if (postBody.data) data = postBody.data;
             } catch (err) {
-                // Ignore parsing errors for body if parameters were present
             }
         }
 
@@ -70,7 +57,6 @@ function handleRequest(e) {
             result = { success: false, message: 'Invalid Action: ' + action };
         }
 
-        // Return JSON with CORS support
         var output = ContentService.createTextOutput(JSON.stringify(result));
         output.setMimeType(ContentService.MimeType.JSON);
         return output;
@@ -90,18 +76,15 @@ function getEmployees() {
     if (!sheet) return { success: true, data: [] };
 
     var rows = sheet.getDataRange().getValues();
-    // Assume headers in Row 1. Data starts Row 2.
     var data = [];
 
     for (var i = 1; i < rows.length; i++) {
         var row = rows[i];
-        // Map columns: 0:Name, 1:Team, 2:Position, 3:JobGroup, 4:Password
         var emp = {
             name: row[0],
             team: row[1],
             position: row[2],
             jobGroup: row[3]
-            // Password not returned
         };
         data.push(emp);
     }
@@ -115,7 +98,6 @@ function registerUser(userData) {
         sheet.appendRow(["Name", "Team", "Position", "JobGroup", "Password"]);
     }
 
-    // Ensure data exists
     if (!userData) return { success: false, message: 'No data provided' };
 
     var name = userData.name;
@@ -135,13 +117,11 @@ function registerUser(userData) {
     }
 
     if (foundIndex > 0) {
-        // Update
-        sheet.getRange(foundIndex, 3).setValue(position); // Col 3: Position
-        sheet.getRange(foundIndex, 4).setValue(jobGroup); // Col 4: JobGroup
-        sheet.getRange(foundIndex, 5).setValue(password); // Col 5: Password
+        sheet.getRange(foundIndex, 3).setValue(position);
+        sheet.getRange(foundIndex, 4).setValue(jobGroup);
+        sheet.getRange(foundIndex, 5).setValue(password);
         return { success: true, message: 'Updated existing user profile' };
     } else {
-        // Create
         sheet.appendRow([name, team, position, jobGroup, password]);
         return { success: true, message: 'Created new user profile' };
     }
@@ -152,16 +132,16 @@ function loginUser(creds) {
     if (!sheet) return { success: false, message: 'Employee DB not found' };
 
     var rows = sheet.getDataRange().getValues();
-    var name = String(creds.name).trim(); // Normalize Input
+    var name = String(creds.name).trim(); // 공백 제거
     var password = creds.password;
 
     for (var i = 1; i < rows.length; i++) {
-        var sheetName = String(rows[i][0]).trim(); // Normalize Sheet Data
+        var sheetName = String(rows[i][0]).trim(); // 시트 데이터 공백 제거
 
         if (sheetName == name) {
             var storedPw = rows[i][4];
 
-            // Check if password matches
+            // 비밀번호 일치 여부 확인
             if (storedPw == password) {
                 var user = {
                     name: rows[i][0],
@@ -171,10 +151,8 @@ function loginUser(creds) {
                 };
                 return { success: true, user: user };
             }
-            // Check if password Is Empty (First Time Login / Auto-Sync)
-            // Handle both empty string and undefined/null
+            // 비밀번호가 비어있을 경우 (최초 로그인) -> 자동 설정
             else if (!storedPw || storedPw === "") {
-                // Set the password to the provided hash
                 sheet.getRange(i + 1, 5).setValue(password);
                 var user = {
                     name: rows[i][0],
@@ -185,7 +163,6 @@ function loginUser(creds) {
                 return { success: true, user: user, message: 'Password set successfully' };
             }
             else {
-                // Found user, but password wrong
                 return { success: false, message: '비밀번호가 일치하지 않습니다.' };
             }
         }
@@ -201,14 +178,9 @@ function resetPassword(data) {
     var name = data.name;
     var newPassword = data.newPassword;
 
-    // Find user by name (assume unique name or enforce uniqueness in app)
-    // Ideally we match Team too, but Admin might only know Name. 
-    // We'll iterate.
-
     for (var i = 1; i < rows.length; i++) {
         if (rows[i][0] == name) {
-            // Found
-            sheet.getRange(i + 1, 5).setValue(newPassword); // Update Col 5: Password
+            sheet.getRange(i + 1, 5).setValue(newPassword);
             return { success: true };
         }
     }
