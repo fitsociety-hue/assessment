@@ -143,9 +143,9 @@ function saveEvaluation(evalData) {
 
     // Check for existing evaluation (Skip header row 0)
     for (var i = 1; i < data.length; i++) {
-        if (data[i][1] == evalData.type &&
-            data[i][2] == evalData.evaluator &&
-            data[i][3] == evalData.target) {
+        if (String(data[i][1]).trim() == String(evalData.type).trim() &&
+            String(data[i][2]).trim() == String(evalData.evaluator).trim() &&
+            String(data[i][3]).trim() == String(evalData.target).trim()) {
             rowIndex = i + 1; // 1-based index
             break;
         }
