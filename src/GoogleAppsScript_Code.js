@@ -137,13 +137,37 @@ function saveEvaluation(evalData) {
         sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Evaluations");
         sheet.appendRow(["Timestamp", "Type", "Evaluator", "Target", "Data_JSON"]);
     }
-    var row = [
-        new Date(),
-        evalData.type,
-        evalData.evaluator,
-        evalData.target,
-        JSON.stringify(evalData.data)
-    ];
-    sheet.appendRow(row);
-    return { success: true };
+
+    var data = sheet.getDataRange().getValues();
+    var rowIndex = -1;
+
+    // Check for existing evaluation (Skip header row 0)
+    for (var i = 1; i < data.length; i++) {
+        if (data[i][1] == evalData.type &&
+            data[i][2] == evalData.evaluator &&
+            data[i][3] == evalData.target) {
+            rowIndex = i + 1; // 1-based index
+            break;
+        }
+    }
+
+    var timestamp = new Date();
+    var jsonStr = JSON.stringify(evalData.data);
+
+    if (rowIndex > 0) {
+        // Update existing row
+        sheet.getRange(rowIndex, 1).setValue(timestamp);
+        sheet.getRange(rowIndex, 5).setValue(jsonStr);
+        return { success: true, message: 'Evaluation updated' };
+    } else {
+        // Append new row
+        sheet.appendRow([
+            timestamp,
+            evalData.type,
+            evalData.evaluator,
+            evalData.target,
+            jsonStr
+        ]);
+        return { success: true, message: 'Evaluation saved' };
+    }
 }
