@@ -84,6 +84,13 @@ export default function Login({ onLogin }) {
             return;
         }
 
+        // Password Validation
+        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+        if (!pwRegex.test(signupInfo.password)) {
+            setError('비밀번호는 영문+숫자 숫자를 포함하여 6자 이상이어야 합니다.');
+            return;
+        }
+
         setIsLoading(true);
         const res = await API.registerUser(signupInfo);
         setIsLoading(false);
@@ -224,7 +231,7 @@ export default function Login({ onLogin }) {
                                         <option value="관장">관장</option>
                                     </select>
                                     <input className="input-field" placeholder="직종 (예: 사회복지사)" value={signupInfo.jobGroup} onChange={e => setSignupInfo({ ...signupInfo, jobGroup: e.target.value })} />
-                                    <input type="password" className="input-field" placeholder="비밀번호 설정" value={signupInfo.password} onChange={e => setSignupInfo({ ...signupInfo, password: e.target.value })} />
+                                    <input type="password" className="input-field" placeholder="비밀번호 설정 (영문+숫자 6자 이상)" value={signupInfo.password} onChange={e => setSignupInfo({ ...signupInfo, password: e.target.value })} />
                                 </div>
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)', marginTop: '0.5rem' }}>
                                     * 기존 직원은 이름과 부서가 일치하면 자동으로 연동됩니다.

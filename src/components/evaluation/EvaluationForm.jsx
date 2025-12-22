@@ -255,7 +255,15 @@ export default function EvaluationForm() {
 
         const currentTeam = currentUser.team ? currentUser.team.trim() : '';
         // Helper for safe comparison
-        const isSameTeam = (u) => u.team && u.team.trim() === currentTeam;
+        const normalizeTeam = (t) => {
+            if (!t) return '';
+            return t.replace(/\s+/g, '').replace(/팀$/, ''); // Remove spaces and trailing 'Team'/'팀'
+        };
+        const currentTeamNormalized = normalizeTeam(currentTeam);
+
+        const isSameTeam = (u) => {
+            return normalizeTeam(u.team) === currentTeamNormalized;
+        };
 
         // Director: Evaluates SecGen and Leaders
         if (activeTab === 3 && role === 'director') {
